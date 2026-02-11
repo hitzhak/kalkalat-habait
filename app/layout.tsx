@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "sonner";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
@@ -49,6 +50,7 @@ export default function RootLayout({
 
         {/* Toast notifications */}
         <Toaster />
+        <Sonner />
       </body>
     </html>
   );

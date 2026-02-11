@@ -164,19 +164,19 @@ export default function BudgetPage() {
         <Card className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <p className="text-sm text-slate-600">סה"כ מתוכנן</p>
+              <p className="text-sm text-slate-600">סה&quot;כ מתוכנן</p>
               <p className="text-xl font-bold text-slate-800">
                 {formatCurrency(summary.totalPlanned)}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-slate-600">סה"כ בפועל</p>
+              <p className="text-sm text-slate-600">סה&quot;כ בפועל</p>
               <p className="text-xl font-bold text-cyan-600">
                 {formatCurrency(summary.totalActual)}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-slate-600">סה"כ נותר</p>
+              <p className="text-sm text-slate-600">סה&quot;כ נותר</p>
               <p className={`text-xl font-bold ${summary.totalRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 {formatCurrency(summary.totalRemaining)}
               </p>
