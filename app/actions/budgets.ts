@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { TransactionType } from '@/types';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 // ========== Zod Schemas ==========
 
@@ -24,7 +24,7 @@ const BudgetItemSchema = z.object({
 /**
  * המרת Decimal ל-number
  */
-function decimalToNumber(decimal: Decimal): number {
+function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
@@ -41,20 +41,16 @@ async function calculateActualSpent(
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-  // שליפת הקטגוריה עם תתי-קטגוריות אם נדרש
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-    include: includeChildren ? { children: true } : undefined,
-  });
-
-  if (!category) {
-    return 0;
-  }
-
   // רשימת IDs לחיפוש
   const categoryIds = [categoryId];
-  if (includeChildren && category.children) {
-    categoryIds.push(...category.children.map((child) => child.id));
+  
+  // אם צריך לכלול תתי-קטגוריות, שולפים אותן
+  if (includeChildren) {
+    const childCategories = await prisma.category.findMany({
+      where: { parentId: categoryId },
+      select: { id: true },
+    });
+    categoryIds.push(...childCategories.map((child) => child.id));
   }
 
   // שליפת עסקאות
@@ -285,7 +281,7 @@ export async function upsertBudgetItem(
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error upserting budget item:', error);
     throw new Error('שגיאה בעדכון פריט התקציב');

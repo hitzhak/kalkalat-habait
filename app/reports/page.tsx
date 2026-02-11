@@ -65,15 +65,52 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+interface ComparisonData {
+  summary: {
+    month1: { monthName: string; totalIncome: number; totalExpenses: number; balance: number };
+    month2: { monthName: string; totalIncome: number; totalExpenses: number; balance: number };
+    changes: {
+      incomeChange: number;
+      expensesChange: number;
+      balanceChange: number;
+      incomeChangePercent: number;
+      expensesChangePercent: number;
+    };
+  };
+  categoryComparison: Array<{
+    categoryName: string;
+    month1Amount: number;
+    month2Amount: number;
+    changeAmount: number;
+    changePercent: number;
+    changeDirection: 'increase' | 'decrease' | 'same';
+  }>;
+}
+
+interface TrendData {
+  data: Array<{
+    monthYear: string;
+    income: number;
+    expenses: number;
+    balance: number;
+  }>;
+  statistics: {
+    avgIncome: number;
+    avgExpenses: number;
+    highestIncome: number;
+    highestExpenses: number;
+  };
+}
+
 export default function ReportsPage() {
-  const { currentMonth, currentYear } = useMonthNavigation();
+  const { selectedMonth: currentMonth, selectedYear: currentYear } = useMonthNavigation();
 
   // State for Monthly Report
   const [monthlyReport, setMonthlyReport] = useState<MonthlyReportData | null>(null);
   const [loadingMonthly, setLoadingMonthly] = useState(true);
 
   // State for Comparison
-  const [comparisonData, setComparisonData] = useState<any>(null);
+  const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
   const [loadingComparison, setLoadingComparison] = useState(false);
   const [month1, setMonth1] = useState(currentMonth);
   const [year1, setYear1] = useState(currentYear);
@@ -81,7 +118,7 @@ export default function ReportsPage() {
   const [year2, setYear2] = useState(currentMonth === 1 ? currentYear - 1 : currentYear);
 
   // State for Trend
-  const [trendData, setTrendData] = useState<any>(null);
+  const [trendData, setTrendData] = useState<TrendData | null>(null);
   const [loadingTrend, setLoadingTrend] = useState(false);
   const [trendMonths, setTrendMonths] = useState(12);
 
@@ -95,8 +132,9 @@ export default function ReportsPage() {
       setLoadingMonthly(true);
       const data = await getMonthlyReport(currentMonth, currentYear);
       setMonthlyReport(data);
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בטעינת הדוח החודשי');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'שגיאה בטעינת הדוח החודשי';
+      toast.error(errorMessage);
     } finally {
       setLoadingMonthly(false);
     }
@@ -108,8 +146,9 @@ export default function ReportsPage() {
       setLoadingComparison(true);
       const data = await getComparisonData(month1, year1, month2, year2);
       setComparisonData(data);
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בטעינת השוואת חודשים');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'שגיאה בטעינת השוואת חודשים';
+      toast.error(errorMessage);
     } finally {
       setLoadingComparison(false);
     }
@@ -121,8 +160,9 @@ export default function ReportsPage() {
       setLoadingTrend(true);
       const data = await getTrendData(trendMonths);
       setTrendData(data);
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בטעינת נתוני מגמה');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'שגיאה בטעינת נתוני מגמה';
+      toast.error(errorMessage);
     } finally {
       setLoadingTrend(false);
     }
@@ -302,7 +342,7 @@ export default function ReportsPage() {
                           cx="50%"
                           cy="50%"
                           outerRadius={80}
-                          label={(entry) =>
+                          label={(entry: any) =>
                             `${entry.categoryName}: ${entry.percentage.toFixed(1)}%`
                           }
                         >
@@ -310,7 +350,7 @@ export default function ReportsPage() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
                       </PieChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -330,7 +370,7 @@ export default function ReportsPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="weekName" />
                         <YAxis />
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
                         <Bar dataKey="amount" fill="#0891B2" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -625,7 +665,7 @@ export default function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="categoryName" angle={-45} textAnchor="end" height={100} />
                       <YAxis />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
                       <Legend />
                       <Bar
                         dataKey="month1Amount"
@@ -663,7 +703,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {comparisonData.categoryComparison.map((cat: any, index: number) => (
+                        {comparisonData.categoryComparison.map((cat, index) => (
                           <tr key={index} className="border-b">
                             <td className="py-3 px-4">{cat.categoryName}</td>
                             <td className="py-3 px-4">{formatCurrency(cat.month1Amount)}</td>
@@ -804,7 +844,7 @@ export default function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="monthYear" angle={-45} textAnchor="end" height={100} />
                       <YAxis />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
                       <Legend />
                       <Line
                         type="monotone"
@@ -844,7 +884,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {trendData.data.map((row: any, index: number) => (
+                        {trendData.data.map((row, index) => (
                           <tr key={index} className="border-b">
                             <td className="py-3 px-4">{row.monthYear}</td>
                             <td className="py-3 px-4 text-green-600">

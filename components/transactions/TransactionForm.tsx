@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import * as Icons from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TransactionType } from '@/types';
+import { TransactionType, CategoryType } from '@/types';
 import { createTransaction, updateTransaction } from '@/app/actions/transactions';
 import { getParentCategories } from '@/app/actions/categories';
 import { useAppStore } from '@/stores/appStore';
@@ -42,9 +42,10 @@ const formSchema = z.object({
   type: z.nativeEnum(TransactionType),
   categoryId: z.string().min(1, 'חובה לבחור קטגוריה'),
   date: z.date(),
-  isFixed: z.boolean().default(false),
+  isFixed: z.boolean().optional().default(false),
   notes: z.string().optional(),
-  isRecurring: z.boolean().default(false),
+  tags: z.array(z.string()).default([]),
+  isRecurring: z.boolean().optional().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -88,7 +89,7 @@ export function TransactionForm({
   useEffect(() => {
     async function loadCategories() {
       try {
-        const cats = await getParentCategories(selectedType);
+        const cats = await getParentCategories(selectedType as unknown as CategoryType);
         setCategories(cats);
       } catch (error) {
         console.error('Error loading categories:', error);
@@ -114,8 +115,8 @@ export function TransactionForm({
     setValue,
     watch,
     reset,
-  } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  } = useForm({
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       amount: transaction?.amount || undefined,
       type: selectedType,
@@ -123,6 +124,7 @@ export function TransactionForm({
       date: defaultDate,
       isFixed: transaction?.isFixed || false,
       notes: transaction?.notes || '',
+      tags: [],
       isRecurring: transaction?.isRecurring || false,
     },
   });
@@ -207,7 +209,7 @@ export function TransactionForm({
           </div>
         )}
         {errors.categoryId && (
-          <p className="text-sm text-red-500">{errors.categoryId.message}</p>
+          <p className="text-sm text-red-500">{String(errors.categoryId.message)}</p>
         )}
       </div>
     );
@@ -258,7 +260,7 @@ export function TransactionForm({
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₪</span>
         </div>
-        {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
+        {errors.amount && <p className="text-sm text-red-500">{String(errors.amount.message)}</p>}
       </div>
 
       {/* בחירת קטגוריה */}

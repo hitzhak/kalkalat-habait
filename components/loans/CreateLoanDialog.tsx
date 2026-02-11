@@ -18,7 +18,7 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { createLoan } from '@/app/actions/loans';
 import { toast } from 'sonner';
-import { LoanType } from '@prisma/client';
+import { LoanType } from '@/types';
 
 export function CreateLoanDialog() {
   const [open, setOpen] = useState(false);
@@ -26,7 +26,7 @@ export function CreateLoanDialog() {
 
   // שדות הטופס
   const [name, setName] = useState('');
-  const [type, setType] = useState<LoanType>('BANK');
+  const [type, setType] = useState<LoanType>(LoanType.BANK);
   const [originalAmount, setOriginalAmount] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
   const [interestRate, setInterestRate] = useState('');
@@ -38,7 +38,7 @@ export function CreateLoanDialog() {
   // איפוס הטופס
   const resetForm = () => {
     setName('');
-    setType('BANK');
+    setType(LoanType.BANK);
     setOriginalAmount('');
     setMonthlyPayment('');
     setInterestRate('');

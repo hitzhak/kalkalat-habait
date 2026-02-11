@@ -14,8 +14,8 @@ interface Transaction {
   category: {
     id: string;
     name: string;
-    icon?: string;
-    color?: string;
+    icon?: string | null;
+    color?: string | null;
   };
 }
 

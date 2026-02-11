@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { CategoryType } from '@/types';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 // ========== Zod Schemas ==========
 
@@ -33,7 +33,7 @@ const UpdateCategorySchema = CategorySchema.partial().extend({
 /**
  * המרת Decimal ל-number
  */
-function decimalToNumber(decimal: Decimal): number {
+function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
@@ -103,7 +103,7 @@ export async function updateSettings(data: z.infer<typeof SettingsSchema>) {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error updating settings:', error);
     throw new Error('שגיאה בעדכון ההגדרות');
@@ -233,7 +233,7 @@ export async function createCategory(data: z.infer<typeof CategorySchema>) {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error creating category:', error);
     throw error instanceof Error ? error : new Error('שגיאה ביצירת הקטגוריה');
@@ -260,8 +260,8 @@ export async function updateCategory(
       throw new Error('הקטגוריה לא נמצאה');
     }
 
-    // בדיקה אם זו קטגוריית מערכת - לא ניתן לשנות isDefault
-    if (existing.isDefault && validated.isDefault === false) {
+    // בדיקה אם זו קטגוריית מערכת - לא ניתן לשנות
+    if (existing.isDefault) {
       throw new Error('לא ניתן לשנות קטגוריית מערכת');
     }
 
@@ -306,7 +306,7 @@ export async function updateCategory(
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error updating category:', error);
     throw error instanceof Error ? error : new Error('שגיאה בעדכון הקטגוריה');
@@ -559,16 +559,16 @@ export async function importData(jsonData: any) {
       // ייבוא עסקאות
       if (jsonData.transactions && Array.isArray(jsonData.transactions)) {
         // צריך למפות categoryId לפי שם הקטגוריה או ID
-        for (const tx of jsonData.transactions) {
-          let categoryId = tx.categoryId;
+        for (const txData of jsonData.transactions) {
+          let categoryId = txData.categoryId;
           
           // אם יש category object, נשתמש ב-ID שלו
-          if (tx.category && tx.category.id) {
-            categoryId = tx.category.id;
-          } else if (tx.category && tx.category.name) {
+          if (txData.category && txData.category.id) {
+            categoryId = txData.category.id;
+          } else if (txData.category && txData.category.name) {
             // נחפש לפי שם
             const category = await tx.category.findFirst({
-              where: { name: tx.category.name },
+              where: { name: txData.category.name },
             });
             if (category) {
               categoryId = category.id;
@@ -578,18 +578,18 @@ export async function importData(jsonData: any) {
           if (categoryId) {
             await tx.transaction.create({
               data: {
-                id: tx.id,
-                amount: tx.amount,
-                type: tx.type,
+                id: txData.id,
+                amount: txData.amount,
+                type: txData.type,
                 categoryId,
-                date: new Date(tx.date),
-                weekNumber: tx.weekNumber || null,
-                isFixed: tx.isFixed || false,
-                notes: tx.notes || null,
-                tags: tx.tags || [],
-                isRecurring: tx.isRecurring || false,
-                createdAt: tx.createdAt ? new Date(tx.createdAt) : new Date(),
-                updatedAt: tx.updatedAt ? new Date(tx.updatedAt) : new Date(),
+                date: new Date(txData.date),
+                weekNumber: txData.weekNumber || null,
+                isFixed: txData.isFixed || false,
+                notes: txData.notes || null,
+                tags: txData.tags || [],
+                isRecurring: txData.isRecurring || false,
+                createdAt: txData.createdAt ? new Date(txData.createdAt) : new Date(),
+                updatedAt: txData.updatedAt ? new Date(txData.updatedAt) : new Date(),
               },
             });
           }
@@ -598,14 +598,14 @@ export async function importData(jsonData: any) {
 
       // ייבוא תקציבים
       if (jsonData.budgetItems && Array.isArray(jsonData.budgetItems)) {
-        for (const bi of jsonData.budgetItems) {
-          let categoryId = bi.categoryId;
+        for (const biData of jsonData.budgetItems) {
+          let categoryId = biData.categoryId;
           
-          if (bi.category && bi.category.id) {
-            categoryId = bi.category.id;
-          } else if (bi.category && bi.category.name) {
+          if (biData.category && biData.category.id) {
+            categoryId = biData.category.id;
+          } else if (biData.category && biData.category.name) {
             const category = await tx.category.findFirst({
-              where: { name: bi.category.name },
+              where: { name: biData.category.name },
             });
             if (category) {
               categoryId = category.id;
@@ -615,13 +615,13 @@ export async function importData(jsonData: any) {
           if (categoryId) {
             await tx.budgetItem.create({
               data: {
-                id: bi.id,
+                id: biData.id,
                 categoryId,
-                month: bi.month,
-                year: bi.year,
-                plannedAmount: bi.plannedAmount,
-                createdAt: bi.createdAt ? new Date(bi.createdAt) : new Date(),
-                updatedAt: bi.updatedAt ? new Date(bi.updatedAt) : new Date(),
+                month: biData.month,
+                year: biData.year,
+                plannedAmount: biData.plannedAmount,
+                createdAt: biData.createdAt ? new Date(biData.createdAt) : new Date(),
+                updatedAt: biData.updatedAt ? new Date(biData.updatedAt) : new Date(),
               },
             });
           }
