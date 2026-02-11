@@ -1,7 +1,9 @@
 import { getLoans, getLoansSummary } from '@/app/actions/loans';
 import { LoanCard } from '@/components/loans/LoanCard';
+import { DbConnectionError } from '@/components/DbConnectionError';
 
 export const dynamic = 'force-dynamic';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -21,12 +23,13 @@ import { Calendar, TrendingDown, Wallet, Plus } from 'lucide-react';
 import { CreateLoanDialog } from '@/components/loans/CreateLoanDialog';
 
 export default async function LoansPage() {
-  const [loansResult, summaryResult] = await Promise.all([getLoans(), getLoansSummary()]);
+  try {
+    const [loansResult, summaryResult] = await Promise.all([getLoans(), getLoansSummary()]);
 
-  const loans = (loansResult.success ? loansResult.data : []) || [];
-  const summary = summaryResult.success ? summaryResult.data : null;
+    const loans = (loansResult.success ? loansResult.data : []) || [];
+    const summary = summaryResult.success ? summaryResult.data : null;
 
-  return (
+    return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -117,4 +120,7 @@ export default async function LoansPage() {
       </div>
     </div>
   );
+  } catch {
+    return <DbConnectionError />;
+  }
 }

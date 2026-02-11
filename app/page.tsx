@@ -14,6 +14,7 @@ import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { WeeklyBarChart } from '@/components/charts/WeeklyBarChart';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DbConnectionError } from '@/components/DbConnectionError';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
@@ -84,38 +85,39 @@ function EmptyState() {
 
 // Main dashboard content component
 async function DashboardContent({ month, year }: { month: number; year: number }) {
-  // קריאות לכל ה-Server Actions במקביל
-  const [
-    summary,
-    previousSummary,
-    transactionsResult,
-    expensesByCategory,
-    weeklyExpenses,
-    budgetSummary,
-    alerts,
-  ] = await Promise.all([
-    getTransactionsSummary(month, year),
-    getPreviousMonthSummary(month, year),
-    getTransactions(month, year),
-    getExpensesByCategory(month, year),
-    getWeeklyVariableExpenses(month, year),
-    getTotalBudgetSummary(month, year),
-    getBudgetAlerts(month, year),
-  ]);
+  try {
+    // קריאות לכל ה-Server Actions במקביל
+    const [
+      summary,
+      previousSummary,
+      transactionsResult,
+      expensesByCategory,
+      weeklyExpenses,
+      budgetSummary,
+      alerts,
+    ] = await Promise.all([
+      getTransactionsSummary(month, year),
+      getPreviousMonthSummary(month, year),
+      getTransactions(month, year),
+      getExpensesByCategory(month, year),
+      getWeeklyVariableExpenses(month, year),
+      getTotalBudgetSummary(month, year),
+      getBudgetAlerts(month, year),
+    ]);
 
-  // חילוץ רשימת העסקאות מהתוצאה
-  const transactions = transactionsResult.transactions || [];
-  const recurringGenerated = transactionsResult.recurringGenerated;
+    // חילוץ רשימת העסקאות מהתוצאה
+    const transactions = transactionsResult.transactions || [];
+    const recurringGenerated = transactionsResult.recurringGenerated;
 
-  // בדיקה אם יש נתונים
-  const hasData =
-    transactions.length > 0 ||
-    summary.totalIncome > 0 ||
-    summary.totalExpenses > 0;
+    // בדיקה אם יש נתונים
+    const hasData =
+      transactions.length > 0 ||
+      summary.totalIncome > 0 ||
+      summary.totalExpenses > 0;
 
-  if (!hasData) {
-    return <EmptyState />;
-  }
+    if (!hasData) {
+      return <EmptyState />;
+    }
 
   // חישוב ממוצע שבועי רצוי (תקציב משתנות / 4.5)
   // נניח שתקציב משתנות הוא 60% מהתקציב הכולל (זו הנחה - אפשר לשפר)
@@ -213,6 +215,9 @@ async function DashboardContent({ month, year }: { month: number; year: number }
       <RecentTransactions transactions={transactions} />
     </div>
   );
+  } catch {
+    return <DbConnectionError />;
+  }
 }
 
 // Main page component

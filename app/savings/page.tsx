@@ -1,14 +1,17 @@
 import { getSavingsGoals } from "@/app/actions/savings";
 import { SavingsGoalCard } from "@/components/savings/SavingsGoalCard";
+import { DbConnectionError } from "@/components/DbConnectionError";
 
 export const dynamic = 'force-dynamic';
+
 import { CreateGoalDialog } from "@/components/savings/CreateGoalDialog";
 import { Target } from "lucide-react";
 
 export default async function SavingsPage() {
-  const goals = await getSavingsGoals();
+  try {
+    const goals = await getSavingsGoals();
 
-  return (
+    return (
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -80,4 +83,7 @@ export default async function SavingsPage() {
       )}
     </div>
   );
+  } catch {
+    return <DbConnectionError />;
+  }
 }
