@@ -1,14 +1,155 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// === קטגוריות ===
+model Category {
+  id              String        @id @default(cuid())
+  name            String        // שם הקטגוריה (עברית)
+  icon            String?       // שם אייקון מ-Lucide
+  color           String?       // צבע HEX
+  type            CategoryType  // INCOME / EXPENSE
+  isFixed         Boolean       @default(false) // קבועה או משתנה
+  parentId        String?       // קטגוריית אב (null = קטגוריה ראשית)
+  parent          Category?     @relation("SubCategories", fields: [parentId], references: [id])
+  children        Category[]    @relation("SubCategories")
+  sortOrder       Int           @default(0)
+  isActive        Boolean       @default(true)
+  isDefault       Boolean       @default(true) // קטגוריית מערכת
+  createdAt       DateTime      @default(now())
+
+  transactions    Transaction[]
+  budgetItems     BudgetItem[]
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+// === עסקאות (הכנסות והוצאות) ===
+model Transaction {
+  id              String          @id @default(cuid())
+  amount          Decimal         @db.Decimal(10, 2)
+  type            TransactionType // INCOME / EXPENSE
+  categoryId      String
+  category        Category        @relation(fields: [categoryId], references: [id])
+  date            DateTime
+  weekNumber      Int?            // שבוע 1-5 בחודש (null = קבועה)
+  isFixed         Boolean         @default(false)
+  notes           String?
+  tags            String[]        // תגיות חופשיות
+  isRecurring     Boolean         @default(false)  // חוזרת כל חודש?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([date])
+  @@index([categoryId])
+  @@index([type, date])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+// === תקציב חודשי ===
+model BudgetItem {
+  id              String   @id @default(cuid())
+  categoryId      String
+  category        Category @relation(fields: [categoryId], references: [id])
+  month           Int      // 1-12
+  year            Int
+  plannedAmount   Decimal  @db.Decimal(10, 2) // סכום מתוכנן
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([categoryId, month, year])
+  @@index([month, year])
+}
+
+// === מטרות חיסכון ===
+model SavingsGoal {
+  id              String   @id @default(cuid())
+  name            String   // שם המטרה (טיול, רכב, דירה)
+  icon            String?
+  targetAmount    Decimal  @db.Decimal(10, 2)
+  currentAmount   Decimal  @db.Decimal(10, 2) @default(0)
+  targetDate      DateTime?
+  monthlyTarget   Decimal? @db.Decimal(10, 2) // הפקדה חודשית רצויה
+  color           String?
+  isCompleted     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deposits        SavingsDeposit[]
+}
+
+model SavingsDeposit {
+  id              String      @id @default(cuid())
+  goalId          String
+  goal            SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  amount          Decimal     @db.Decimal(10, 2)
+  date            DateTime
+  notes           String?
+  createdAt       DateTime    @default(now())
+}
+
+// === הלוואות וחובות ===
+model Loan {
+  id              String     @id @default(cuid())
+  name            String     // שם ההלוואה
+  type            LoanType   // MORTGAGE / BANK / EXTERNAL / CREDIT / OTHER
+  originalAmount  Decimal    @db.Decimal(10, 2) // סכום מקורי
+  remainingAmount Decimal    @db.Decimal(10, 2) // יתרה
+  monthlyPayment  Decimal    @db.Decimal(10, 2) // תשלום חודשי
+  interestRate    Decimal?   @db.Decimal(5, 3)  // ריבית שנתית
+  startDate       DateTime
+  endDate         DateTime?
+  totalPayments   Int?       // מספר תשלומים כולל
+  remainingPayments Int?     // תשלומים שנותרו
+  notes           String?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  payments        LoanPayment[]
+}
+
+enum LoanType {
+  MORTGAGE      // משכנתא
+  BANK          // הלוואת בנק
+  EXTERNAL      // חוץ בנקאי
+  CREDIT        // כרטיס אשראי
+  OTHER         // אחר
+}
+
+model LoanPayment {
+  id              String   @id @default(cuid())
+  loanId          String
+  loan            Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  amount          Decimal  @db.Decimal(10, 2)
+  principalAmount Decimal? @db.Decimal(10, 2) // קרן
+  interestAmount  Decimal? @db.Decimal(10, 2) // ריבית
+  date            DateTime
+  notes           String?
+  createdAt       DateTime @default(now())
+}
+
+// === הגדרות אפליקציה ===
+model AppSettings {
+  id              String   @id @default("default")
+  payday          Int      @default(11)      // יום המשכורת
+  currency        String   @default("ILS")
+  startMonth      Int      @default(1)       // חודש התחלה (ינואר)
+  weekStartDay    Int      @default(0)       // 0=ראשון
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
