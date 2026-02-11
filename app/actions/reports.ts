@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { TransactionType } from '@/types';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 // ========== Zod Schemas ==========
 
@@ -28,7 +28,7 @@ const TrendSchema = z.object({
 /**
  * המרת Decimal ל-number
  */
-function decimalToNumber(decimal: Decimal): number {
+function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
@@ -225,7 +225,7 @@ export async function getMonthlyReport(month: number, year: number) {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error generating monthly report:', error);
     throw new Error('שגיאה ביצירת דוח חודשי');
@@ -307,7 +307,7 @@ export async function getComparisonData(
           changePercent:
             changePercent !== null ? parseFloat(changePercent) : cat.month2Amount > 0 ? 100 : 0,
           changeDirection:
-            changeAmount > 0 ? 'increase' : changeAmount < 0 ? 'decrease' : 'same',
+            (changeAmount > 0 ? 'increase' : changeAmount < 0 ? 'decrease' : 'same') as 'increase' | 'decrease' | 'same',
         };
       })
       .sort((a, b) => Math.abs(b.changeAmount) - Math.abs(a.changeAmount));
@@ -359,7 +359,7 @@ export async function getComparisonData(
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error generating comparison data:', error);
     throw new Error('שגיאה ביצירת השוואת חודשים');
@@ -450,7 +450,7 @@ export async function getTrendData(months: number = 12) {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error generating trend data:', error);
     throw new Error('שגיאה ביצירת נתוני מגמה');

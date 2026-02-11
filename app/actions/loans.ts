@@ -1,7 +1,8 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { LoanType, Prisma } from '@prisma/client';
+import { LoanType } from '@/types';
+import { Prisma } from '@prisma/client';
 import { addMonths, format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
 

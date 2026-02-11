@@ -81,6 +81,7 @@ export default function SettingsPage() {
     type: CategoryType.EXPENSE,
     isFixed: false,
     parentId: null as string | null,
+    sortOrder: 0,
   });
 
   // State for Backup/Restore
@@ -149,6 +150,7 @@ export default function SettingsPage() {
       type: CategoryType.EXPENSE,
       isFixed: false,
       parentId: null,
+      sortOrder: 0,
     });
     setCategoryDialogOpen(true);
   };
@@ -163,6 +165,7 @@ export default function SettingsPage() {
       type: category.type,
       isFixed: category.isFixed,
       parentId: category.parentId,
+      sortOrder: category.sortOrder || 0,
     });
     setCategoryDialogOpen(true);
   };

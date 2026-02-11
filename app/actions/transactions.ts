@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { TransactionType } from '@/types';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 // ========== Zod Schemas ==========
 
@@ -49,7 +49,7 @@ function getWeekNumber(date: Date): number {
 /**
  * המרת Decimal ל-number
  */
-function decimalToNumber(decimal: Decimal): number {
+function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
@@ -196,7 +196,7 @@ export async function createTransaction(data: z.infer<typeof TransactionSchema>)
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error creating transaction:', error);
     throw new Error('שגיאה ביצירת העסקה');
@@ -268,7 +268,7 @@ export async function updateTransaction(
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`שגיאת ולידציה: ${error.errors[0].message}`);
+      throw new Error(`שגיאת ולידציה: ${error.issues[0].message}`);
     }
     console.error('Error updating transaction:', error);
     throw new Error('שגיאה בעדכון העסקה');
@@ -496,7 +496,7 @@ export async function generateRecurringTransactions(month: number, year: number)
       createdTransactions.push({
         id: newTransaction.id,
         amount: decimalToNumber(newTransaction.amount),
-        type: newTransaction.type,
+        type: newTransaction.type as TransactionType,
         categoryId: newTransaction.categoryId,
         date: newTransaction.date.toISOString(),
         isRecurring: newTransaction.isRecurring,

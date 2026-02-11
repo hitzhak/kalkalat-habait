@@ -236,7 +236,10 @@ export function exportMonthlyReportToPDF(
   });
 
   // הוצאות לפי קטגוריה
-  const finalY = (doc as any).lastAutoTable.finalY || 100;
+  interface JsPDFWithAutoTable extends jsPDF {
+    lastAutoTable?: { finalY: number };
+  }
+  const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 100;
 
   doc.setFontSize(14);
   doc.text('הוצאות לפי קטגוריה', 105, finalY + 15, { align: 'center' });
@@ -337,7 +340,10 @@ export function exportBudgetToPDF(budgetData: BudgetData, month: string, filenam
       4: { cellWidth: 30 },
     },
     margin: { left: 15, right: 15 },
-    didParseCell: (data: any) => {
+    didParseCell: (data: {
+      row: { index: number };
+      cell: { styles: { fontStyle: string; fillColor: any } };
+    }) => {
       // עיצוב שורת הסיכום
       if (data.row.index === budgetData.categories.length + 1) {
         data.cell.styles.fontStyle = 'bold';

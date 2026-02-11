@@ -50,7 +50,16 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
   });
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ 
+    active, 
+    payload 
+  }: { 
+    active?: boolean; 
+    payload?: Array<{ 
+      payload: { weekLabel: string }; 
+      value: number 
+    }> 
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       return (

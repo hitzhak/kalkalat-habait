@@ -61,7 +61,16 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
   const total = chartData.reduce((sum, item) => sum + item.value, 0);
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ 
+    active, 
+    payload 
+  }: { 
+    active?: boolean; 
+    payload?: Array<{ 
+      name: string; 
+      value: number 
+    }> 
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       const percent = ((data.value / total) * 100).toFixed(1);
@@ -79,7 +88,7 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
   };
 
   // Custom label
-  const renderLabel = (entry: any) => {
+  const renderLabel = (entry: { value: number }) => {
     const percent = ((entry.value / total) * 100).toFixed(0);
     return `${percent}%`;
   };

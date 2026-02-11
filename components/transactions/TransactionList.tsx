@@ -33,8 +33,8 @@ interface Transaction {
   category: {
     id: string;
     name: string;
-    icon?: string;
-    color?: string;
+    icon?: string | null;
+    color?: string | null;
   };
 }
 
@@ -52,7 +52,12 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
 
   // קיבוץ עסקאות לפי תאריך
   const groupedTransactions = useMemo(() => {
-    const groups: Record<string, Transaction[]> = {
+    const groups: {
+      today: Transaction[];
+      yesterday: Transaction[];
+      fixed: Transaction[];
+      other: Record<string, Transaction[]>;
+    } = {
       today: [],
       yesterday: [],
       fixed: [],

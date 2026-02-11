@@ -21,7 +21,7 @@ import { CreateLoanDialog } from '@/components/loans/CreateLoanDialog';
 export default async function LoansPage() {
   const [loansResult, summaryResult] = await Promise.all([getLoans(), getLoansSummary()]);
 
-  const loans = loansResult.success ? loansResult.data : [];
+  const loans = (loansResult.success ? loansResult.data : []) || [];
   const summary = summaryResult.success ? summaryResult.data : null;
 
   return (

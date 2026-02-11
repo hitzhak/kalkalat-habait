@@ -12,12 +12,35 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 type TabValue = 'all' | 'income' | 'expense' | 'fixed';
 
+interface Transaction {
+  id: string;
+  amount: number;
+  type: TransactionType;
+  date: string | Date;
+  isFixed: boolean;
+  notes?: string | null;
+  category: {
+    id: string;
+    name: string;
+    icon?: string | null;
+    color?: string | null;
+  };
+}
+
+interface TransactionSummary {
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+  fixedExpenses: number;
+  variableExpenses: number;
+}
+
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [summary, setSummary] = useState<any>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [summary, setSummary] = useState<TransactionSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabValue>('all');
-  const [editTransaction, setEditTransaction] = useState<any>(null);
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
   const { selectedMonth, selectedYear } = useAppStore();
@@ -31,7 +54,7 @@ export default function TransactionsPage() {
         getTransactionsSummary(selectedMonth, selectedYear),
       ]);
       // חילוץ רשימת העסקאות מהתוצאה
-      setTransactions(txsResult.transactions || []);
+      setTransactions((txsResult.transactions || []) as Transaction[]);
       setSummary(sum);
     } catch (error) {
       console.error('Error loading transactions:', error);
@@ -59,7 +82,7 @@ export default function TransactionsPage() {
   });
 
   // פתיחת עריכה
-  const handleEdit = (transaction: any) => {
+  const handleEdit = (transaction: Transaction) => {
     setEditTransaction(transaction);
     setFormOpen(true);
   };
@@ -99,11 +122,11 @@ export default function TransactionsPage() {
             <p className="text-sm text-slate-600">מאזן</p>
             <p
               className={`mt-2 text-2xl font-bold ${
-                summary?.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                (summary?.balance ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
               }`}
             >
-              {summary?.balance >= 0 ? '+' : ''}
-              {summary?.balance?.toLocaleString('he-IL')}₪
+              {(summary?.balance ?? 0) >= 0 ? '+' : ''}
+              {(summary?.balance ?? 0).toLocaleString('he-IL')}₪
             </p>
           </Card>
         </div>

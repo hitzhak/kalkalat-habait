@@ -112,7 +112,7 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
   // פונקציה לקבלת אייקון
   const getIcon = (iconName: string | null) => {
     if (!iconName) return null;
-    const IconComponent = (Icons as any)[iconName];
+    const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName];
     return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
   };
 
@@ -273,7 +273,7 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
         {/* תתי-קטגוריות */}
         {isExpanded && hasChildren && (
           <div className="border-b">
-            {category.children.map((child) => renderCategoryRow(child as any, true))}
+            {category.children.map((child) => renderCategoryRow(child as unknown as BudgetCategory, true))}
           </div>
         )}
       </div>

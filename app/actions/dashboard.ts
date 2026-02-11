@@ -1,12 +1,12 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 /**
  * המרת Decimal ל-number
  */
-function decimalToNumber(decimal: Decimal): number {
+function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
