@@ -368,9 +368,19 @@ export default function ReportsPage() {
               </Card>
             </>
           ) : (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                לא נמצאו נתונים לחודש זה
+            <Card className="animate-in fade-in duration-300">
+              <CardContent className="py-16">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                    <FileText className="w-12 h-12 text-slate-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                    אין מספיק נתונים להצגת דוח
+                  </h2>
+                  <p className="text-slate-600 text-center max-w-md">
+                    התחל בהוספת עסקאות כדי לראות דוחות מפורטים ומגמות
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}

@@ -77,7 +77,7 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
     : maxAmount * 1.2;
 
   return (
-    <Card className="bg-white rounded-xl shadow-sm">
+    <Card className="bg-white rounded-xl shadow-sm animate-in fade-in duration-300 delay-[400ms] hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="text-lg">הוצאות משתנות לפי שבוע</CardTitle>
         {averageWeeklyBudget && (
@@ -127,6 +127,8 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
                 fill="#0891B2"
                 radius={[8, 8, 0, 0]}
                 maxBarSize={60}
+                animationBegin={0}
+                animationDuration={800}
               />
             </BarChart>
           </ResponsiveContainer>

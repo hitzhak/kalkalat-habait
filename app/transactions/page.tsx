@@ -120,17 +120,33 @@ export default function TransactionsPage() {
 
         <TabsContent value={activeTab} className="mt-6">
           {isLoading ? (
-            <div className="space-y-2">
+            <div className="space-y-2 animate-pulse">
               <Skeleton className="h-20" />
               <Skeleton className="h-20" />
               <Skeleton className="h-20" />
             </div>
+          ) : filteredTransactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 animate-in fade-in duration-300">
+              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                אין עסקאות החודש
+              </h2>
+              <p className="text-slate-600 text-center max-w-md mb-6">
+                התחל בהוספת העסקה הראשונה שלך כדי לעקוב אחר ההכנסות וההוצאות
+              </p>
+            </div>
           ) : (
-            <TransactionList
-              transactions={filteredTransactions}
-              onEdit={handleEdit}
-              onDelete={loadData}
-            />
+            <div className="animate-in fade-in duration-300">
+              <TransactionList
+                transactions={filteredTransactions}
+                onEdit={handleEdit}
+                onDelete={loadData}
+              />
+            </div>
           )}
         </TabsContent>
       </Tabs>

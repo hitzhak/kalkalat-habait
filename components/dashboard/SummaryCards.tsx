@@ -38,7 +38,7 @@ export function SummaryCards({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* כרטיס הכנסות */}
-      <Card className="bg-white rounded-xl shadow-sm">
+      <Card className="bg-white rounded-xl shadow-sm animate-in fade-in duration-300 hover:shadow-md transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -74,7 +74,7 @@ export function SummaryCards({
       </Card>
 
       {/* כרטיס הוצאות */}
-      <Card className="bg-white rounded-xl shadow-sm">
+      <Card className="bg-white rounded-xl shadow-sm animate-in fade-in duration-300 delay-75 hover:shadow-md transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -110,7 +110,7 @@ export function SummaryCards({
       </Card>
 
       {/* כרטיס מאזן */}
-      <Card className="bg-white rounded-xl shadow-sm">
+      <Card className="bg-white rounded-xl shadow-sm animate-in fade-in duration-300 delay-150 hover:shadow-md transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">

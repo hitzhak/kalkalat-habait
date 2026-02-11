@@ -198,19 +198,26 @@ export default function BudgetPage() {
 
       {/* טבלת תקציב */}
       {loading ? (
-        <Card className="p-6">
+        <Card className="p-6 animate-pulse">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
           </div>
         </Card>
       ) : budgetData.length === 0 ? (
-        <Card className="p-6">
-          <div className="text-center py-12 space-y-4">
-            <p className="text-slate-600">
-              עדיין לא הגדרת תקציב לחודש זה
+        <Card className="p-6 animate-in fade-in duration-300">
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-24 h-24 bg-cyan-50 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-12 h-12 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              לא הוגדר תקציב
+            </h2>
+            <p className="text-slate-600 text-center max-w-md mb-6">
+              התחל בהגדרת תקציב חודשי כדי לעקוב אחר ההוצאות שלך
             </p>
             <Button
-              variant="outline"
               onClick={handleCopyFromPreviousMonth}
               disabled={copying}
               className="gap-2"
@@ -225,12 +232,14 @@ export default function BudgetPage() {
           </div>
         </Card>
       ) : (
-        <BudgetTable
-          data={budgetData}
-          month={selectedMonth}
-          year={selectedYear}
-          onUpdate={loadBudgetData}
-        />
+        <div className="animate-in fade-in duration-300">
+          <BudgetTable
+            data={budgetData}
+            month={selectedMonth}
+            year={selectedYear}
+            onUpdate={loadBudgetData}
+          />
+        </div>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import { formatCurrency } from '@/lib/formatters';
 import { formatDistanceToNow } from 'date-fns';
 import { he } from 'date-fns/locale';
 import * as LucideIcons from 'lucide-react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -37,7 +37,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             className="text-sm text-cyan-600 hover:text-cyan-700 flex items-center gap-1"
           >
             צפה בכל העסקאות
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 rotate-180" />
           </Link>
         </CardHeader>
         <CardContent>
@@ -50,7 +50,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   }
 
   return (
-    <Card className="bg-white rounded-xl shadow-sm">
+    <Card className="bg-white rounded-xl shadow-sm animate-in fade-in duration-300 delay-[500ms] hover:shadow-md transition-shadow">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-lg">עסקאות אחרונות</CardTitle>
         <Link
@@ -58,7 +58,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           className="text-sm text-cyan-600 hover:text-cyan-700 flex items-center gap-1 transition-colors"
         >
           צפה בכל העסקאות
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 rotate-180" />
         </Link>
       </CardHeader>
       <CardContent>
@@ -110,7 +110,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                 </div>
 
                 {/* סכום */}
-                <div className="text-left">
+                <div className="text-right">
                   <p
                     className={`font-bold ${
                       transaction.type === 'INCOME'

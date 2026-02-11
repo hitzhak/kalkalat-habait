@@ -22,11 +22,11 @@ const Progress = React.forwardRef<
   >
     <ProgressPrimitive.Indicator
       className={cn(
-        "h-full w-full flex-1 transition-all",
+        "h-full w-full flex-1 transition-all origin-right",
         indicatorClassName
       )}
       style={{
-        transform: `translateX(-${100 - (value || 0)}%)`,
+        transform: `translateX(${100 - (value || 0)}%)`,
         backgroundColor:
           (style as any)?.["--progress-background"] || "hsl(var(--primary))",
       }}

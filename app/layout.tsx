@@ -16,6 +16,18 @@ const heebo = Heebo({
 export const metadata: Metadata = {
   title: "כלכלת הבית",
   description: "ניהול תקציב משפחתי",
+  manifest: "/manifest.json",
+  themeColor: "#0891B2",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "כלכלת הבית",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({

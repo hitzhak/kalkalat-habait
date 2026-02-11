@@ -58,7 +58,7 @@ export function BudgetProgress({
   }
 
   return (
-    <Card className="bg-white rounded-xl shadow-sm">
+    <Card className="bg-white rounded-xl shadow-sm animate-in fade-in duration-300 delay-200 hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="text-lg">ניצול תקציב חודשי</CardTitle>
       </CardHeader>

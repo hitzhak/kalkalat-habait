@@ -85,7 +85,7 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
   };
 
   return (
-    <Card className="bg-white rounded-xl shadow-sm">
+    <Card className="bg-white rounded-xl shadow-sm animate-in fade-in duration-300 delay-300 hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="text-lg">הוצאות לפי קטגוריה</CardTitle>
       </CardHeader>
@@ -102,6 +102,8 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
+                animationBegin={0}
+                animationDuration={800}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
