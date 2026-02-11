@@ -17,6 +17,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 // פונקציה לקבלת החודש והשנה הנוכחיים
 function getCurrentMonthYear() {
   const now = new Date();

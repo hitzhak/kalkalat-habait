@@ -1,5 +1,7 @@
 import { getLoans, getLoansSummary } from '@/app/actions/loans';
 import { LoanCard } from '@/components/loans/LoanCard';
+
+export const dynamic = 'force-dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -107,7 +109,7 @@ export default async function LoansPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {loans.map((loan) => (
+            {loans.map((loan: Loan) => (
               <LoanCard key={loan.id} loan={loan} />
             ))}
           </div>

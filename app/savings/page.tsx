@@ -1,5 +1,7 @@
 import { getSavingsGoals } from "@/app/actions/savings";
 import { SavingsGoalCard } from "@/components/savings/SavingsGoalCard";
+
+export const dynamic = 'force-dynamic';
 import { CreateGoalDialog } from "@/components/savings/CreateGoalDialog";
 import { Target } from "lucide-react";
 
