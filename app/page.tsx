@@ -86,7 +86,7 @@ async function DashboardContent({ month, year }: { month: number; year: number }
   const [
     summary,
     previousSummary,
-    transactions,
+    transactionsResult,
     expensesByCategory,
     weeklyExpenses,
     budgetSummary,
@@ -100,6 +100,10 @@ async function DashboardContent({ month, year }: { month: number; year: number }
     getTotalBudgetSummary(month, year),
     getBudgetAlerts(month, year),
   ]);
+
+  // חילוץ רשימת העסקאות מהתוצאה
+  const transactions = transactionsResult.transactions || [];
+  const recurringGenerated = transactionsResult.recurringGenerated;
 
   // בדיקה אם יש נתונים
   const hasData =
@@ -116,8 +120,63 @@ async function DashboardContent({ month, year }: { month: number; year: number }
   const estimatedVariableBudget = budgetSummary.totalBudget * 0.6;
   const averageWeeklyBudget = estimatedVariableBudget / 4.5;
 
+  // שמות חודשים בעברית
+  const monthNames = [
+    'ינואר',
+    'פברואר',
+    'מרץ',
+    'אפריל',
+    'מאי',
+    'יוני',
+    'יולי',
+    'אוגוסט',
+    'ספטמבר',
+    'אוקטובר',
+    'נובמבר',
+    'דצמבר',
+  ];
+
   return (
     <div className="space-y-6">
+      {/* באנר עסקאות חוזרות (אם נוצרו) */}
+      {recurringGenerated && recurringGenerated.count > 0 && (
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
+                <svg
+                  className="h-5 w-5 text-cyan-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-cyan-900">
+                  נוצרו {recurringGenerated.count} עסקאות חוזרות לחודש {monthNames[month - 1]}
+                </p>
+                <p className="text-sm text-cyan-700">
+                  העסקאות נוצרו אוטומטית מהחודש הקודם
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/transactions"
+              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 transition-colors"
+            >
+              צפה
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* כרטיסי סיכום */}
       <SummaryCards
         totalIncome={summary.totalIncome}

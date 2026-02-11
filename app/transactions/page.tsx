@@ -26,11 +26,12 @@ export default function TransactionsPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [txs, sum] = await Promise.all([
+      const [txsResult, sum] = await Promise.all([
         getTransactions(selectedMonth, selectedYear),
         getTransactionsSummary(selectedMonth, selectedYear),
       ]);
-      setTransactions(txs);
+      // חילוץ רשימת העסקאות מהתוצאה
+      setTransactions(txsResult.transactions || []);
       setSummary(sum);
     } catch (error) {
       console.error('Error loading transactions:', error);
