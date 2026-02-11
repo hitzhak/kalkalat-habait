@@ -82,24 +82,33 @@ function EmptyState() {
 
 // Main dashboard content component
 async function DashboardContent({ month, year }: { month: number; year: number }) {
-  // קריאות לכל ה-Server Actions במקביל
-  const [
-    summary,
-    previousSummary,
-    transactionsResult,
-    expensesByCategory,
-    weeklyExpenses,
-    budgetSummary,
-    alerts,
-  ] = await Promise.all([
-    getTransactionsSummary(month, year),
-    getPreviousMonthSummary(month, year),
-    getTransactions(month, year),
-    getExpensesByCategory(month, year),
-    getWeeklyVariableExpenses(month, year),
-    getTotalBudgetSummary(month, year),
-    getBudgetAlerts(month, year),
-  ]);
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[Dashboard] DashboardContent - Starting data fetch for month:', month, 'year:', year);
+    }
+    
+    // קריאות לכל ה-Server Actions במקביל
+    const [
+      summary,
+      previousSummary,
+      transactionsResult,
+      expensesByCategory,
+      weeklyExpenses,
+      budgetSummary,
+      alerts,
+    ] = await Promise.all([
+      getTransactionsSummary(month, year),
+      getPreviousMonthSummary(month, year),
+      getTransactions(month, year),
+      getExpensesByCategory(month, year),
+      getWeeklyVariableExpenses(month, year),
+      getTotalBudgetSummary(month, year),
+      getBudgetAlerts(month, year),
+    ]);
+
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[Dashboard] DashboardContent - Data fetched successfully');
+    }
 
   // חילוץ רשימת העסקאות מהתוצאה
   const transactions = transactionsResult.transactions || [];
@@ -211,6 +220,14 @@ async function DashboardContent({ month, year }: { month: number; year: number }
       <RecentTransactions transactions={transactions} />
     </div>
   );
+  } catch (error) {
+    console.error('[Dashboard] Error in DashboardContent:', error);
+    if (error instanceof Error) {
+      console.error('[Dashboard] Error message:', error.message);
+      console.error('[Dashboard] Error stack:', error.stack);
+    }
+    throw error; // Re-throw to let Next.js error boundary handle it
+  }
 }
 
 // Main page component

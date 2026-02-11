@@ -18,6 +18,10 @@ export async function getExpensesByCategory(month: number, year: number) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[Dashboard] getExpensesByCategory - Querying transactions...');
+    }
+
     const transactions = await prisma.transaction.findMany({
       where: {
         type: 'EXPENSE',
@@ -60,8 +64,12 @@ export async function getExpensesByCategory(month: number, year: number) {
 
     return Array.from(categoryMap.values()).sort((a, b) => b.totalAmount - a.totalAmount);
   } catch (error) {
-    console.error('Error fetching expenses by category:', error);
-    throw new Error('שגיאה בטעינת הוצאות לפי קטגוריה');
+    console.error('[Dashboard] Error fetching expenses by category:', error);
+    if (error instanceof Error) {
+      console.error('[Dashboard] Error message:', error.message);
+      console.error('[Dashboard] Error stack:', error.stack);
+    }
+    throw new Error(`שגיאה בטעינת הוצאות לפי קטגוריה: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

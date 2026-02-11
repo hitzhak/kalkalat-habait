@@ -69,6 +69,10 @@ function isDateInMonth(date: Date, month: number, year: number): boolean {
  */
 export async function getTransactions(month: number, year: number) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[Transactions] getTransactions - Starting query for month:', month, 'year:', year);
+    }
+    
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -145,8 +149,15 @@ export async function getTransactions(month: number, year: number) {
       recurringGenerated,
     };
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-    throw new Error('שגיאה בטעינת העסקאות');
+    console.error('[Transactions] Error fetching transactions:', error);
+    if (error instanceof Error) {
+      console.error('[Transactions] Error message:', error.message);
+      console.error('[Transactions] Error stack:', error.stack);
+      if (error.message.includes('P1001') || error.message.includes('connect')) {
+        console.error('[Transactions] Database connection error detected!');
+      }
+    }
+    throw new Error(`שגיאה בטעינת העסקאות: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -307,6 +318,10 @@ export async function deleteTransaction(id: string) {
  */
 export async function getTransactionsSummary(month: number, year: number) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[Transactions] getTransactionsSummary - Starting query for month:', month, 'year:', year);
+    }
+    
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -355,8 +370,15 @@ export async function getTransactionsSummary(month: number, year: number) {
       variableExpenses: Math.round(variableExpenses * 100) / 100,
     };
   } catch (error) {
-    console.error('Error fetching transactions summary:', error);
-    throw new Error('שגיאה בטעינת סיכום העסקאות');
+    console.error('[Transactions] Error fetching transactions summary:', error);
+    if (error instanceof Error) {
+      console.error('[Transactions] Error message:', error.message);
+      console.error('[Transactions] Error stack:', error.stack);
+      if (error.message.includes('P1001') || error.message.includes('connect')) {
+        console.error('[Transactions] Database connection error detected!');
+      }
+    }
+    throw new Error(`שגיאה בטעינת סיכום העסקאות: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
