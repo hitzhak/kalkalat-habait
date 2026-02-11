@@ -50,7 +50,7 @@ async function calculateActualSpent(
       where: { parentId: categoryId },
       select: { id: true },
     });
-    categoryIds.push(...childCategories.map((child) => child.id));
+    categoryIds.push(...childCategories.map((child: { id: string }) => child.id));
   }
 
   // שליפת עסקאות
@@ -68,7 +68,10 @@ async function calculateActualSpent(
   });
 
   // סיכום הסכומים
-  return transactions.reduce((sum, tx) => sum + decimalToNumber(tx.amount), 0);
+  return transactions.reduce(
+    (sum: number, tx: { amount: Prisma.Decimal }) => sum + decimalToNumber(tx.amount),
+    0
+  );
 }
 
 /**
