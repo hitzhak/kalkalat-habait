@@ -11,6 +11,7 @@
     "generate-icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
+    "@apideck/better-ajv-errors": "^0.3.6",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -48,8 +49,7 @@
     "tailwindcss-animate": "^1.0.7",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11",
-    "prisma": "^5.22.0"
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -59,6 +59,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
+    "prisma": "^5.22.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.21.0",
