@@ -1,4 +1,6 @@
-import { Suspense } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { getTransactionsSummary, getTransactions } from './actions/transactions';
 import {
   getExpensesByCategory,
@@ -15,19 +17,9 @@ import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { WeeklyBarChart } from '@/components/charts/WeeklyBarChart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DbConnectionError } from '@/components/DbConnectionError';
+import { useAppStore } from '@/stores/appStore';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
-
-// פונקציה לקבלת החודש והשנה הנוכחיים
-function getCurrentMonthYear() {
-  const now = new Date();
-  return {
-    month: now.getMonth() + 1,
-    year: now.getFullYear(),
-  };
-}
 
 // Loading skeletons
 function DashboardSkeleton() {
@@ -83,45 +75,96 @@ function EmptyState() {
   );
 }
 
+// Interface for dashboard data
+interface DashboardData {
+  summary: Awaited<ReturnType<typeof getTransactionsSummary>>;
+  previousSummary: Awaited<ReturnType<typeof getPreviousMonthSummary>>;
+  transactionsResult: Awaited<ReturnType<typeof getTransactions>>;
+  expensesByCategory: Awaited<ReturnType<typeof getExpensesByCategory>>;
+  weeklyExpenses: Awaited<ReturnType<typeof getWeeklyVariableExpenses>>;
+  budgetSummary: Awaited<ReturnType<typeof getTotalBudgetSummary>>;
+  alerts: Awaited<ReturnType<typeof getBudgetAlerts>>;
+}
+
 // Main dashboard content component
-async function DashboardContent({ month, year }: { month: number; year: number }) {
-  try {
-    // קריאות לכל ה-Server Actions במקביל
-    const [
-      summary,
-      previousSummary,
-      transactionsResult,
-      expensesByCategory,
-      weeklyExpenses,
-      budgetSummary,
-      alerts,
-    ] = await Promise.all([
-      getTransactionsSummary(month, year),
-      getPreviousMonthSummary(month, year),
-      getTransactions(month, year),
-      getExpensesByCategory(month, year),
-      getWeeklyVariableExpenses(month, year),
-      getTotalBudgetSummary(month, year),
-      getBudgetAlerts(month, year),
-    ]);
+function DashboardContent({ month, year }: { month: number; year: number }) {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-    // חילוץ רשימת העסקאות מהתוצאה
-    const transactions = transactionsResult.transactions || [];
-    const recurringGenerated = transactionsResult.recurringGenerated;
+  useEffect(() => {
+    async function fetchDashboardData() {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // קריאות לכל ה-Server Actions במקביל
+        const [
+          summary,
+          previousSummary,
+          transactionsResult,
+          expensesByCategory,
+          weeklyExpenses,
+          budgetSummary,
+          alerts,
+        ] = await Promise.all([
+          getTransactionsSummary(month, year),
+          getPreviousMonthSummary(month, year),
+          getTransactions(month, year),
+          getExpensesByCategory(month, year),
+          getWeeklyVariableExpenses(month, year),
+          getTotalBudgetSummary(month, year),
+          getBudgetAlerts(month, year),
+        ]);
 
-    // בדיקה אם יש נתונים
-    const hasData =
-      transactions.length > 0 ||
-      summary.totalIncome > 0 ||
-      summary.totalExpenses > 0;
-
-    if (!hasData) {
-      return <EmptyState />;
+        setDashboardData({
+          summary,
+          previousSummary,
+          transactionsResult,
+          expensesByCategory,
+          weeklyExpenses,
+          budgetSummary,
+          alerts,
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('שגיאה בטעינת הנתונים'));
+      } finally {
+        setLoading(false);
+      }
     }
+
+    fetchDashboardData();
+  }, [month, year]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (error) {
+    return <DbConnectionError />;
+  }
+
+  if (!dashboardData) {
+    return <EmptyState />;
+  }
+
+  // חילוץ רשימת העסקאות מהתוצאה
+  const transactions = dashboardData.transactionsResult.transactions || [];
+  const recurringGenerated = dashboardData.transactionsResult.recurringGenerated;
+
+  // בדיקה אם יש נתונים
+  const hasData =
+    transactions.length > 0 ||
+    dashboardData.summary.totalIncome > 0 ||
+    dashboardData.summary.totalExpenses > 0;
+
+  if (!hasData) {
+    return <EmptyState />;
+  }
 
   // חישוב ממוצע שבועי רצוי (תקציב משתנות / 4.5)
   // נניח שתקציב משתנות הוא 60% מהתקציב הכולל (זו הנחה - אפשר לשפר)
-  const estimatedVariableBudget = budgetSummary.totalBudget * 0.6;
+  const estimatedVariableBudget = dashboardData.budgetSummary.totalBudget * 0.6;
   const averageWeeklyBudget = estimatedVariableBudget / 4.5;
 
   // שמות חודשים בעברית
@@ -183,30 +226,30 @@ async function DashboardContent({ month, year }: { month: number; year: number }
 
       {/* כרטיסי סיכום */}
       <SummaryCards
-        totalIncome={summary.totalIncome}
-        totalExpenses={summary.totalExpenses}
-        balance={summary.balance}
-        previousMonthIncome={previousSummary.totalIncome}
-        previousMonthExpenses={previousSummary.totalExpenses}
-        previousMonthBalance={previousSummary.balance}
+        totalIncome={dashboardData.summary.totalIncome}
+        totalExpenses={dashboardData.summary.totalExpenses}
+        balance={dashboardData.summary.balance}
+        previousMonthIncome={dashboardData.previousSummary.totalIncome}
+        previousMonthExpenses={dashboardData.previousSummary.totalExpenses}
+        previousMonthBalance={dashboardData.previousSummary.balance}
       />
 
       {/* פס התקדמות תקציב */}
       <BudgetProgress
-        totalBudget={budgetSummary.totalBudget}
-        totalSpent={budgetSummary.totalSpent}
+        totalBudget={dashboardData.budgetSummary.totalBudget}
+        totalSpent={dashboardData.budgetSummary.totalSpent}
         month={month}
         year={year}
       />
 
       {/* התראות תקציב (אם יש) */}
-      {alerts.length > 0 && <BudgetAlerts alerts={alerts} />}
+      {dashboardData.alerts.length > 0 && <BudgetAlerts alerts={dashboardData.alerts} />}
 
       {/* גרפים - שורה עם 2 עמודות */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ExpensePieChart data={expensesByCategory} />
+        <ExpensePieChart data={dashboardData.expensesByCategory} />
         <WeeklyBarChart
-          data={weeklyExpenses}
+          data={dashboardData.weeklyExpenses}
           averageWeeklyBudget={averageWeeklyBudget}
         />
       </div>
@@ -215,14 +258,11 @@ async function DashboardContent({ month, year }: { month: number; year: number }
       <RecentTransactions transactions={transactions} />
     </div>
   );
-  } catch {
-    return <DbConnectionError />;
-  }
 }
 
 // Main page component
 export default function DashboardPage() {
-  const { month, year } = getCurrentMonthYear();
+  const { selectedMonth, selectedYear } = useAppStore();
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -238,10 +278,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main content with Suspense */}
-      <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardContent month={month} year={year} />
-      </Suspense>
+      {/* Main content */}
+      <DashboardContent month={selectedMonth} year={selectedYear} />
     </div>
   );
 }

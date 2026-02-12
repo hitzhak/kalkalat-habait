@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, LayoutList, Target, BarChart3 } from 'lucide-react';
+import { Home, Receipt, LayoutList, Target, Landmark, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'דשבורד', icon: Home },
+  { href: '/transactions', label: 'עסקאות', icon: Receipt },
   { href: '/budget', label: 'תקציב', icon: LayoutList },
   { href: '/savings', label: 'חיסכון', icon: Target },
+  { href: '/loans', label: 'הלוואות', icon: Landmark },
   { href: '/reports', label: 'דוחות', icon: BarChart3 },
 ];
 
@@ -27,12 +29,12 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors',
+                'flex flex-col items-center justify-center gap-1 px-1 py-2 transition-colors',
                 isActive ? 'text-cyan-600' : 'text-slate-500'
               )}
             >
-              <Icon className={cn('h-5 w-5', isActive && 'fill-current')} />
-              <span className="text-xs font-medium">{item.label}</span>
+              <Icon className={cn('h-4 w-4', isActive && 'fill-current')} />
+              <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
         })}

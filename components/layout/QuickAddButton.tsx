@@ -13,7 +13,7 @@ export function QuickAddButton() {
       <Button
         onClick={() => setOpen(true)}
         size="icon"
-        className="fixed bottom-20 left-4 z-50 h-14 w-14 rounded-full shadow-lg md:bottom-6 md:right-6 md:left-auto hover:scale-110 active:scale-95 transition-transform duration-200 animate-in fade-in zoom-in"
+        className="fixed bottom-20 left-4 z-50 h-14 w-14 rounded-full shadow-lg md:bottom-6 md:left-6 hover:scale-110 active:scale-95 transition-transform duration-200 animate-in fade-in zoom-in"
       >
         <Plus className="h-6 w-6" />
       </Button>

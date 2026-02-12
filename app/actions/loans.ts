@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/db';
 import { LoanType } from '@/types';
 import { Prisma } from '@prisma/client';
 import { addMonths, format } from 'date-fns';
@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 // === 1. קבלת כל ההלוואות הפעילות ===
 export async function getLoans() {
   try {
-    const loans = await db.loan.findMany({
+    const loans = await prisma.loan.findMany({
       where: {
         isActive: true,
       },
@@ -46,7 +46,7 @@ export async function createLoan(data: {
   notes?: string;
 }) {
   try {
-    const loan = await db.loan.create({
+    const loan = await prisma.loan.create({
       data: {
         name: data.name,
         type: data.type,
@@ -98,7 +98,7 @@ export async function updateLoan(
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    const loan = await db.loan.update({
+    const loan = await prisma.loan.update({
       where: { id },
       data: updateData,
     });
@@ -114,7 +114,7 @@ export async function updateLoan(
 // === 4. מחיקת הלוואה ===
 export async function deleteLoan(id: string) {
   try {
-    await db.loan.delete({
+    await prisma.loan.delete({
       where: { id },
     });
 
@@ -137,7 +137,7 @@ export async function addLoanPayment(
 ) {
   try {
     // קבלת ההלוואה הנוכחית
-    const loan = await db.loan.findUnique({
+    const loan = await prisma.loan.findUnique({
       where: { id: loanId },
     });
 
@@ -146,7 +146,7 @@ export async function addLoanPayment(
     }
 
     // יצירת התשלום
-    const payment = await db.loanPayment.create({
+    const payment = await prisma.loanPayment.create({
       data: {
         loanId,
         amount: new Prisma.Decimal(amount),
@@ -163,7 +163,7 @@ export async function addLoanPayment(
     );
     const newRemainingPayments = loan.remainingPayments ? loan.remainingPayments - 1 : null;
 
-    await db.loan.update({
+    await prisma.loan.update({
       where: { id: loanId },
       data: {
         remainingAmount: newRemainingAmount.isNegative() ? new Prisma.Decimal(0) : newRemainingAmount,
@@ -182,7 +182,7 @@ export async function addLoanPayment(
 // === 6. קבלת היסטוריית תשלומים להלוואה ===
 export async function getLoanPayments(loanId: string) {
   try {
-    const payments = await db.loanPayment.findMany({
+    const payments = await prisma.loanPayment.findMany({
       where: {
         loanId,
       },
@@ -201,7 +201,7 @@ export async function getLoanPayments(loanId: string) {
 // === 7. סיכום הלוואות ===
 export async function getLoansSummary() {
   try {
-    const loans = await db.loan.findMany({
+    const loans = await prisma.loan.findMany({
       where: {
         isActive: true,
       },

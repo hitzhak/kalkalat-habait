@@ -65,7 +65,15 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Array<{
+    id: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+    type: string;
+    isFixed: boolean;
+    sortOrder: number;
+  }>>([]);
   const [selectedType, setSelectedType] = useState<TransactionType>(
     transaction?.type || TransactionType.EXPENSE
   );

@@ -333,26 +333,28 @@ export default function ReportsPage() {
                     <CardTitle>הוצאות לפי קטגוריה</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={monthlyReport.expensesByCategory.slice(0, 8)}
-                          dataKey="amount"
-                          nameKey="categoryName"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label={(entry: any) =>
-                            `${entry.categoryName}: ${entry.percentage.toFixed(1)}%`
-                          }
-                        >
-                          {monthlyReport.expensesByCategory.slice(0, 8).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <div className="w-full overflow-x-auto">
+                      <div className="min-w-[400px]">
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={monthlyReport.expensesByCategory.slice(0, 8)}
+                              dataKey="amount"
+                              nameKey="categoryName"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={70}
+                            >
+                              {monthlyReport.expensesByCategory.slice(0, 8).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -365,15 +367,19 @@ export default function ReportsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={monthlyReport.expensesByWeek}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="weekName" />
-                        <YAxis />
-                        <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
-                        <Bar dataKey="amount" fill="#0891B2" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <div className="w-full overflow-x-auto">
+                      <div className="min-w-[400px]">
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart data={monthlyReport.expensesByWeek}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="weekName" />
+                            <YAxis />
+                            <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
+                            <Bar dataKey="amount" fill="#0891B2" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -657,28 +663,32 @@ export default function ReportsPage() {
                   <CardTitle>השוואת הוצאות לפי קטגוריה</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart
-                      data={comparisonData.categoryComparison.slice(0, 10)}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="categoryName" angle={-45} textAnchor="end" height={100} />
-                      <YAxis />
-                      <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
-                      <Legend />
-                      <Bar
-                        dataKey="month1Amount"
-                        fill="#0891B2"
-                        name={comparisonData.summary.month1.monthName}
-                      />
-                      <Bar
-                        dataKey="month2Amount"
-                        fill="#10B981"
-                        name={comparisonData.summary.month2.monthName}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="w-full overflow-x-auto">
+                    <div className="min-w-[400px]">
+                      <ResponsiveContainer width="100%" height={400}>
+                        <BarChart
+                          data={comparisonData.categoryComparison.slice(0, 10)}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="categoryName" angle={-30} textAnchor="end" height={80} interval={0} tick={{ fontSize: 10 }} />
+                          <YAxis />
+                          <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
+                          <Legend />
+                          <Bar
+                            dataKey="month1Amount"
+                            fill="#0891B2"
+                            name={comparisonData.summary.month1.monthName}
+                          />
+                          <Bar
+                            dataKey="month2Amount"
+                            fill="#10B981"
+                            name={comparisonData.summary.month2.monthName}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -836,34 +846,38 @@ export default function ReportsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart
-                      data={trendData.data}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="monthYear" angle={-45} textAnchor="end" height={100} />
-                      <YAxis />
-                      <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="income"
-                        stroke="#10B981"
-                        strokeWidth={2}
-                        name="הכנסות"
-                        dot={{ r: 4 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="expenses"
-                        stroke="#EF4444"
-                        strokeWidth={2}
-                        name="הוצאות"
-                        dot={{ r: 4 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <div className="w-full overflow-x-auto">
+                    <div className="min-w-[400px]">
+                      <ResponsiveContainer width="100%" height={400}>
+                        <LineChart
+                          data={trendData.data}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="monthYear" angle={-30} textAnchor="end" height={70} tick={{ fontSize: 10 }} />
+                          <YAxis />
+                          <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="income"
+                            stroke="#10B981"
+                            strokeWidth={2}
+                            name="הכנסות"
+                            dot={{ r: 4 }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="expenses"
+                            stroke="#EF4444"
+                            strokeWidth={2}
+                            name="הוצאות"
+                            dot={{ r: 4 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 

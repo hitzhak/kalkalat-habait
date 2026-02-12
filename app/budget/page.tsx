@@ -6,7 +6,7 @@ import { getBudgetForMonth, copyBudgetFromPreviousMonth, getBudgetSummary } from
 import { BudgetTable } from '@/components/budget/BudgetTable';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ChevronRight, ChevronLeft, Copy, Loader2 } from 'lucide-react';
+import { Copy, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,7 @@ interface BudgetSummary {
 }
 
 export default function BudgetPage() {
-  const { selectedMonth, selectedYear, monthYearDisplay, goToNextMonth, goToPrevMonth } = useMonthNavigation();
+  const { selectedMonth, selectedYear } = useMonthNavigation();
   const [budgetData, setBudgetData] = useState<BudgetCategory[]>([]);
   const [summary, setSummary] = useState<BudgetSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,55 +108,25 @@ export default function BudgetPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Header עם בחירת חודש */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
-            תקציב חודשי
-          </h1>
-        </div>
-
-        {/* בורר חודש */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToPrevMonth}
-              className="h-9 w-9"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <div className="min-w-[140px] text-center">
-              <span className="text-lg font-semibold text-slate-800">
-                {monthYearDisplay}
-              </span>
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToNextMonth}
-              className="h-9 w-9"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyFromPreviousMonth}
-            disabled={copying}
-            className="gap-2"
-          >
-            {copying ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
-            העתק מחודש קודם
-          </Button>
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
+          תקציב חודשי
+        </h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCopyFromPreviousMonth}
+          disabled={copying}
+          className="gap-2"
+        >
+          {copying ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+          העתק מחודש קודם
+        </Button>
       </div>
 
       {/* כרטיס סיכום */}

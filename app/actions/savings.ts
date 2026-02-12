@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 
@@ -9,7 +9,7 @@ import { Prisma } from "@prisma/client";
  */
 export async function getSavingsGoals() {
   try {
-    const goals = await db.savingsGoal.findMany({
+    const goals = await prisma.savingsGoal.findMany({
       include: {
         deposits: {
           orderBy: {
@@ -41,7 +41,7 @@ export async function createSavingsGoal(data: {
   monthlyTarget?: number;
 }) {
   try {
-    const goal = await db.savingsGoal.create({
+    const goal = await prisma.savingsGoal.create({
       data: {
         name: data.name,
         targetAmount: new Prisma.Decimal(data.targetAmount),
@@ -95,7 +95,7 @@ export async function updateSavingsGoal(
     if (data.isCompleted !== undefined)
       updateData.isCompleted = data.isCompleted;
 
-    const goal = await db.savingsGoal.update({
+    const goal = await prisma.savingsGoal.update({
       where: { id },
       data: updateData,
     });
@@ -113,7 +113,7 @@ export async function updateSavingsGoal(
  */
 export async function deleteSavingsGoal(id: string) {
   try {
-    await db.savingsGoal.delete({
+    await prisma.savingsGoal.delete({
       where: { id },
     });
 
@@ -136,7 +136,7 @@ export async function addDeposit(data: {
 }) {
   try {
     // יצירת ההפקדה
-    const deposit = await db.savingsDeposit.create({
+    const deposit = await prisma.savingsDeposit.create({
       data: {
         goalId: data.goalId,
         amount: new Prisma.Decimal(data.amount),
@@ -146,7 +146,7 @@ export async function addDeposit(data: {
     });
 
     // עדכון currentAmount במטרה
-    const goal = await db.savingsGoal.findUnique({
+    const goal = await prisma.savingsGoal.findUnique({
       where: { id: data.goalId },
     });
 
@@ -161,7 +161,7 @@ export async function addDeposit(data: {
     // בדיקה האם הושלמה המטרה
     const isCompleted = newCurrentAmount.gte(goal.targetAmount);
 
-    await db.savingsGoal.update({
+    await prisma.savingsGoal.update({
       where: { id: data.goalId },
       data: {
         currentAmount: newCurrentAmount,
@@ -182,7 +182,7 @@ export async function addDeposit(data: {
  */
 export async function getDepositsForGoal(goalId: string) {
   try {
-    const deposits = await db.savingsDeposit.findMany({
+    const deposits = await prisma.savingsDeposit.findMany({
       where: {
         goalId,
       },

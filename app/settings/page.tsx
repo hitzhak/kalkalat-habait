@@ -70,10 +70,24 @@ export default function SettingsPage() {
   const [savingSettings, setSavingSettings] = useState(false);
 
   // State for Categories
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Array<{
+    id: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+    type: string;
+    isFixed: boolean;
+    isDefault: boolean;
+    isActive: boolean;
+    parentId: string | null;
+    parentName: string | null;
+    sortOrder: number;
+    transactionCount: number;
+    budgetItemCount: number;
+  }>>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<any | null>(null);
+  const [editingCategory, setEditingCategory] = useState<typeof categories[number] | null>(null);
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     icon: '',
@@ -156,7 +170,7 @@ export default function SettingsPage() {
   };
 
   // פתיחת דיאלוג עריכת קטגוריה
-  const handleOpenEditCategory = (category: any) => {
+  const handleOpenEditCategory = (category: typeof categories[number]) => {
     setEditingCategory(category);
     setCategoryForm({
       name: category.name,

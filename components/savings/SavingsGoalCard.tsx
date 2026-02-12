@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SavingsGoal } from "@prisma/client";
+import { SavingsGoal } from "@/types";
 import * as Icons from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
