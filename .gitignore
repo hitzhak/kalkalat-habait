@@ -40,3 +40,12 @@ next-env.d.ts
 /prisma/migrations
 
 /lib/generated/prisma
+
+# screenshots & test artifacts (root only, not public/)
+/*.png
+/*.jpg
+/*.jpeg
+.playwright-mcp/
+
+# cursor plans
+*.plan.md
