@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
+import { prisma, withRetry } from '@/lib/db';
 import { TransactionType } from '@/types';
 import { Prisma } from '@prisma/client';
 
@@ -100,33 +100,40 @@ export async function getBudgetForMonth(month: number, year: number) {
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
-    // שליפת קטגוריות הוצאות ראשיות בלבד (parentId = null)
-    const categories = await prisma.category.findMany({
-      where: {
-        type: 'EXPENSE',
-        isActive: true,
-        parentId: null,
-      },
-      include: {
-        children: {
-          where: {
-            isActive: true,
+    // שליפת קטגוריות הוצאות ראשיות בלבד (parentId = null) — with retry for cold starts
+    const categories = await withRetry(() =>
+      prisma.category.findMany({
+        where: {
+          type: 'EXPENSE',
+          isActive: true,
+          parentId: null,
+        },
+        include: {
+          children: {
+            where: {
+              isActive: true,
+            },
+            orderBy: {
+              sortOrder: 'asc',
+            },
           },
-          orderBy: {
-            sortOrder: 'asc',
+          budgetItems: {
+            where: {
+              month: validated.month,
+              year: validated.year,
+            },
           },
         },
-        budgetItems: {
-          where: {
-            month: validated.month,
-            year: validated.year,
-          },
+        orderBy: {
+          sortOrder: 'asc',
         },
-      },
-      orderBy: {
-        sortOrder: 'asc',
-      },
-    });
+      })
+    );
+
+    // אם אין קטגוריות — מחזיר מערך ריק (DB לא seed-עד)
+    if (categories.length === 0) {
+      return [];
+    }
 
     // חישוב נתונים לכל קטגוריה
     const budgetData = await Promise.all(
@@ -209,7 +216,8 @@ export async function getBudgetForMonth(month: number, year: number) {
     return budgetData;
   } catch (error) {
     console.error('Error fetching budget for month:', error);
-    throw new Error('שגיאה בטעינת התקציב החודשי');
+    // Return empty array instead of throwing — let the UI show the empty state
+    return [];
   }
 }
 
@@ -373,21 +381,23 @@ export async function getBudgetSummary(month: number, year: number) {
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
-    // שליפת כל פריטי התקציב לחודש
-    const budgetItems = await prisma.budgetItem.findMany({
-      where: {
-        month: validated.month,
-        year: validated.year,
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            parentId: true,
+    // שליפת כל פריטי התקציב לחודש — with retry for cold starts
+    const budgetItems = await withRetry(() =>
+      prisma.budgetItem.findMany({
+        where: {
+          month: validated.month,
+          year: validated.year,
+        },
+        include: {
+          category: {
+            select: {
+              id: true,
+              parentId: true,
+            },
           },
         },
-      },
-    });
+      })
+    );
 
     // סינון רק קטגוריות ראשיות (למנוע ספירה כפולה)
     const mainCategoryItems = budgetItems.filter((item) => !item.category.parentId);
@@ -422,6 +432,12 @@ export async function getBudgetSummary(month: number, year: number) {
     };
   } catch (error) {
     console.error('Error fetching budget summary:', error);
-    throw new Error('שגיאה בטעינת סיכום התקציב');
+    // Return zeroed summary instead of throwing — let the UI show gracefully
+    return {
+      totalPlanned: 0,
+      totalActual: 0,
+      totalRemaining: 0,
+      totalUsagePercent: 0,
+    };
   }
 }

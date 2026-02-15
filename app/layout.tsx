@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,20 +13,25 @@ const heebo = Heebo({
   variable: "--font-heebo",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#0891B2",
+};
+
 export const metadata: Metadata = {
   title: "כלכלת הבית",
   description: "ניהול תקציב משפחתי",
   manifest: "/manifest.json",
-  themeColor: "#0891B2",
+  icons: {
+    icon: "/icons/icon-192.svg",
+    apple: "/icons/icon-192.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "כלכלת הבית",
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
   },
 };
 

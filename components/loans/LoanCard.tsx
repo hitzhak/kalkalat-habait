@@ -36,10 +36,10 @@ type Loan = {
   id: string;
   name: string;
   type: LoanType;
-  originalAmount: any;
-  remainingAmount: any;
-  monthlyPayment: any;
-  interestRate: any;
+  originalAmount: number | string;
+  remainingAmount: number | string;
+  monthlyPayment: number | string;
+  interestRate: number | string | null;
   startDate: Date;
   endDate: Date | null;
   totalPayments: number | null;

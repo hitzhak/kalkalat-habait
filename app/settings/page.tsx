@@ -113,8 +113,9 @@ export default function SettingsPage() {
     try {
       const settings = await getSettings();
       setPayday(settings.payday);
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בטעינת ההגדרות');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה בטעינת ההגדרות';
+      toast.error(message);
     }
   };
 
@@ -123,8 +124,9 @@ export default function SettingsPage() {
       setLoadingCategories(true);
       const data = await getAllCategoriesForManagement();
       setCategories(data);
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בטעינת הקטגוריות');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה בטעינת הקטגוריות';
+      toast.error(message);
     } finally {
       setLoadingCategories(false);
     }
@@ -136,8 +138,9 @@ export default function SettingsPage() {
       setSavingSettings(true);
       await updateSettings({ payday, currency: 'ILS', startMonth: 1, weekStartDay: 0 });
       toast.success('ההגדרות נשמרו בהצלחה');
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בשמירת ההגדרות');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה בשמירת ההגדרות';
+      toast.error(message);
     } finally {
       setSavingSettings(false);
     }
@@ -149,8 +152,9 @@ export default function SettingsPage() {
       await toggleCategory(id);
       await loadCategories();
       toast.success('הקטגוריה עודכנה');
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בעדכון הקטגוריה');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה בעדכון הקטגוריה';
+      toast.error(message);
     }
   };
 
@@ -176,7 +180,7 @@ export default function SettingsPage() {
       name: category.name,
       icon: category.icon || '',
       color: category.color || '',
-      type: category.type,
+      type: category.type as CategoryType,
       isFixed: category.isFixed,
       parentId: category.parentId,
       sortOrder: category.sortOrder || 0,
@@ -196,8 +200,9 @@ export default function SettingsPage() {
       }
       setCategoryDialogOpen(false);
       await loadCategories();
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בשמירת הקטגוריה');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה בשמירת הקטגוריה';
+      toast.error(message);
     }
   };
 
@@ -221,8 +226,9 @@ export default function SettingsPage() {
       window.URL.revokeObjectURL(url);
 
       toast.success('הגיבוי הורד בהצלחה');
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בייצוא הגיבוי');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה בייצוא הגיבוי';
+      toast.error(message);
     } finally {
       setExporting(false);
     }
@@ -253,8 +259,9 @@ export default function SettingsPage() {
       // רענון הנתונים
       await loadSettings();
       await loadCategories();
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה בייבוא הגיבוי');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה בייבוא הגיבוי';
+      toast.error(message);
     } finally {
       setImporting(false);
       // איפוס input
@@ -272,8 +279,9 @@ export default function SettingsPage() {
       // רענון הנתונים
       await loadSettings();
       await loadCategories();
-    } catch (error: any) {
-      toast.error(error.message || 'שגיאה באיפוס הנתונים');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'שגיאה באיפוס הנתונים';
+      toast.error(message);
     }
   };
 

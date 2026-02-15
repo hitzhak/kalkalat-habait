@@ -333,28 +333,38 @@ export default function ReportsPage() {
                     <CardTitle>הוצאות לפי קטגוריה</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="w-full overflow-x-auto">
-                      <div className="min-w-[400px]">
-                        <ResponsiveContainer width="100%" height={300}>
-                          <PieChart>
-                            <Pie
-                              data={monthlyReport.expensesByCategory.slice(0, 8)}
-                              dataKey="amount"
-                              nameKey="categoryName"
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={70}
-                            >
-                              {monthlyReport.expensesByCategory.slice(0, 8).map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
+                    {monthlyReport.expensesByCategory.length > 0 &&
+                     monthlyReport.expensesByCategory.some((c) => c.amount > 0) ? (
+                      <div className="w-full overflow-x-auto">
+                        <div className="min-w-[400px]">
+                          <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                              <Pie
+                                data={monthlyReport.expensesByCategory.slice(0, 8)}
+                                dataKey="amount"
+                                nameKey="categoryName"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={70}
+                              >
+                                {monthlyReport.expensesByCategory.slice(0, 8).map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
+                              <Legend />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <BarChart3 className="h-12 w-12 text-slate-300 mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          אין נתוני הוצאות להצגה בחודש זה
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -367,19 +377,29 @@ export default function ReportsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="w-full overflow-x-auto">
-                      <div className="min-w-[400px]">
-                        <ResponsiveContainer width="100%" height={250}>
-                          <BarChart data={monthlyReport.expensesByWeek}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="weekName" />
-                            <YAxis />
-                            <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
-                            <Bar dataKey="amount" fill="#0891B2" />
-                          </BarChart>
-                        </ResponsiveContainer>
+                    {monthlyReport.expensesByWeek.length > 0 &&
+                     monthlyReport.expensesByWeek.some((w) => w.amount > 0) ? (
+                      <div className="w-full overflow-x-auto">
+                        <div className="min-w-[400px]">
+                          <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={monthlyReport.expensesByWeek}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="weekName" />
+                              <YAxis />
+                              <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
+                              <Bar dataKey="amount" fill="#0891B2" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <BarChart3 className="h-12 w-12 text-slate-300 mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          אין נתוני הוצאות שבועיות להצגה בחודש זה
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>

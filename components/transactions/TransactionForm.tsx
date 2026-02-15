@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import * as Icons from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TransactionType, CategoryType } from '@/types';
+import { TransactionType, CategoryType, Transaction } from '@/types';
 import { createTransaction, updateTransaction } from '@/app/actions/transactions';
 import { getParentCategories } from '@/app/actions/categories';
 import { useAppStore } from '@/stores/appStore';
@@ -50,10 +50,22 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface EditableTransaction {
+  id?: string;
+  amount?: number;
+  type?: TransactionType;
+  categoryId?: string;
+  date?: Date | string;
+  isFixed?: boolean;
+  notes?: string | null;
+  isRecurring?: boolean;
+  category?: { id: string; name: string; icon?: string; color?: string };
+}
+
 interface TransactionFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  transaction?: any; // עסקה קיימת לעריכה
+  transaction?: EditableTransaction; // עסקה קיימת לעריכה
   onSuccess?: () => void;
 }
 
@@ -123,10 +135,11 @@ export function TransactionForm({
     setValue,
     watch,
     reset,
-  } = useForm({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      amount: transaction?.amount || undefined,
+      amount: transaction?.amount != null ? Number(transaction.amount) : undefined,
       type: selectedType,
       categoryId: transaction?.categoryId || '',
       date: defaultDate,
@@ -170,10 +183,11 @@ export function TransactionForm({
       reset();
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'אירעה שגיאה בשמירת העסקה';
       toast({
         title: 'שגיאה',
-        description: error.message || 'אירעה שגיאה בשמירת העסקה',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -264,7 +278,13 @@ export function TransactionForm({
             autoFocus
             inputMode="decimal"
             className="text-left pr-8"
-            {...register('amount', { valueAsNumber: true })}
+            {...register('amount', {
+              valueAsNumber: true,
+              setValueAs: (v: string) => {
+                const parsed = parseFloat(v);
+                return isNaN(parsed) ? undefined : parsed;
+              },
+            })}
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₪</span>
         </div>
