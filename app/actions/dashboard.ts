@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import { getTransactionsSummary, getTransactions } from './transactions';
 
 /**
  * המרת Decimal ל-number
@@ -276,4 +277,38 @@ export async function getPreviousMonthSummary(month: number, year: number) {
     console.error('Error fetching previous month summary:', error);
     return { totalIncome: 0, totalExpenses: 0, balance: 0 };
   }
+}
+
+/**
+ * טעינה מאוחדת של כל נתוני הדשבורד - קריאה אחת במקום 7.
+ * מפחיתה עומס רשת, cold-start ב-Vercel, ומשפרת דרמטית את מהירות המעבר בין דפים.
+ */
+export async function getDashboardData(month: number, year: number) {
+  const [
+    summary,
+    previousSummary,
+    transactionsResult,
+    expensesByCategory,
+    weeklyExpenses,
+    budgetSummary,
+    alerts,
+  ] = await Promise.all([
+    getTransactionsSummary(month, year),
+    getPreviousMonthSummary(month, year),
+    getTransactions(month, year),
+    getExpensesByCategory(month, year),
+    getWeeklyVariableExpenses(month, year),
+    getTotalBudgetSummary(month, year),
+    getBudgetAlerts(month, year),
+  ]);
+
+  return {
+    summary,
+    previousSummary,
+    transactionsResult,
+    expensesByCategory,
+    weeklyExpenses,
+    budgetSummary,
+    alerts,
+  };
 }

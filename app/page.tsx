@@ -1,14 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getTransactionsSummary, getTransactions } from './actions/transactions';
-import {
-  getExpensesByCategory,
-  getWeeklyVariableExpenses,
-  getBudgetAlerts,
-  getTotalBudgetSummary,
-  getPreviousMonthSummary,
-} from './actions/dashboard';
+import { getDashboardData } from './actions/dashboard';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { BudgetProgress } from '@/components/dashboard/BudgetProgress';
 import { BudgetAlerts } from '@/components/dashboard/BudgetAlerts';
@@ -75,16 +68,8 @@ function EmptyState() {
   );
 }
 
-// Interface for dashboard data
-interface DashboardData {
-  summary: Awaited<ReturnType<typeof getTransactionsSummary>>;
-  previousSummary: Awaited<ReturnType<typeof getPreviousMonthSummary>>;
-  transactionsResult: Awaited<ReturnType<typeof getTransactions>>;
-  expensesByCategory: Awaited<ReturnType<typeof getExpensesByCategory>>;
-  weeklyExpenses: Awaited<ReturnType<typeof getWeeklyVariableExpenses>>;
-  budgetSummary: Awaited<ReturnType<typeof getTotalBudgetSummary>>;
-  alerts: Awaited<ReturnType<typeof getBudgetAlerts>>;
-}
+// Interface for dashboard data (from unified getDashboardData)
+type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
 
 // Main dashboard content component
 function DashboardContent({ month, year }: { month: number; year: number }) {
@@ -98,34 +83,9 @@ function DashboardContent({ month, year }: { month: number; year: number }) {
       setError(null);
       
       try {
-        // קריאות לכל ה-Server Actions במקביל
-        const [
-          summary,
-          previousSummary,
-          transactionsResult,
-          expensesByCategory,
-          weeklyExpenses,
-          budgetSummary,
-          alerts,
-        ] = await Promise.all([
-          getTransactionsSummary(month, year),
-          getPreviousMonthSummary(month, year),
-          getTransactions(month, year),
-          getExpensesByCategory(month, year),
-          getWeeklyVariableExpenses(month, year),
-          getTotalBudgetSummary(month, year),
-          getBudgetAlerts(month, year),
-        ]);
-
-        setDashboardData({
-          summary,
-          previousSummary,
-          transactionsResult,
-          expensesByCategory,
-          weeklyExpenses,
-          budgetSummary,
-          alerts,
-        });
+        // קריאה מאוחדת אחת - 7 round-trips הפכו ל-1
+        const data = await getDashboardData(month, year);
+        setDashboardData(data);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('שגיאה בטעינת הנתונים'));
       } finally {

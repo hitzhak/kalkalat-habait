@@ -13,14 +13,7 @@ import {
 } from '@/components/ui/select';
 import { useMonthNavigation } from '@/hooks/useMonthNavigation';
 import { getMonthlyReport, getComparisonData, getTrendData } from '@/app/actions/reports';
-import {
-  exportMonthlyReportToExcel,
-  exportMonthlyReportToPDF,
-  exportBudgetToExcel,
-  exportBudgetToPDF,
-  MonthlyReportData,
-  BudgetData,
-} from '@/lib/export';
+import type { MonthlyReportData, BudgetData } from '@/lib/export';
 import { Download, FileSpreadsheet, FileText, TrendingUp, BarChart3, Loader2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -178,13 +171,14 @@ export default function ReportsPage() {
     loadTrend();
   }, []);
 
-  // ייצוא Excel - דוח חודשי
-  const handleExportMonthlyExcel = () => {
+  // ייצוא Excel - דוח חודשי (dynamic import כדי לא לטעון xlsx+jspdf בכניסה לדף)
+  const handleExportMonthlyExcel = async () => {
     if (!monthlyReport) {
       toast.error('אין נתונים לייצוא');
       return;
     }
     try {
+      const { exportMonthlyReportToExcel } = await import('@/lib/export');
       exportMonthlyReportToExcel(monthlyReport);
       toast.success('הקובץ הורד בהצלחה');
     } catch (error) {
@@ -192,13 +186,14 @@ export default function ReportsPage() {
     }
   };
 
-  // ייצוא PDF - דוח חודשי
-  const handleExportMonthlyPDF = () => {
+  // ייצוא PDF - דוח חודשי (dynamic import)
+  const handleExportMonthlyPDF = async () => {
     if (!monthlyReport) {
       toast.error('אין נתונים לייצוא');
       return;
     }
     try {
+      const { exportMonthlyReportToPDF } = await import('@/lib/export');
       exportMonthlyReportToPDF(monthlyReport);
       toast.success('הקובץ הורד בהצלחה');
     } catch (error) {
