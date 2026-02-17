@@ -2,7 +2,7 @@ import { getSavingsGoals } from "@/app/actions/savings";
 import { SavingsGoalCard } from "@/components/savings/SavingsGoalCard";
 import { DbConnectionError } from "@/components/DbConnectionError";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 import { CreateGoalDialog } from "@/components/savings/CreateGoalDialog";
 import { Target } from "lucide-react";

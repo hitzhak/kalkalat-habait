@@ -1,0 +1,194 @@
+'use client';
+
+import { getDashboardData } from '@/app/actions/dashboard';
+import { SummaryCards } from '@/components/dashboard/SummaryCards';
+import { RemainingBudget } from '@/components/dashboard/RemainingBudget';
+import { BudgetAlerts } from '@/components/dashboard/BudgetAlerts';
+import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
+import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
+import { WeeklyBarChart } from '@/components/charts/WeeklyBarChart';
+import { DbConnectionError } from '@/components/DbConnectionError';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
+import { Plus, ArrowLeft, Wallet } from 'lucide-react';
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('he-IL', {
+    style: 'currency',
+    currency: 'ILS',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md text-center space-y-5">
+        <div className="w-20 h-20 mx-auto bg-cyan-50 rounded-full flex items-center justify-center">
+          <Plus className="w-10 h-10 text-cyan-400" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-slate-800">
+            ברוך הבא לכלכלת הבית!
+          </h2>
+          <p className="text-slate-500 text-sm leading-relaxed">
+            3 צעדים פשוטים להתחלה:
+          </p>
+          <div className="text-right space-y-2 max-w-xs mx-auto">
+            <div className="flex items-center gap-3 text-sm">
+              <span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold shrink-0">1</span>
+              <span className="text-slate-600">הגדר תקציב חודשי לכל קטגוריה</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold shrink-0">2</span>
+              <span className="text-slate-600">הזן הוצאות והכנסות בלחיצה על +</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold shrink-0">3</span>
+              <span className="text-slate-600">עקוב אחרי כמה נשאר להוציא</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/budget"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-cyan-700 transition-colors"
+          >
+            הגדר תקציב
+          </Link>
+          <Link
+            href="/transactions"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-600 text-cyan-600 px-5 py-2.5 text-sm font-medium hover:bg-cyan-50 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            הוסף עסקה
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
+
+interface DashboardContentProps {
+  data: DashboardData | null;
+  error: boolean;
+  month: number;
+  year: number;
+}
+
+export function DashboardContent({ data, error, month, year }: DashboardContentProps) {
+  if (error) return <DbConnectionError />;
+  if (!data) return <EmptyState />;
+
+  const transactions = data.transactionsResult.transactions || [];
+  const recurringGenerated = data.transactionsResult.recurringGenerated;
+
+  const hasData =
+    transactions.length > 0 ||
+    data.summary.totalIncome > 0 ||
+    data.summary.totalExpenses > 0;
+
+  if (!hasData) return <EmptyState />;
+
+  const availableForVariable = data.budgetFlow.availableForVariable;
+  const averageWeeklyBudget = availableForVariable > 0 ? availableForVariable / 4.5 : 0;
+
+  const monthNames = [
+    'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
+    'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
+  ];
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      {/* Recurring transactions banner */}
+      {recurringGenerated && recurringGenerated.count > 0 && (
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100 shrink-0">
+                <svg className="h-4 w-4 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <p className="text-sm text-cyan-900 truncate">
+                <span className="font-medium">{recurringGenerated.count} עסקאות חוזרות</span>
+                {' '}נוצרו ל{monthNames[month - 1]}
+              </p>
+            </div>
+            <Link href="/transactions" className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-700 transition-colors shrink-0">
+              צפה
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Summary strip */}
+      <SummaryCards
+        totalIncome={data.summary.totalIncome}
+        totalExpenses={data.summary.totalExpenses}
+        balance={data.summary.balance}
+        previousMonthIncome={data.previousSummary.totalIncome}
+        previousMonthExpenses={data.previousSummary.totalExpenses}
+        previousMonthBalance={data.previousSummary.balance}
+      />
+
+      {/* HERO: Remaining Budget per Category */}
+      <RemainingBudget
+        categories={data.budgetByCategory}
+        totalRemaining={data.budgetSummary.totalBudget - data.budgetSummary.totalSpent}
+        totalBudget={data.budgetSummary.totalBudget}
+        totalSpent={data.budgetSummary.totalSpent}
+      />
+
+      {/* Budget alerts */}
+      {data.alerts.length > 0 && <BudgetAlerts alerts={data.alerts} />}
+
+      {/* Budget flow — desktop only */}
+      {data.budgetFlow.totalIncome > 0 && (
+        <Card className="hidden md:block">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wallet className="h-5 w-5 text-cyan-600" />
+              זרימת תקציב חודשי
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-0 text-center">
+              <div className="flex-1 rounded-lg bg-emerald-50 p-3">
+                <div className="text-xs text-emerald-600 font-medium">הכנסות</div>
+                <div className="text-lg font-bold text-emerald-700">{formatCurrency(data.budgetFlow.totalIncome)}</div>
+              </div>
+              <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0" />
+              <div className="flex-1 rounded-lg bg-orange-50 p-3">
+                <div className="text-xs text-orange-600 font-medium">קבועות (ב-{data.budgetFlow.payday} לחודש)</div>
+                <div className="text-lg font-bold text-orange-700">-{formatCurrency(data.budgetFlow.fixedExpenses)}</div>
+              </div>
+              <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0" />
+              <div className="flex-1 rounded-lg bg-blue-50 p-3">
+                <div className="text-xs text-blue-600 font-medium">נותר למשתנות</div>
+                <div className="text-lg font-bold text-blue-700">{formatCurrency(data.budgetFlow.availableForVariable)}</div>
+              </div>
+              <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0" />
+              <div className={`flex-1 rounded-lg p-3 ${data.budgetFlow.netRemaining >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                <div className={`text-xs font-medium ${data.budgetFlow.netRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>יתרה סופית</div>
+                <div className={`text-lg font-bold ${data.budgetFlow.netRemaining >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(data.budgetFlow.netRemaining)}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Charts — desktop only */}
+      <div className="hidden md:grid md:grid-cols-2 gap-4">
+        <ExpensePieChart data={data.expensesByCategory} />
+        <WeeklyBarChart data={data.weeklyExpenses} averageWeeklyBudget={averageWeeklyBudget} />
+      </div>
+
+      {/* Recent transactions */}
+      <RecentTransactions transactions={transactions} />
+    </div>
+  );
+}

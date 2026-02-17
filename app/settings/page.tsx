@@ -100,43 +100,44 @@ function CategoryRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors ${
-        indent ? 'mr-6 border-dashed' : ''
+      className={`flex items-center justify-between p-2 sm:p-3 border rounded-lg hover:bg-accent/50 transition-colors gap-2 ${
+        indent ? 'mr-4 sm:mr-6 border-dashed' : ''
       }`}
     >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
         <div
-          className={`${indent ? 'w-8 h-8' : 'w-10 h-10'} rounded-full flex items-center justify-center text-white shrink-0`}
+          className={`${indent ? 'w-7 h-7 sm:w-8 sm:h-8' : 'w-8 h-8 sm:w-10 sm:h-10'} rounded-full flex items-center justify-center text-white shrink-0`}
           style={{ backgroundColor: category.color || '#0891B2' }}
         >
           {category.icon ? (
-            <span className={indent ? 'text-sm' : 'text-lg'}>{category.icon}</span>
+            <span className={indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-lg'}>{category.icon}</span>
           ) : (
-            <span className={indent ? 'text-sm' : 'text-lg'}>📁</span>
+            <span className={indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-lg'}>📁</span>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`font-medium truncate ${indent ? 'text-sm' : ''}`}>{category.name}</span>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className={`font-medium truncate ${indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>{category.name}</span>
             {category.isDefault && (
-              <span className="text-xs bg-muted px-2 py-0.5 rounded shrink-0">מערכת</span>
+              <span className="text-[10px] sm:text-xs bg-muted px-1.5 sm:px-2 py-0.5 rounded shrink-0">מערכת</span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-[10px] sm:text-xs text-muted-foreground">
             {category.transactionCount} עסקאות • {category.budgetItemCount} תקציבים
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {!category.isDefault && (
-          <Button variant="ghost" size="sm" onClick={() => onEdit(category)}>
-            <Edit2 className="h-4 w-4" />
+          <Button variant="ghost" size="sm" className="h-7 w-7 sm:h-8 sm:w-8 p-0" onClick={() => onEdit(category)}>
+            <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
         )}
         <Switch
           checked={category.isActive}
           onCheckedChange={() => onToggleActive(category.id)}
           disabled={category.isDefault && !category.isActive}
+          className="scale-90 sm:scale-100"
         />
       </div>
     </div>
@@ -161,58 +162,59 @@ function CategoryGroup({
   return (
     <Collapsible open={isOpen} onOpenChange={onToggleOpen}>
       <div className="border rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
+        <div className="flex items-center justify-between p-2 sm:p-3 bg-muted/30 hover:bg-muted/50 transition-colors gap-2">
           <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-3 flex-1 min-w-0 text-right">
+            <button className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-right">
               {isOpen ? (
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
               ) : (
                 <ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
               )}
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white shrink-0"
                 style={{ backgroundColor: parent.color || '#0891B2' }}
               >
                 {parent.icon ? (
-                  <span className="text-lg">{parent.icon}</span>
+                  <span className="text-sm sm:text-lg">{parent.icon}</span>
                 ) : (
-                  <span className="text-lg">📁</span>
+                  <span className="text-sm sm:text-lg">📁</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold truncate">{parent.name}</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <span className="font-semibold truncate text-sm sm:text-base">{parent.name}</span>
                   {children.length > 0 && (
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-[10px] sm:text-xs bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
                       {children.length}
                     </span>
                   )}
                   {parent.isDefault && (
-                    <span className="text-xs bg-muted px-2 py-0.5 rounded shrink-0">מערכת</span>
+                    <span className="text-[10px] sm:text-xs bg-muted px-1.5 sm:px-2 py-0.5 rounded shrink-0">מערכת</span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-[10px] sm:text-xs text-muted-foreground">
                   {parent.isFixed ? 'קבועה' : 'משתנה'} • {parent.transactionCount} עסקאות
                 </div>
               </div>
             </button>
           </CollapsibleTrigger>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {!parent.isDefault && (
-              <Button variant="ghost" size="sm" onClick={() => onEdit(parent)}>
-                <Edit2 className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="h-7 w-7 sm:h-8 sm:w-8 p-0" onClick={() => onEdit(parent)}>
+                <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             )}
             <Switch
               checked={parent.isActive}
               onCheckedChange={() => onToggleActive(parent.id)}
               disabled={parent.isDefault && !parent.isActive}
+              className="scale-90 sm:scale-100"
             />
           </div>
         </div>
         <CollapsibleContent>
           {children.length > 0 && (
-            <div className="p-2 space-y-1 bg-background">
+            <div className="p-1.5 sm:p-2 space-y-1 bg-background">
               {children.map((child) => (
                 <CategoryRow
                   key={child.id}
@@ -496,14 +498,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
       {/* כותרת ראשית */}
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Settings className="h-8 w-8" />
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <Settings className="h-6 w-6 sm:h-8 sm:w-8 shrink-0" />
           הגדרות
         </h1>
-        <p className="text-muted-foreground mt-1">ניהול הגדרות האפליקציה והנתונים</p>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">ניהול הגדרות האפליקציה והנתונים</p>
       </div>
 
       {/* 1. הגדרות כלליות */}
@@ -555,8 +557,8 @@ export default function SettingsPage() {
 
       {/* 2. ניהול קטגוריות */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-3 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <CardTitle>ניהול קטגוריות</CardTitle>
               <CardDescription>הוסף, ערוך או הפעל/כבה קטגוריות</CardDescription>
@@ -566,8 +568,8 @@ export default function SettingsPage() {
                 <ChevronsUpDown className="ml-1 h-4 w-4" />
                 {expandedCategories.size > 0 ? 'כווץ הכל' : 'הרחב הכל'}
               </Button>
-              <Button onClick={handleOpenNewCategory}>
-                <Plus className="ml-2 h-4 w-4" />
+              <Button size="sm" onClick={handleOpenNewCategory}>
+                <Plus className="ml-1 h-4 w-4" />
                 קטגוריה חדשה
               </Button>
             </div>
@@ -643,7 +645,7 @@ export default function SettingsPage() {
 
       {/* Dialog לעריכת/יצירת קטגוריה */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? 'עריכת קטגוריה' : 'קטגוריה חדשה'}

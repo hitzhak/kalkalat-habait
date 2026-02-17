@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, TrendingDown, Wallet } from 'lucide-react';
 import { CreateLoanDialog } from '@/components/loans/CreateLoanDialog';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 export default async function LoansPage() {
   try {

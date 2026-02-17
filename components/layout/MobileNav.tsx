@@ -2,15 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Receipt, LayoutList, Target, Landmark, BarChart3, Settings } from 'lucide-react';
+import { Home, Receipt, LayoutList, BarChart3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', label: 'דשבורד', icon: Home },
+  { href: '/', label: 'ראשי', icon: Home },
   { href: '/transactions', label: 'עסקאות', icon: Receipt },
   { href: '/budget', label: 'תקציב', icon: LayoutList },
-  { href: '/savings', label: 'חיסכון', icon: Target },
-  { href: '/loans', label: 'הלוואות', icon: Landmark },
   { href: '/reports', label: 'דוחות', icon: BarChart3 },
   { href: '/settings', label: 'הגדרות', icon: Settings },
 ];
@@ -19,8 +17,8 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white shadow-lg md:hidden">
-      <div className="grid h-16 grid-cols-7 items-center pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white/95 backdrop-blur-sm shadow-lg md:hidden">
+      <div className="grid h-14 grid-cols-5 items-center pb-safe">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -30,14 +28,14 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200 min-w-0',
-                isActive ? 'text-cyan-600 scale-105' : 'text-slate-500 active:scale-95'
+                'flex flex-col items-center justify-center gap-0.5 py-1.5 transition-all duration-200',
+                isActive ? 'text-cyan-600' : 'text-slate-400 active:text-slate-600'
               )}
             >
-              <Icon className={cn('h-5 w-5 shrink-0 transition-transform duration-200', isActive && 'fill-current scale-110')} />
+              <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-cyan-600')} />
               <span className={cn(
-                'text-[9px] font-medium leading-tight truncate max-w-full px-0.5 transition-all duration-200',
-                isActive && 'font-bold'
+                'text-[10px] leading-tight',
+                isActive ? 'font-bold text-cyan-600' : 'font-medium'
               )}>
                 {item.label}
               </span>

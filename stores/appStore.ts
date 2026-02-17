@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 
+/**
+ * @deprecated Use useMonthNavigation() hook instead.
+ * This store is kept for backward compatibility with components that
+ * haven't been migrated to URL-based month navigation yet.
+ */
 interface AppState {
   selectedMonth: number;
   selectedYear: number;
@@ -22,7 +27,6 @@ export const useAppStore = create<AppState>((set, get) => {
     
     goToNextMonth: () => {
       const { selectedMonth, selectedYear } = get();
-      
       if (selectedMonth === 12) {
         set({ selectedMonth: 1, selectedYear: selectedYear + 1 });
       } else {
@@ -32,7 +36,6 @@ export const useAppStore = create<AppState>((set, get) => {
     
     goToPrevMonth: () => {
       const { selectedMonth, selectedYear } = get();
-      
       if (selectedMonth === 1) {
         set({ selectedMonth: 12, selectedYear: selectedYear - 1 });
       } else {

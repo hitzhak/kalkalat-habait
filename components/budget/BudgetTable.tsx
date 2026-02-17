@@ -49,7 +49,6 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  // פונקציה להרחבה/כיווץ קטגוריה
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
     if (newExpanded.has(categoryId)) {
@@ -60,19 +59,16 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
     setExpandedCategories(newExpanded);
   };
 
-  // פונקציה להתחלת עריכה
   const startEditing = (categoryId: string, currentAmount: number) => {
     setEditingCategory(categoryId);
     setEditingValue(currentAmount.toString());
   };
 
-  // פונקציה לביטול עריכה
   const cancelEditing = () => {
     setEditingCategory(null);
     setEditingValue('');
   };
 
-  // פונקציה לשמירת תקציב
   const saveBudget = async (categoryId: string) => {
     try {
       setSaving(true);
@@ -109,14 +105,12 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
     }
   };
 
-  // פונקציה לקבלת אייקון
   const getIcon = (iconName: string | null) => {
     if (!iconName) return null;
     const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName];
     return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
   };
 
-  // פונקציה לקבלת צבע פס התקדמות
   const getProgressColor = (alertLevel: string) => {
     switch (alertLevel) {
       case 'success':
@@ -132,21 +126,128 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
     }
   };
 
-  // רינדור שורת קטגוריה
-  const renderCategoryRow = (category: BudgetCategory, isChild: boolean = false) => {
+  const getRemainingColor = (remaining: number, usagePercent: number) => {
+    if (remaining < 0 || usagePercent >= 100) return 'text-red-600';
+    if (usagePercent >= 90) return 'text-orange-600';
+    if (usagePercent >= 70) return 'text-yellow-600';
+    return 'text-emerald-600';
+  };
+
+  const renderMobileCategoryRow = (category: BudgetCategory, isChild: boolean = false) => {
+    const isExpanded = expandedCategories.has(category.id);
+    const isEditing = editingCategory === category.id;
+    const hasChildren = !isChild && category.children && category.children.length > 0;
+
+    return (
+      <div key={category.id} className={isChild ? 'mr-3 border-r-2 border-slate-200 pr-3' : ''}>
+        <div className="py-3 px-3">
+          {/* Row 1: Icon + Name + Remaining */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {hasChildren && (
+                <button
+                  className="p-0.5 -mr-1 shrink-0"
+                  onClick={() => toggleCategory(category.id)}
+                >
+                  {isExpanded ? (
+                    <ChevronUp className="h-4 w-4 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                  )}
+                </button>
+              )}
+              <div
+                className="flex items-center gap-1.5 min-w-0"
+                style={{ color: category.color || undefined }}
+              >
+                {getIcon(category.icon)}
+                <span className="font-medium text-sm truncate">{category.name}</span>
+              </div>
+            </div>
+
+            {/* Remaining amount — the hero info on mobile */}
+            <div className="shrink-0 text-left">
+              <span className={`font-bold text-base ${getRemainingColor(category.remaining, category.usagePercent)}`}>
+                {formatCurrency(category.remaining)}
+              </span>
+            </div>
+          </div>
+
+          {/* Row 2: Budget info + edit + progress */}
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 shrink-0">
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    className="w-16 h-6 text-xs px-1"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveBudget(category.id);
+                      else if (e.key === 'Escape') cancelEditing();
+                    }}
+                    disabled={saving}
+                  />
+                  <button onClick={() => saveBudget(category.id)} disabled={saving} className="p-0.5">
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  </button>
+                  <button onClick={cancelEditing} disabled={saving} className="p-0.5">
+                    <X className="h-3.5 w-3.5 text-red-500" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => startEditing(category.id, category.plannedAmount)}
+                  className="flex items-center gap-0.5 hover:text-slate-700 transition-colors"
+                >
+                  <span>{formatCurrency(category.plannedAmount)}</span>
+                  <Edit2 className="h-2.5 w-2.5" />
+                </button>
+              )}
+              <span className="text-slate-300">|</span>
+              <span>{formatCurrency(category.actualSpent)} בפועל</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-1">
+              <Progress
+                value={Math.min(category.usagePercent, 100)}
+                className="h-1.5 flex-1"
+                indicatorClassName={getProgressColor(category.alertLevel)}
+              />
+              <span className={`text-xs font-semibold shrink-0 ${getRemainingColor(category.remaining, category.usagePercent)}`}>
+                {category.usagePercent.toFixed(0)}%
+              </span>
+              {category.usagePercent >= 100 && (
+                <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Children */}
+        {isExpanded && hasChildren && (
+          <div className="pb-1">
+            {category.children.map((child) => renderMobileCategoryRow(child as unknown as BudgetCategory, true))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderDesktopCategoryRow = (category: BudgetCategory, isChild: boolean = false) => {
     const isExpanded = expandedCategories.has(category.id);
     const isEditing = editingCategory === category.id;
     const hasChildren = !isChild && category.children && category.children.length > 0;
 
     return (
       <div key={category.id}>
-        {/* שורה ראשית */}
         <div
-          className={`grid grid-cols-[1fr_auto_auto_auto_auto] md:grid-cols-[1fr_120px_120px_120px_100px] gap-2 md:gap-4 p-4 ${
+          className={`grid grid-cols-[1fr_120px_120px_120px_100px] gap-4 p-4 ${
             isChild ? 'bg-slate-50 border-r-4 border-slate-200 mr-4' : 'bg-white'
           } border-b hover:bg-slate-50/50 transition-colors`}
         >
-          {/* קטגוריה */}
+          {/* Category */}
           <div className="flex items-center gap-2 min-w-0">
             {hasChildren && (
               <Button
@@ -171,7 +272,7 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
             </div>
           </div>
 
-          {/* תקציב */}
+          {/* Budget */}
           <div className="flex items-center justify-end">
             {isEditing ? (
               <div className="flex items-center gap-1">
@@ -182,30 +283,15 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                   className="w-20 h-8 text-sm"
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      saveBudget(category.id);
-                    } else if (e.key === 'Escape') {
-                      cancelEditing();
-                    }
+                    if (e.key === 'Enter') saveBudget(category.id);
+                    else if (e.key === 'Escape') cancelEditing();
                   }}
                   disabled={saving}
                 />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
-                  onClick={() => saveBudget(category.id)}
-                  disabled={saving}
-                >
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveBudget(category.id)} disabled={saving}>
                   <Check className="h-4 w-4 text-emerald-600" />
                 </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
-                  onClick={cancelEditing}
-                  disabled={saving}
-                >
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={cancelEditing} disabled={saving}>
                   <X className="h-4 w-4 text-red-600" />
                 </Button>
               </div>
@@ -214,54 +300,34 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                 onClick={() => startEditing(category.id, category.plannedAmount)}
                 className="group flex items-center gap-1 hover:bg-slate-100 px-2 py-1 rounded transition-colors"
               >
-                <span className="font-medium text-slate-800">
-                  {formatCurrency(category.plannedAmount)}
-                </span>
+                <span className="font-medium text-slate-800">{formatCurrency(category.plannedAmount)}</span>
                 <Edit2 className="h-3 w-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             )}
           </div>
 
-          {/* בפועל (מוסתר במובייל) */}
-          <div className="hidden md:flex items-center justify-end">
-            <span className="font-medium text-cyan-600">
-              {formatCurrency(category.actualSpent)}
-            </span>
+          {/* Actual */}
+          <div className="flex items-center justify-end">
+            <span className="font-medium text-cyan-600">{formatCurrency(category.actualSpent)}</span>
           </div>
 
-          {/* נותר (מוסתר במובייל) */}
-          <div className="hidden md:flex items-center justify-end">
-            <span
-              className={`font-medium ${
-                category.remaining >= 0 ? 'text-emerald-600' : 'text-red-600'
-              }`}
-            >
+          {/* Remaining */}
+          <div className="flex items-center justify-end">
+            <span className={`font-bold ${category.remaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {formatCurrency(category.remaining)}
             </span>
           </div>
 
-          {/* אחוז */}
+          {/* Percentage */}
           <div className="flex items-center justify-end gap-1">
-            <span
-              className={`font-bold text-sm ${
-                category.usagePercent >= 100
-                  ? 'text-red-600'
-                  : category.usagePercent >= 90
-                  ? 'text-orange-600'
-                  : category.usagePercent >= 70
-                  ? 'text-yellow-600'
-                  : 'text-emerald-600'
-              }`}
-            >
+            <span className={`font-bold text-sm ${getRemainingColor(category.remaining, category.usagePercent)}`}>
               {category.usagePercent.toFixed(0)}%
             </span>
-            {category.usagePercent >= 100 && (
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-            )}
+            {category.usagePercent >= 100 && <AlertTriangle className="h-4 w-4 text-red-600" />}
           </div>
         </div>
 
-        {/* פס התקדמות */}
+        {/* Progress bar */}
         <div className={`px-4 pb-2 ${isChild ? 'bg-slate-50 mr-4' : 'bg-white'}`}>
           <Progress
             value={Math.min(category.usagePercent, 100)}
@@ -270,10 +336,10 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
           />
         </div>
 
-        {/* תתי-קטגוריות */}
+        {/* Children */}
         {isExpanded && hasChildren && (
           <div className="border-b">
-            {category.children.map((child) => renderCategoryRow(child as unknown as BudgetCategory, true))}
+            {category.children.map((child) => renderDesktopCategoryRow(child as unknown as BudgetCategory, true))}
           </div>
         )}
       </div>
@@ -282,31 +348,28 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
 
   return (
     <Card className="overflow-hidden">
-      {/* Header של הטבלה */}
-      <div className="bg-slate-100 border-b">
-        <div className="grid grid-cols-[1fr_auto_auto_auto_auto] md:grid-cols-[1fr_120px_120px_120px_100px] gap-2 md:gap-4 p-4">
-          <div className="text-sm font-semibold text-slate-700">קטגוריה</div>
-          <div className="text-sm font-semibold text-slate-700 text-left">תקציב</div>
-          <div className="hidden md:block text-sm font-semibold text-slate-700 text-left">
-            בפועל
+      {/* Mobile layout */}
+      <div className="md:hidden divide-y">
+        {data.map((category) => renderMobileCategoryRow(category))}
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden md:block">
+        {/* Table header */}
+        <div className="bg-slate-100 border-b">
+          <div className="grid grid-cols-[1fr_120px_120px_120px_100px] gap-4 p-4">
+            <div className="text-sm font-semibold text-slate-700">קטגוריה</div>
+            <div className="text-sm font-semibold text-slate-700 text-left">תקציב</div>
+            <div className="text-sm font-semibold text-slate-700 text-left">בפועל</div>
+            <div className="text-sm font-semibold text-slate-700 text-left">נותר</div>
+            <div className="text-sm font-semibold text-slate-700 text-left">%</div>
           </div>
-          <div className="hidden md:block text-sm font-semibold text-slate-700 text-left">
-            נותר
-          </div>
-          <div className="text-sm font-semibold text-slate-700 text-left">%</div>
         </div>
-      </div>
 
-      {/* שורות הנתונים */}
-      <div className="divide-y">
-        {data.map((category) => renderCategoryRow(category))}
-      </div>
-
-      {/* הודעה למובייל */}
-      <div className="md:hidden p-4 bg-slate-50 border-t">
-        <p className="text-xs text-slate-600 text-center">
-          💡 עברו למצב רוחב כדי לראות את כל העמודות
-        </p>
+        {/* Data rows */}
+        <div className="divide-y">
+          {data.map((category) => renderDesktopCategoryRow(category))}
+        </div>
       </div>
     </Card>
   );

@@ -58,7 +58,7 @@ export default function RootLayout({
             <Header />
 
             {/* Page content with smooth transitions */}
-            <main className="flex-1 pb-20 md:pb-6">
+            <main className="flex-1 pb-20 md:pb-6 overflow-x-hidden">
               <PageTransition>
                 {children}
               </PageTransition>

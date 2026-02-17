@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { TransactionType, CategoryType, Transaction } from '@/types';
 import { createTransaction, updateTransaction } from '@/app/actions/transactions';
 import { getParentCategories } from '@/app/actions/categories';
-import { useAppStore } from '@/stores/appStore';
+import { useMonthNavigation } from '@/hooks/useMonthNavigation';
 
 import {
   Sheet,
@@ -90,7 +90,7 @@ export function TransactionForm({
     transaction?.type || TransactionType.EXPENSE
   );
   const [isDesktop, setIsDesktop] = useState(false);
-  const { selectedMonth, selectedYear } = useAppStore();
+  const { selectedMonth, selectedYear } = useMonthNavigation();
   const { toast } = useToast();
 
   // זיהוי גודל מסך
@@ -164,19 +164,19 @@ export function TransactionForm({
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
+      const categoryName = categories.find(c => c.id === data.categoryId)?.name || '';
+
       if (transaction?.id) {
-        // עדכון עסקה קיימת
         await updateTransaction(transaction.id, data);
         toast({
           title: 'העסקה עודכנה',
-          description: 'העסקה עודכנה בהצלחה',
+          description: `${categoryName} — ${data.amount.toLocaleString('he-IL')}₪`,
         });
       } else {
-        // יצירת עסקה חדשה
         await createTransaction(data);
         toast({
           title: 'העסקה נוספה',
-          description: 'העסקה נוספה בהצלחה',
+          description: `${data.amount.toLocaleString('he-IL')}₪ ב${categoryName}`,
         });
       }
 
@@ -195,7 +195,7 @@ export function TransactionForm({
     }
   };
 
-  // קומפוננט בחירת קטגוריה - Grid של אייקונים
+  // קומפוננט בחירת קטגוריה
   const CategorySelector = () => {
     const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
 
@@ -203,30 +203,33 @@ export function TransactionForm({
       <div className="space-y-2">
         <Label>קטגוריה *</Label>
         {selectedCategory ? (
-          <div className="space-y-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setValue('categoryId', '')}
-            >
-              <CategoryIcon icon={selectedCategory.icon} color={selectedCategory.color} />
-              <span className="mr-2">{selectedCategory.name}</span>
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start h-11"
+            onClick={() => setValue('categoryId', '')}
+          >
+            <CategoryIcon icon={selectedCategory.icon} color={selectedCategory.color} />
+            <span className="mr-2 font-medium">{selectedCategory.name}</span>
+            <span className="text-xs text-slate-400 mr-auto">שנה</span>
+          </Button>
         ) : (
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-4 sm:gap-2">
             {categories.map((category) => (
-              <Button
+              <button
                 key={category.id}
                 type="button"
-                variant={selectedCategoryId === category.id ? 'default' : 'outline'}
-                className="h-20 flex-col gap-1 p-2"
+                className={cn(
+                  'flex flex-col items-center gap-1 p-2 rounded-lg border transition-all text-center',
+                  selectedCategoryId === category.id
+                    ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-500'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                )}
                 onClick={() => setValue('categoryId', category.id)}
               >
-                <CategoryIcon icon={category.icon} color={category.color} size={24} />
-                <span className="text-xs">{category.name}</span>
-              </Button>
+                <CategoryIcon icon={category.icon} color={category.color} size={20} />
+                <span className="text-[10px] sm:text-xs leading-tight truncate w-full">{category.name}</span>
+              </button>
             ))}
           </div>
         )}
@@ -266,7 +269,7 @@ export function TransactionForm({
         </Button>
       </div>
 
-      {/* סכום */}
+      {/* סכום — prominent large input */}
       <div className="space-y-2">
         <Label htmlFor="amount">סכום *</Label>
         <div className="relative">
@@ -277,7 +280,7 @@ export function TransactionForm({
             placeholder="0"
             autoFocus
             inputMode="decimal"
-            className="text-left pr-8"
+            className="text-left pr-8 h-14 text-2xl font-bold"
             {...register('amount', {
               valueAsNumber: true,
               setValueAs: (v: string) => {
@@ -286,7 +289,7 @@ export function TransactionForm({
               },
             })}
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₪</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-slate-400 font-medium">₪</span>
         </div>
         {errors.amount && <p className="text-sm text-red-500">{String(errors.amount.message)}</p>}
       </div>

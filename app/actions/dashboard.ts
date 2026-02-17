@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { getTransactionsSummary, getTransactions } from './transactions';
+import { getBudgetForMonth } from './budgets';
 
 /**
  * המרת Decimal ל-number
@@ -364,6 +365,7 @@ export async function getDashboardData(month: number, year: number) {
     budgetSummary,
     alerts,
     budgetFlow,
+    budgetByCategory,
   ] = await Promise.all([
     getTransactionsSummary(month, year),
     getPreviousMonthSummary(month, year),
@@ -373,6 +375,7 @@ export async function getDashboardData(month: number, year: number) {
     getTotalBudgetSummary(month, year),
     getBudgetAlerts(month, year),
     getBudgetFlowSummary(month, year),
+    getBudgetForMonth(month, year),
   ]);
 
   return {
@@ -384,5 +387,6 @@ export async function getDashboardData(month: number, year: number) {
     budgetSummary,
     alerts,
     budgetFlow,
+    budgetByCategory,
   };
 }

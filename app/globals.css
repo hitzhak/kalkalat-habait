@@ -10,6 +10,8 @@ html[dir="rtl"] {
 html, body {
   color: hsl(var(--foreground));
   background: hsl(var(--background));
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 @layer base {
@@ -30,7 +32,7 @@ html, body {
   --accent-foreground: 0 0% 9%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
+  --border: 0 0% 92%;
   --input: 0 0% 89.8%;
   --ring: 0 0% 3.9%;
   --chart-1: 12 76% 61%;
