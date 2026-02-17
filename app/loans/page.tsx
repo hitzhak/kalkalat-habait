@@ -18,7 +18,7 @@ export default async function LoansPage() {
     return (
     <div className="container mx-auto px-4 py-4 md:p-6 space-y-6 pb-24 md:pb-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center animate-fade-in-up">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">הלוואות וחובות</h1>
           <p className="text-slate-500 mt-1">ניהול הלוואות, משכנתאות ותשלומים</p>
@@ -28,7 +28,7 @@ export default async function LoansPage() {
 
       {/* סיכום עליון */}
       {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in-up animate-delay-1">
           {/* סה"כ חובות */}
           <Card>
             <CardHeader className="pb-3">
@@ -83,7 +83,7 @@ export default async function LoansPage() {
       )}
 
       {/* רשימת הלוואות */}
-      <div>
+      <div className="animate-fade-in-up animate-delay-2">
         <h2 className="text-xl font-semibold mb-4">ההלוואות שלי</h2>
         {loans.length === 0 ? (
           <Card>

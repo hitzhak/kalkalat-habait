@@ -29,12 +29,15 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 py-2 transition-colors min-w-0',
-                isActive ? 'text-cyan-600' : 'text-slate-500'
+                'flex flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200 min-w-0',
+                isActive ? 'text-cyan-600 scale-105' : 'text-slate-500 active:scale-95'
               )}
             >
-              <Icon className={cn('h-5 w-5 shrink-0', isActive && 'fill-current')} />
-              <span className="text-[9px] font-medium leading-tight truncate max-w-full px-0.5">
+              <Icon className={cn('h-5 w-5 shrink-0 transition-transform duration-200', isActive && 'fill-current scale-110')} />
+              <span className={cn(
+                'text-[9px] font-medium leading-tight truncate max-w-full px-0.5 transition-all duration-200',
+                isActive && 'font-bold'
+              )}>
                 {item.label}
               </span>
             </Link>

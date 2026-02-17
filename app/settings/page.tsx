@@ -36,6 +36,7 @@ import {
   exportAllData,
   importData,
   resetAllData,
+  getSettingsPageData,
 } from '@/app/actions/settings';
 import {
   Settings,
@@ -103,19 +104,22 @@ export default function SettingsPage() {
   const [importing, setImporting] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
-  // טעינת הגדרות
+  // טעינה מאוחדת של כל נתוני ההגדרות (2 round-trips → 1)
   useEffect(() => {
-    loadSettings();
-    loadCategories();
+    loadAllSettings();
   }, []);
 
-  const loadSettings = async () => {
+  const loadAllSettings = async () => {
     try {
-      const settings = await getSettings();
+      setLoadingCategories(true);
+      const { settings, categories: cats } = await getSettingsPageData();
       setPayday(settings.payday);
+      setCategories(cats);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'שגיאה בטעינת ההגדרות';
       toast.error(message);
+    } finally {
+      setLoadingCategories(false);
     }
   };
 
@@ -257,8 +261,7 @@ export default function SettingsPage() {
       toast.success('הנתונים יובאו בהצלחה');
       
       // רענון הנתונים
-      await loadSettings();
-      await loadCategories();
+      await loadAllSettings();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'שגיאה בייבוא הגיבוי';
       toast.error(message);
@@ -277,8 +280,7 @@ export default function SettingsPage() {
       setResetDialogOpen(false);
       
       // רענון הנתונים
-      await loadSettings();
-      await loadCategories();
+      await loadAllSettings();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'שגיאה באיפוס הנתונים';
       toast.error(message);

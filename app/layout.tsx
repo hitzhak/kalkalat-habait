@@ -7,6 +7,8 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { QuickAddButton } from "@/components/layout/QuickAddButton";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 const heebo = Heebo({ 
   subsets: ["hebrew", "latin"],
@@ -43,6 +45,9 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" className={heebo.variable}>
       <body className={heebo.className}>
+        {/* סרגל התקדמות עליון */}
+        <NavigationProgress />
+
         <div className="flex min-h-screen bg-slate-50">
           {/* Sidebar - Desktop only */}
           <Sidebar />
@@ -52,9 +57,11 @@ export default function RootLayout({
             {/* Header with month selector */}
             <Header />
 
-            {/* Page content */}
+            {/* Page content with smooth transitions */}
             <main className="flex-1 pb-20 md:pb-6">
-              {children}
+              <PageTransition>
+                {children}
+              </PageTransition>
             </main>
           </div>
         </div>

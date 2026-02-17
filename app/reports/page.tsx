@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useMonthNavigation } from '@/hooks/useMonthNavigation';
-import { getMonthlyReport, getComparisonData, getTrendData } from '@/app/actions/reports';
+import { getMonthlyReport, getComparisonData, getTrendData, getReportsPageData } from '@/app/actions/reports';
 import type { MonthlyReportData, BudgetData } from '@/lib/export';
 import { Download, FileSpreadsheet, FileText, TrendingUp, BarChart3, Loader2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
@@ -115,25 +115,37 @@ export default function ReportsPage() {
   const [loadingTrend, setLoadingTrend] = useState(false);
   const [trendMonths, setTrendMonths] = useState(12);
 
-  // טעינת דוח חודשי
+  // טעינת כל הנתונים בקריאה מאוחדת אחת (3 round-trips → 1)
   useEffect(() => {
-    loadMonthlyReport();
+    loadAllData();
   }, [currentMonth, currentYear]);
 
-  const loadMonthlyReport = async () => {
+  const loadAllData = async () => {
     try {
       setLoadingMonthly(true);
-      const data = await getMonthlyReport(currentMonth, currentYear);
-      setMonthlyReport(data);
+      setLoadingComparison(true);
+      setLoadingTrend(true);
+
+      const data = await getReportsPageData(
+        currentMonth, currentYear,
+        month1, year1, month2, year2,
+        trendMonths
+      );
+
+      setMonthlyReport(data.monthlyReport);
+      setComparisonData(data.comparisonData);
+      setTrendData(data.trendData);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'שגיאה בטעינת הדוח החודשי';
+      const errorMessage = error instanceof Error ? error.message : 'שגיאה בטעינת הדוחות';
       toast.error(errorMessage);
     } finally {
       setLoadingMonthly(false);
+      setLoadingComparison(false);
+      setLoadingTrend(false);
     }
   };
 
-  // טעינת השוואה
+  // טעינת השוואה מחדש (כשמשנים חודשים ידנית)
   const loadComparison = async () => {
     try {
       setLoadingComparison(true);
@@ -147,7 +159,7 @@ export default function ReportsPage() {
     }
   };
 
-  // טעינת מגמות
+  // טעינת מגמות מחדש (כשמשנים טווח ידנית)
   const loadTrend = async () => {
     try {
       setLoadingTrend(true);
@@ -160,16 +172,6 @@ export default function ReportsPage() {
       setLoadingTrend(false);
     }
   };
-
-  // טעינת השוואה בהפעלה ראשונה
-  useEffect(() => {
-    loadComparison();
-  }, []);
-
-  // טעינת מגמות בהפעלה ראשונה
-  useEffect(() => {
-    loadTrend();
-  }, []);
 
   // ייצוא Excel - דוח חודשי (dynamic import כדי לא לטעון xlsx+jspdf בכניסה לדף)
   const handleExportMonthlyExcel = async () => {

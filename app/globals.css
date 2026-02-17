@@ -76,3 +76,89 @@ body {
     @apply bg-background text-foreground;
  }
 }
+
+/* ==========================================
+   Navigation Progress Bar (YouTube-style)
+   ========================================== */
+.navigation-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 3px;
+  pointer-events: none;
+}
+
+.navigation-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #06b6d4, #0891b2, #0e7490);
+  box-shadow: 0 0 8px rgba(8, 145, 178, 0.4);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ==========================================
+   Page Transition Animations
+   ========================================== */
+.page-transition {
+  will-change: opacity, transform;
+}
+
+.page-enter {
+  animation: pageEnter 280ms ease-out forwards;
+}
+
+.page-exit {
+  animation: pageExit 100ms ease-in forwards;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ==========================================
+   Staggered content fade-in
+   ========================================== */
+.animate-fade-in-up {
+  animation: fadeInUp 350ms ease-out both;
+}
+
+.animate-delay-1 { animation-delay: 60ms; }
+.animate-delay-2 { animation-delay: 120ms; }
+.animate-delay-3 { animation-delay: 180ms; }
+.animate-delay-4 { animation-delay: 240ms; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smoother skeleton pulse */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

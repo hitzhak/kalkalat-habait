@@ -51,13 +51,13 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-cyan-50 text-cyan-600'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  ? 'bg-cyan-50 text-cyan-600 shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]'
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className={cn('h-5 w-5 transition-transform duration-200', isActive && 'scale-110')} />
               <span>{item.label}</span>
             </Link>
           );
@@ -69,10 +69,10 @@ export function Sidebar() {
         <Link
           href={bottomNavItem.href}
           className={cn(
-            'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+            'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200',
             pathname === bottomNavItem.href
-              ? 'bg-cyan-50 text-cyan-600'
-              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              ? 'bg-cyan-50 text-cyan-600 shadow-sm'
+              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]'
           )}
         >
           <bottomNavItem.icon className="h-5 w-5" />

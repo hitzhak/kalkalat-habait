@@ -764,3 +764,14 @@ export async function resetAllData() {
     throw new Error('שגיאה באיפוס הנתונים');
   }
 }
+
+/**
+ * טעינה מאוחדת של כל נתוני דף ההגדרות — קריאה אחת במקום 2.
+ */
+export async function getSettingsPageData() {
+  const [settings, categories] = await Promise.all([
+    getSettings(),
+    getAllCategoriesForManagement(),
+  ]);
+  return { settings, categories };
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '@/stores/appStore';
 import { TransactionType } from '@/types';
-import { getTransactions, getTransactionsSummary } from '@/app/actions/transactions';
+import { getTransactions, getTransactionsSummary, getTransactionsPageData } from '@/app/actions/transactions';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { Card } from '@/components/ui/card';
@@ -45,16 +45,12 @@ export default function TransactionsPage() {
 
   const { selectedMonth, selectedYear } = useAppStore();
 
-  // טעינת עסקאות וסיכום
+  // טעינת עסקאות וסיכום — קריאה מאוחדת אחת (2 round-trips → 1)
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [txsResult, sum] = await Promise.all([
-        getTransactions(selectedMonth, selectedYear),
-        getTransactionsSummary(selectedMonth, selectedYear),
-      ]);
-      // חילוץ רשימת העסקאות מהתוצאה
-      setTransactions((txsResult.transactions || []) as Transaction[]);
+      const { transactionsResult, summary: sum } = await getTransactionsPageData(selectedMonth, selectedYear);
+      setTransactions((transactionsResult.transactions || []) as Transaction[]);
       setSummary(sum);
     } catch (error) {
       console.error('Error loading transactions:', error);
@@ -105,7 +101,7 @@ export default function TransactionsPage() {
           <Skeleton className="h-24" />
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3 animate-fade-in-up">
           <Card className="p-4">
             <p className="text-sm text-slate-600">הכנסות</p>
             <p className="mt-2 text-2xl font-bold text-green-600">

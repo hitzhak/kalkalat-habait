@@ -456,3 +456,23 @@ export async function getTrendData(months: number = 12) {
     throw new Error('שגיאה ביצירת נתוני מגמה');
   }
 }
+
+/**
+ * טעינה מאוחדת של כל נתוני דף הדוחות — קריאה אחת במקום 3.
+ */
+export async function getReportsPageData(
+  currentMonth: number,
+  currentYear: number,
+  compMonth1: number,
+  compYear1: number,
+  compMonth2: number,
+  compYear2: number,
+  trendMonths: number = 12
+) {
+  const [monthlyReport, comparisonData, trendData] = await Promise.all([
+    getMonthlyReport(currentMonth, currentYear),
+    getComparisonData(compMonth1, compYear1, compMonth2, compYear2),
+    getTrendData(trendMonths),
+  ]);
+  return { monthlyReport, comparisonData, trendData };
+}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useMonthNavigation } from '@/hooks/useMonthNavigation';
-import { getBudgetForMonth, copyBudgetFromPreviousMonth, getBudgetSummary } from '@/app/actions/budgets';
+import { getBudgetForMonth, copyBudgetFromPreviousMonth, getBudgetSummary, getBudgetPageData } from '@/app/actions/budgets';
 import { BudgetTable } from '@/components/budget/BudgetTable';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -47,14 +47,11 @@ export default function BudgetPage() {
   const [copying, setCopying] = useState(false);
   const { toast } = useToast();
 
-  // טעינת נתוני תקציב
+  // טעינת נתוני תקציב — קריאה מאוחדת אחת (2 round-trips → 1)
   const loadBudgetData = async () => {
     try {
       setLoading(true);
-      const [budget, summaryData] = await Promise.all([
-        getBudgetForMonth(selectedMonth, selectedYear),
-        getBudgetSummary(selectedMonth, selectedYear),
-      ]);
+      const { budget, summaryData } = await getBudgetPageData(selectedMonth, selectedYear);
       setBudgetData(budget as BudgetCategory[]);
       setSummary(summaryData);
     } catch (error) {

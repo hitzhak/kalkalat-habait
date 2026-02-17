@@ -441,3 +441,14 @@ export async function getBudgetSummary(month: number, year: number) {
     };
   }
 }
+
+/**
+ * טעינה מאוחדת של כל נתוני דף התקציב — קריאה אחת במקום 2.
+ */
+export async function getBudgetPageData(month: number, year: number) {
+  const [budget, summaryData] = await Promise.all([
+    getBudgetForMonth(month, year),
+    getBudgetSummary(month, year),
+  ]);
+  return { budget, summaryData };
+}

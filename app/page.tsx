@@ -147,7 +147,7 @@ function DashboardContent({ month, year }: { month: number; year: number }) {
     <div className="space-y-6">
       {/* באנר עסקאות חוזרות (אם נוצרו) */}
       {recurringGenerated && recurringGenerated.count > 0 && (
-        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm animate-fade-in-up">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
@@ -185,6 +185,7 @@ function DashboardContent({ month, year }: { month: number; year: number }) {
       )}
 
       {/* כרטיסי סיכום */}
+      <div className="animate-fade-in-up animate-delay-1">
       <SummaryCards
         totalIncome={dashboardData.summary.totalIncome}
         totalExpenses={dashboardData.summary.totalExpenses}
@@ -193,20 +194,23 @@ function DashboardContent({ month, year }: { month: number; year: number }) {
         previousMonthExpenses={dashboardData.previousSummary.totalExpenses}
         previousMonthBalance={dashboardData.previousSummary.balance}
       />
+      </div>
 
       {/* פס התקדמות תקציב */}
+      <div className="animate-fade-in-up animate-delay-2">
       <BudgetProgress
         totalBudget={dashboardData.budgetSummary.totalBudget}
         totalSpent={dashboardData.budgetSummary.totalSpent}
         month={month}
         year={year}
       />
+      </div>
 
       {/* התראות תקציב (אם יש) */}
       {dashboardData.alerts.length > 0 && <BudgetAlerts alerts={dashboardData.alerts} />}
 
       {/* גרפים - שורה עם 2 עמודות */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up animate-delay-3">
         <ExpensePieChart data={dashboardData.expensesByCategory} />
         <WeeklyBarChart
           data={dashboardData.weeklyExpenses}
@@ -215,7 +219,9 @@ function DashboardContent({ month, year }: { month: number; year: number }) {
       </div>
 
       {/* עסקאות אחרונות */}
+      <div className="animate-fade-in-up animate-delay-4">
       <RecentTransactions transactions={transactions} />
+      </div>
     </div>
   );
 }

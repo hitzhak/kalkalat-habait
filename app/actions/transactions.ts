@@ -361,6 +361,17 @@ export async function getTransactionsSummary(month: number, year: number) {
 }
 
 /**
+ * טעינה מאוחדת של כל נתוני דף העסקאות — קריאה אחת במקום 2.
+ */
+export async function getTransactionsPageData(month: number, year: number) {
+  const [transactionsResult, summary] = await Promise.all([
+    getTransactions(month, year),
+    getTransactionsSummary(month, year),
+  ]);
+  return { transactionsResult, summary };
+}
+
+/**
  * 6. יצירת עסקאות חוזרות לחודש מסוים
  * מחפש עסקאות מהחודש הקודם שמסומנות isRecurring=true,
  * בודק אם כבר קיימת עסקה חוזרת תואמת בחודש הנוכחי,
