@@ -280,6 +280,77 @@ export async function getPreviousMonthSummary(month: number, year: number) {
 }
 
 /**
+ * סיכום זרימת תקציב לפי מחזור תשלום (payday).
+ * מציג: הכנסות -> הוצאות קבועות (ב-payday) -> נותר למשתנות -> הוצאות משתנות בפועל -> יתרה סופית
+ */
+export async function getBudgetFlowSummary(month: number, year: number) {
+  try {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const [settings, transactions] = await Promise.all([
+      prisma.appSettings.findFirst(),
+      prisma.transaction.findMany({
+        where: {
+          date: { gte: startDate, lte: endDate },
+        },
+      }),
+    ]);
+
+    const payday = settings?.payday || 11;
+
+    let totalIncome = 0;
+    let fixedExpenses = 0;
+    let variableExpenses = 0;
+    const weeklySpending: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    transactions.forEach((tx) => {
+      const amount = decimalToNumber(tx.amount);
+      if (tx.type === 'INCOME') {
+        totalIncome += amount;
+      } else if (tx.type === 'EXPENSE') {
+        if (tx.isFixed) {
+          fixedExpenses += amount;
+        } else {
+          variableExpenses += amount;
+          const week = tx.weekNumber || 0;
+          if (week >= 1 && week <= 5) {
+            weeklySpending[week] += amount;
+          }
+        }
+      }
+    });
+
+    const availableForVariable = totalIncome - fixedExpenses;
+    const netRemaining = totalIncome - fixedExpenses - variableExpenses;
+
+    return {
+      payday,
+      totalIncome: Math.round(totalIncome * 100) / 100,
+      fixedExpenses: Math.round(fixedExpenses * 100) / 100,
+      availableForVariable: Math.round(availableForVariable * 100) / 100,
+      variableExpenses: Math.round(variableExpenses * 100) / 100,
+      netRemaining: Math.round(netRemaining * 100) / 100,
+      weeklySpending: Object.entries(weeklySpending).map(([week, amount]) => ({
+        week: parseInt(week),
+        amount: Math.round(amount * 100) / 100,
+      })),
+    };
+  } catch (error) {
+    console.error('Error fetching budget flow summary:', error);
+    return {
+      payday: 11,
+      totalIncome: 0,
+      fixedExpenses: 0,
+      availableForVariable: 0,
+      variableExpenses: 0,
+      netRemaining: 0,
+      weeklySpending: [1, 2, 3, 4, 5].map((week) => ({ week, amount: 0 })),
+    };
+  }
+}
+
+/**
  * טעינה מאוחדת של כל נתוני הדשבורד - קריאה אחת במקום 7.
  * מפחיתה עומס רשת, cold-start ב-Vercel, ומשפרת דרמטית את מהירות המעבר בין דפים.
  */
@@ -292,6 +363,7 @@ export async function getDashboardData(month: number, year: number) {
     weeklyExpenses,
     budgetSummary,
     alerts,
+    budgetFlow,
   ] = await Promise.all([
     getTransactionsSummary(month, year),
     getPreviousMonthSummary(month, year),
@@ -300,6 +372,7 @@ export async function getDashboardData(month: number, year: number) {
     getWeeklyVariableExpenses(month, year),
     getTotalBudgetSummary(month, year),
     getBudgetAlerts(month, year),
+    getBudgetFlowSummary(month, year),
   ]);
 
   return {
@@ -310,5 +383,6 @@ export async function getDashboardData(month: number, year: number) {
     weeklyExpenses,
     budgetSummary,
     alerts,
+    budgetFlow,
   };
 }

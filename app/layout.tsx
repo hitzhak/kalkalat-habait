@@ -43,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" className={heebo.variable}>
+    <html lang="he" dir="rtl" className={`${heebo.variable} bg-slate-50`}>
       <body className={heebo.className}>
         {/* סרגל התקדמות עליון */}
         <NavigationProgress />

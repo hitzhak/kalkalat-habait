@@ -50,10 +50,15 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  ChevronDown,
+  ChevronLeft,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CategoryType } from '@/types';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // פורמט מטבע
 function formatCurrency(amount: number): string {
@@ -63,6 +68,166 @@ function formatCurrency(amount: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+// Reusable type for category data
+type CategoryData = {
+  id: string;
+  name: string;
+  icon: string | null;
+  color: string | null;
+  type: string;
+  isFixed: boolean;
+  isDefault: boolean;
+  isActive: boolean;
+  parentId: string | null;
+  parentName: string | null;
+  sortOrder: number;
+  transactionCount: number;
+  budgetItemCount: number;
+};
+
+function CategoryRow({
+  category,
+  onEdit,
+  onToggleActive,
+  indent,
+}: {
+  category: CategoryData;
+  onEdit: (cat: CategoryData) => void;
+  onToggleActive: (id: string) => void;
+  indent: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors ${
+        indent ? 'mr-6 border-dashed' : ''
+      }`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div
+          className={`${indent ? 'w-8 h-8' : 'w-10 h-10'} rounded-full flex items-center justify-center text-white shrink-0`}
+          style={{ backgroundColor: category.color || '#0891B2' }}
+        >
+          {category.icon ? (
+            <span className={indent ? 'text-sm' : 'text-lg'}>{category.icon}</span>
+          ) : (
+            <span className={indent ? 'text-sm' : 'text-lg'}>📁</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`font-medium truncate ${indent ? 'text-sm' : ''}`}>{category.name}</span>
+            {category.isDefault && (
+              <span className="text-xs bg-muted px-2 py-0.5 rounded shrink-0">מערכת</span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {category.transactionCount} עסקאות • {category.budgetItemCount} תקציבים
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {!category.isDefault && (
+          <Button variant="ghost" size="sm" onClick={() => onEdit(category)}>
+            <Edit2 className="h-4 w-4" />
+          </Button>
+        )}
+        <Switch
+          checked={category.isActive}
+          onCheckedChange={() => onToggleActive(category.id)}
+          disabled={category.isDefault && !category.isActive}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CategoryGroup({
+  parent,
+  children,
+  isOpen,
+  onToggleOpen,
+  onEdit,
+  onToggleActive,
+}: {
+  parent: CategoryData;
+  children: CategoryData[];
+  isOpen: boolean;
+  onToggleOpen: () => void;
+  onEdit: (cat: CategoryData) => void;
+  onToggleActive: (id: string) => void;
+}) {
+  return (
+    <Collapsible open={isOpen} onOpenChange={onToggleOpen}>
+      <div className="border rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-3 flex-1 min-w-0 text-right">
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+              ) : (
+                <ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0"
+                style={{ backgroundColor: parent.color || '#0891B2' }}
+              >
+                {parent.icon ? (
+                  <span className="text-lg">{parent.icon}</span>
+                ) : (
+                  <span className="text-lg">📁</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold truncate">{parent.name}</span>
+                  {children.length > 0 && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+                      {children.length}
+                    </span>
+                  )}
+                  {parent.isDefault && (
+                    <span className="text-xs bg-muted px-2 py-0.5 rounded shrink-0">מערכת</span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {parent.isFixed ? 'קבועה' : 'משתנה'} • {parent.transactionCount} עסקאות
+                </div>
+              </div>
+            </button>
+          </CollapsibleTrigger>
+          <div className="flex items-center gap-2 shrink-0">
+            {!parent.isDefault && (
+              <Button variant="ghost" size="sm" onClick={() => onEdit(parent)}>
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Switch
+              checked={parent.isActive}
+              onCheckedChange={() => onToggleActive(parent.id)}
+              disabled={parent.isDefault && !parent.isActive}
+            />
+          </div>
+        </div>
+        <CollapsibleContent>
+          {children.length > 0 && (
+            <div className="p-2 space-y-1 bg-background">
+              {children.map((child) => (
+                <CategoryRow
+                  key={child.id}
+                  category={child}
+                  onEdit={onEdit}
+                  onToggleActive={onToggleActive}
+                  indent={true}
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
 }
 
 export default function SettingsPage() {
@@ -98,6 +263,49 @@ export default function SettingsPage() {
     parentId: null as string | null,
     sortOrder: 0,
   });
+
+  // Derived: parent categories (for collapsible groups and parent selector)
+  const parentCategories = categories.filter((c) => !c.parentId);
+
+  // Build child map for grouped display
+  const childrenByParent = categories.reduce<Record<string, typeof categories>>((acc, cat) => {
+    if (cat.parentId) {
+      if (!acc[cat.parentId]) acc[cat.parentId] = [];
+      acc[cat.parentId].push(cat);
+    }
+    return acc;
+  }, {});
+
+  const incomeParents = parentCategories.filter((c) => c.type === CategoryType.INCOME);
+  const expenseParents = parentCategories.filter((c) => c.type === CategoryType.EXPENSE);
+
+  // Orphan children (parent was filtered out or child has no matching parent in list)
+  const incomeOrphans = categories.filter(
+    (c) => c.parentId && c.type === CategoryType.INCOME && !parentCategories.find((p) => p.id === c.parentId)
+  );
+  const expenseOrphans = categories.filter(
+    (c) => c.parentId && c.type === CategoryType.EXPENSE && !parentCategories.find((p) => p.id === c.parentId)
+  );
+
+  // State for collapsible categories
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedCategories(new Set(parentCategories.map((c) => c.id)));
+  };
+
+  const collapseAll = () => {
+    setExpandedCategories(new Set());
+  };
 
   // State for Backup/Restore
   const [exporting, setExporting] = useState(false);
@@ -287,11 +495,8 @@ export default function SettingsPage() {
     }
   };
 
-  // קבלת קטגוריות ראשיות לסלקט
-  const parentCategories = categories.filter((c) => !c.parentId);
-
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* כותרת ראשית */}
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -309,7 +514,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="payday">יום המשכורת</Label>
+            <Label htmlFor="payday">יום חיוב הוצאות קבועות</Label>
             <div className="flex items-center gap-4">
               <Input
                 id="payday"
@@ -321,9 +526,15 @@ export default function SettingsPage() {
                 className="w-24"
               />
               <span className="text-sm text-muted-foreground">
-                יום בחודש שבו מתקבלת המשכורת (ברירת מחדל: 11)
+                ברירת מחדל: 11
               </span>
             </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              ביום זה מחויבות כל ההוצאות הקבועות (משכנתא, ביטוחים, חוגים וכו&apos;).
+              ההכנסות (משכורות, קצבאות) מגיעות לפני תאריך זה.
+              המערכת מחשבת את היתרה הפנויה להוצאות משתנות לפי הנוסחה:
+              הכנסות &minus; הוצאות קבועות = נותר להוצאות שבועיות.
+            </p>
           </div>
 
           <Button onClick={handleSaveSettings} disabled={savingSettings}>
@@ -350,10 +561,16 @@ export default function SettingsPage() {
               <CardTitle>ניהול קטגוריות</CardTitle>
               <CardDescription>הוסף, ערוך או הפעל/כבה קטגוריות</CardDescription>
             </div>
-            <Button onClick={handleOpenNewCategory}>
-              <Plus className="ml-2 h-4 w-4" />
-              קטגוריה חדשה
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={expandedCategories.size > 0 ? collapseAll : expandAll}>
+                <ChevronsUpDown className="ml-1 h-4 w-4" />
+                {expandedCategories.size > 0 ? 'כווץ הכל' : 'הרחב הכל'}
+              </Button>
+              <Button onClick={handleOpenNewCategory}>
+                <Plus className="ml-2 h-4 w-4" />
+                קטגוריה חדשה
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -361,77 +578,65 @@ export default function SettingsPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : categories.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              אין קטגוריות להצגה
+            </p>
           ) : (
-            <div className="space-y-2">
-              {categories.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  אין קטגוריות להצגה
-                </p>
-              ) : (
-                categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-                        style={{
-                          backgroundColor: category.color || '#0891B2',
-                        }}
-                      >
-                        {category.icon ? (
-                          <span className="text-lg">{category.icon}</span>
-                        ) : (
-                          <span className="text-lg">📁</span>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{category.name}</span>
-                          {category.isDefault && (
-                            <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                              מערכת
-                            </span>
-                          )}
-                          {category.parentName && (
-                            <span className="text-xs text-muted-foreground">
-                              ← {category.parentName}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {category.type === CategoryType.INCOME ? 'הכנסה' : 'הוצאה'} •{' '}
-                          {category.transactionCount} עסקאות •{' '}
-                          {category.budgetItemCount} תקציבים
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {!category.isDefault && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenEditCategory(category)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={category.isActive}
-                          onCheckedChange={() => handleToggleCategory(category.id)}
-                          disabled={category.isDefault && !category.isActive}
-                        />
-                        <span className="text-sm text-muted-foreground w-12">
-                          {category.isActive ? 'פעיל' : 'כבוי'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            <Tabs defaultValue="expenses" className="w-full">
+              <TabsList className="w-full grid grid-cols-2 mb-4">
+                <TabsTrigger value="expenses">
+                  הוצאות ({expenseParents.length})
+                </TabsTrigger>
+                <TabsTrigger value="income">
+                  הכנסות ({incomeParents.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="expenses">
+                <div className="space-y-2">
+                  {expenseParents.map((parent) => {
+                    const children = childrenByParent[parent.id] || [];
+                    return (
+                      <CategoryGroup
+                        key={parent.id}
+                        parent={parent}
+                        children={children}
+                        isOpen={expandedCategories.has(parent.id)}
+                        onToggleOpen={() => toggleExpanded(parent.id)}
+                        onEdit={handleOpenEditCategory}
+                        onToggleActive={handleToggleCategory}
+                      />
+                    );
+                  })}
+                  {expenseOrphans.map((cat) => (
+                    <CategoryRow key={cat.id} category={cat} onEdit={handleOpenEditCategory} onToggleActive={handleToggleCategory} indent={false} />
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="income">
+                <div className="space-y-2">
+                  {incomeParents.map((parent) => {
+                    const children = childrenByParent[parent.id] || [];
+                    return (
+                      <CategoryGroup
+                        key={parent.id}
+                        parent={parent}
+                        children={children}
+                        isOpen={expandedCategories.has(parent.id)}
+                        onToggleOpen={() => toggleExpanded(parent.id)}
+                        onEdit={handleOpenEditCategory}
+                        onToggleActive={handleToggleCategory}
+                      />
+                    );
+                  })}
+                  {incomeOrphans.map((cat) => (
+                    <CategoryRow key={cat.id} category={cat} onEdit={handleOpenEditCategory} onToggleActive={handleToggleCategory} indent={false} />
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>

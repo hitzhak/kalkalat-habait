@@ -92,7 +92,7 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 p-4 pb-24 md:pb-6">
+    <div className="p-4 md:p-6 space-y-6 pb-24 md:pb-6">
       {/* סיכום עליון */}
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-3">

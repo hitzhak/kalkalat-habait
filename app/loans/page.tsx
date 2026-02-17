@@ -16,7 +16,7 @@ export default async function LoansPage() {
     const summary = summaryResult.success ? summaryResult.data : null;
 
     return (
-    <div className="container mx-auto px-4 py-4 md:p-6 space-y-6 pb-24 md:pb-6">
+    <div className="p-4 md:p-6 space-y-6 pb-24 md:pb-6">
       {/* Header */}
       <div className="flex justify-between items-center animate-fade-in-up">
         <div>

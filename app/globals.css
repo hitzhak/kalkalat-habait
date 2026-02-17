@@ -7,9 +7,9 @@ html[dir="rtl"] {
   direction: rtl;
 }
 
-body {
-  color: rgb(var(--foreground));
-  background: rgb(var(--background));
+html, body {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
 }
 
 @layer base {

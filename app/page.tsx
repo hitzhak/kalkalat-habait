@@ -11,8 +11,18 @@ import { WeeklyBarChart } from '@/components/charts/WeeklyBarChart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DbConnectionError } from '@/components/DbConnectionError';
 import { useAppStore } from '@/stores/appStore';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, ArrowDown, ArrowLeft, Wallet } from 'lucide-react';
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('he-IL', {
+    style: 'currency',
+    currency: 'ILS',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 // Loading skeletons
 function DashboardSkeleton() {
@@ -122,10 +132,9 @@ function DashboardContent({ month, year }: { month: number; year: number }) {
     return <EmptyState />;
   }
 
-  // חישוב ממוצע שבועי רצוי (תקציב משתנות / 4.5)
-  // נניח שתקציב משתנות הוא 60% מהתקציב הכולל (זו הנחה - אפשר לשפר)
-  const estimatedVariableBudget = dashboardData.budgetSummary.totalBudget * 0.6;
-  const averageWeeklyBudget = estimatedVariableBudget / 4.5;
+  // חישוב ממוצע שבועי מתוך נתוני זרימת תקציב אמיתיים
+  const availableForVariable = dashboardData.budgetFlow.availableForVariable;
+  const averageWeeklyBudget = availableForVariable > 0 ? availableForVariable / 4.5 : 0;
 
   // שמות חודשים בעברית
   const monthNames = [
@@ -205,6 +214,69 @@ function DashboardContent({ month, year }: { month: number; year: number }) {
         year={year}
       />
       </div>
+
+      {/* זרימת תקציב — הכנסות → קבועות → נותר למשתנות */}
+      {dashboardData.budgetFlow.totalIncome > 0 && (
+        <Card className="animate-fade-in-up animate-delay-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wallet className="h-5 w-5 text-cyan-600" />
+              זרימת תקציב חודשי
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 text-center">
+              {/* הכנסות */}
+              <div className="flex-1 rounded-lg bg-emerald-50 p-3">
+                <div className="text-xs text-emerald-600 font-medium">הכנסות</div>
+                <div className="text-lg font-bold text-emerald-700">
+                  {formatCurrency(dashboardData.budgetFlow.totalIncome)}
+                </div>
+              </div>
+              <ArrowLeft className="hidden sm:block h-5 w-5 text-slate-400 mx-1 shrink-0" />
+              <ArrowDown className="sm:hidden h-5 w-5 text-slate-400 mx-auto shrink-0" />
+              {/* קבועות */}
+              <div className="flex-1 rounded-lg bg-orange-50 p-3">
+                <div className="text-xs text-orange-600 font-medium">
+                  קבועות (ב-{dashboardData.budgetFlow.payday} לחודש)
+                </div>
+                <div className="text-lg font-bold text-orange-700">
+                  -{formatCurrency(dashboardData.budgetFlow.fixedExpenses)}
+                </div>
+              </div>
+              <ArrowLeft className="hidden sm:block h-5 w-5 text-slate-400 mx-1 shrink-0" />
+              <ArrowDown className="sm:hidden h-5 w-5 text-slate-400 mx-auto shrink-0" />
+              {/* נותר למשתנות */}
+              <div className="flex-1 rounded-lg bg-blue-50 p-3">
+                <div className="text-xs text-blue-600 font-medium">נותר למשתנות</div>
+                <div className="text-lg font-bold text-blue-700">
+                  {formatCurrency(dashboardData.budgetFlow.availableForVariable)}
+                </div>
+              </div>
+              <ArrowLeft className="hidden sm:block h-5 w-5 text-slate-400 mx-1 shrink-0" />
+              <ArrowDown className="sm:hidden h-5 w-5 text-slate-400 mx-auto shrink-0" />
+              {/* הוצאות משתנות בפועל */}
+              <div className="flex-1 rounded-lg bg-red-50 p-3">
+                <div className="text-xs text-red-600 font-medium">משתנות בפועל</div>
+                <div className="text-lg font-bold text-red-700">
+                  -{formatCurrency(dashboardData.budgetFlow.variableExpenses)}
+                </div>
+              </div>
+              <ArrowLeft className="hidden sm:block h-5 w-5 text-slate-400 mx-1 shrink-0" />
+              <ArrowDown className="sm:hidden h-5 w-5 text-slate-400 mx-auto shrink-0" />
+              {/* יתרה סופית */}
+              <div className={`flex-1 rounded-lg p-3 ${dashboardData.budgetFlow.netRemaining >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                <div className={`text-xs font-medium ${dashboardData.budgetFlow.netRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  יתרה סופית
+                </div>
+                <div className={`text-lg font-bold ${dashboardData.budgetFlow.netRemaining >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                  {formatCurrency(dashboardData.budgetFlow.netRemaining)}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* התראות תקציב (אם יש) */}
       {dashboardData.alerts.length > 0 && <BudgetAlerts alerts={dashboardData.alerts} />}
