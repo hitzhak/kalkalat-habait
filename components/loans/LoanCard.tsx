@@ -181,15 +181,15 @@ export function LoanCard({ loan }: LoanCardProps) {
                     <div>{getLoanTypeText(loan.type)}</div>
                     
                     <div className="text-slate-500">סכום מקורי:</div>
-                    <div>{Number(loan.originalAmount).toLocaleString('he-IL')}₪</div>
+                    <div>₪{Number(loan.originalAmount).toLocaleString('he-IL')}</div>
                     
                     <div className="text-slate-500">יתרה:</div>
                     <div className="font-semibold text-red-600">
-                      {Number(loan.remainingAmount).toLocaleString('he-IL')}₪
+                      ₪{Number(loan.remainingAmount).toLocaleString('he-IL')}
                     </div>
                     
                     <div className="text-slate-500">תשלום חודשי:</div>
-                    <div>{Number(loan.monthlyPayment).toLocaleString('he-IL')}₪</div>
+                    <div>₪{Number(loan.monthlyPayment).toLocaleString('he-IL')}</div>
                     
                     {loan.interestRate && (
                       <>
@@ -264,12 +264,12 @@ export function LoanCard({ loan }: LoanCardProps) {
           <div>
             <div className="text-sm text-slate-500 mb-1">יתרה</div>
             <div className="text-xl font-bold text-red-600">
-              {Number(loan.remainingAmount).toLocaleString('he-IL')}₪
+              ₪{Number(loan.remainingAmount).toLocaleString('he-IL')}
             </div>
           </div>
           <div>
             <div className="text-sm text-slate-500 mb-1">תשלום חודשי</div>
-            <div className="text-xl font-semibold">{Number(loan.monthlyPayment).toLocaleString('he-IL')}₪</div>
+            <div className="text-xl font-semibold">₪{Number(loan.monthlyPayment).toLocaleString('he-IL')}</div>
           </div>
         </div>
 
@@ -297,8 +297,8 @@ export function LoanCard({ loan }: LoanCardProps) {
           </div>
           <Progress value={paidPercentage} className="h-2" />
           <div className="text-xs text-slate-500 text-center">
-            שולם {(Number(loan.originalAmount) - Number(loan.remainingAmount)).toLocaleString('he-IL')}₪ מתוך{' '}
-            {Number(loan.originalAmount).toLocaleString('he-IL')}₪
+            שולם ₪{(Number(loan.originalAmount) - Number(loan.remainingAmount)).toLocaleString('he-IL')} מתוך{' '}
+            ₪{Number(loan.originalAmount).toLocaleString('he-IL')}
           </div>
         </div>
 

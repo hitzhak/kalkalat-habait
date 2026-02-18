@@ -183,7 +183,6 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                     value={editingValue}
                     onChange={(e) => setEditingValue(e.target.value)}
                     className="w-16 h-6 text-xs px-1"
-                    autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') saveBudget(category.id);
                       else if (e.key === 'Escape') cancelEditing();
@@ -281,7 +280,6 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                   value={editingValue}
                   onChange={(e) => setEditingValue(e.target.value)}
                   className="w-20 h-8 text-sm"
-                  autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') saveBudget(category.id);
                     else if (e.key === 'Escape') cancelEditing();

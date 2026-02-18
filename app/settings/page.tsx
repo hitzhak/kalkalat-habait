@@ -46,7 +46,6 @@ import {
   Trash2,
   Plus,
   Edit2,
-  Info,
   Loader2,
   CheckCircle2,
   XCircle,
@@ -61,14 +60,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { BudgetAllocation } from '@/components/settings/BudgetAllocation';
 
-// פורמט מטבע
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('he-IL', {
-    style: 'currency',
-    currency: 'ILS',
+  const formatted = new Intl.NumberFormat('he-IL', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(Math.abs(amount));
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}₪${formatted}`;
 }
 
 // Reusable type for category data
@@ -99,46 +97,48 @@ function CategoryRow({
   onToggleActive: (id: string) => void;
   indent: boolean;
 }) {
+  const isActive = category.isActive;
   return (
     <div
-      className={`flex items-center justify-between p-2 sm:p-3 border rounded-lg hover:bg-accent/50 transition-colors gap-2 ${
-        indent ? 'mr-4 sm:mr-6 border-dashed' : ''
-      }`}
+      className={`flex items-center gap-3 p-2.5 sm:p-3 rounded-lg border transition-all ${
+        indent ? 'me-4 sm:me-6 border-dashed' : ''
+      } ${isActive ? 'bg-white border-slate-200' : 'bg-slate-50/70 border-slate-100 opacity-60'}`}
     >
-      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-        <div
-          className={`${indent ? 'w-7 h-7 sm:w-8 sm:h-8' : 'w-8 h-8 sm:w-10 sm:h-10'} rounded-full flex items-center justify-center text-white shrink-0`}
-          style={{ backgroundColor: category.color || '#0891B2' }}
-        >
-          {category.icon ? (
-            <span className={indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-lg'}>{category.icon}</span>
-          ) : (
-            <span className={indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-lg'}>📁</span>
+      <div
+        className={`${indent ? 'w-8 h-8' : 'w-9 h-9 sm:w-10 sm:h-10'} rounded-lg flex items-center justify-center shrink-0 transition-opacity`}
+        style={{
+          backgroundColor: (category.color || '#0891B2') + (isActive ? '18' : '10'),
+          color: category.color || '#0891B2',
+        }}
+      >
+        <span className={indent ? 'text-sm' : 'text-base sm:text-lg'}>{category.icon || '📁'}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className={`font-medium truncate ${indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>
+            {category.name}
+          </span>
+          {category.isDefault && (
+            <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded shrink-0">מערכת</span>
+          )}
+          {!isActive && (
+            <span className="text-[10px] bg-red-50 text-red-400 px-1.5 py-0.5 rounded shrink-0">כבוי</span>
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 sm:gap-2">
-            <span className={`font-medium truncate ${indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>{category.name}</span>
-            {category.isDefault && (
-              <span className="text-[10px] sm:text-xs bg-muted px-1.5 sm:px-2 py-0.5 rounded shrink-0">מערכת</span>
-            )}
-          </div>
-          <div className="text-[10px] sm:text-xs text-muted-foreground">
-            {category.transactionCount} עסקאות • {category.budgetItemCount} תקציבים
-          </div>
+        <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+          {category.transactionCount} עסקאות • {category.budgetItemCount} תקציבים
         </div>
       </div>
-      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         {!category.isDefault && (
-          <Button variant="ghost" size="sm" className="h-7 w-7 sm:h-8 sm:w-8 p-0" onClick={() => onEdit(category)}>
-            <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600" onClick={() => onEdit(category)}>
+            <Edit2 className="h-3.5 w-3.5" />
           </Button>
         )}
         <Switch
-          checked={category.isActive}
+          checked={isActive}
           onCheckedChange={() => onToggleActive(category.id)}
-          disabled={category.isDefault && !category.isActive}
-          className="scale-90 sm:scale-100"
+          disabled={category.isDefault && !isActive}
         />
       </div>
     </div>
@@ -160,62 +160,60 @@ function CategoryGroup({
   onEdit: (cat: CategoryData) => void;
   onToggleActive: (id: string) => void;
 }) {
+  const isActive = parent.isActive;
   return (
     <Collapsible open={isOpen} onOpenChange={onToggleOpen}>
-      <div className="border rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between p-2 sm:p-3 bg-muted/30 hover:bg-muted/50 transition-colors gap-2">
+      <div className={`border rounded-xl overflow-hidden transition-all ${isActive ? 'border-slate-200' : 'border-slate-100 opacity-60'}`}>
+        <div className={`flex items-center gap-3 p-3 transition-colors ${isActive ? 'bg-slate-50/50 hover:bg-slate-100/50' : 'bg-slate-50/30'}`}>
           <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-right">
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-              ) : (
-                <ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
-              )}
+            <button className="flex items-center gap-3 flex-1 min-w-0 text-right">
+              <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? '' : '-rotate-90 rtl:rotate-90'}`} />
               <div
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white shrink-0"
-                style={{ backgroundColor: parent.color || '#0891B2' }}
+                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                style={{
+                  backgroundColor: (parent.color || '#0891B2') + (isActive ? '18' : '10'),
+                  color: parent.color || '#0891B2',
+                }}
               >
-                {parent.icon ? (
-                  <span className="text-sm sm:text-lg">{parent.icon}</span>
-                ) : (
-                  <span className="text-sm sm:text-lg">📁</span>
-                )}
+                <span className="text-lg">{parent.icon || '📁'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1.5">
                   <span className="font-semibold truncate text-sm sm:text-base">{parent.name}</span>
                   {children.length > 0 && (
-                    <span className="text-[10px] sm:text-xs bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-[10px] bg-cyan-50 text-cyan-600 font-medium px-1.5 py-0.5 rounded-full shrink-0">
                       {children.length}
                     </span>
                   )}
                   {parent.isDefault && (
-                    <span className="text-[10px] sm:text-xs bg-muted px-1.5 sm:px-2 py-0.5 rounded shrink-0">מערכת</span>
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded shrink-0">מערכת</span>
+                  )}
+                  {!isActive && (
+                    <span className="text-[10px] bg-red-50 text-red-400 px-1.5 py-0.5 rounded shrink-0">כבוי</span>
                   )}
                 </div>
-                <div className="text-[10px] sm:text-xs text-muted-foreground">
+                <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                   {parent.isFixed ? 'קבועה' : 'משתנה'} • {parent.transactionCount} עסקאות
                 </div>
               </div>
             </button>
           </CollapsibleTrigger>
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {!parent.isDefault && (
-              <Button variant="ghost" size="sm" className="h-7 w-7 sm:h-8 sm:w-8 p-0" onClick={() => onEdit(parent)}>
-                <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600" onClick={() => onEdit(parent)}>
+                <Edit2 className="h-3.5 w-3.5" />
               </Button>
             )}
             <Switch
-              checked={parent.isActive}
+              checked={isActive}
               onCheckedChange={() => onToggleActive(parent.id)}
-              disabled={parent.isDefault && !parent.isActive}
-              className="scale-90 sm:scale-100"
+              disabled={parent.isDefault && !isActive}
             />
           </div>
         </div>
         <CollapsibleContent>
           {children.length > 0 && (
-            <div className="p-1.5 sm:p-2 space-y-1 bg-background">
+            <div className="p-2 space-y-1.5 border-t border-slate-100 bg-white">
               {children.map((child) => (
                 <CategoryRow
                   key={child.id}
@@ -499,7 +497,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden pb-24 md:pb-6">
       {/* כותרת ראשית */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
@@ -600,7 +598,7 @@ export default function SettingsPage() {
               </TabsList>
 
               <TabsContent value="expenses">
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {expenseParents.map((parent) => {
                     const children = childrenByParent[parent.id] || [];
                     return (
@@ -622,7 +620,7 @@ export default function SettingsPage() {
               </TabsContent>
 
               <TabsContent value="income">
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {incomeParents.map((parent) => {
                     const children = childrenByParent[parent.id] || [];
                     return (
@@ -856,37 +854,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* 4. אודות */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5" />
-            אודות
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-lg">כלכלת הבית v1.0</h3>
-            <p className="text-muted-foreground mt-1">
-              נבנה עם ❤️ לניהול תקציב משפחתי
-            </p>
-          </div>
-          <Separator />
-          <div className="text-sm text-muted-foreground space-y-2">
-            <p>
-              <strong>תכונות עיקריות:</strong>
-            </p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>ניהול הכנסות והוצאות</li>
-              <li>תקציב חודשי מפורט</li>
-              <li>מטרות חיסכון</li>
-              <li>ניהול הלוואות</li>
-              <li>דוחות וניתוחים</li>
-              <li>גיבוי ושחזור נתונים</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+    
     </div>
   );
 }

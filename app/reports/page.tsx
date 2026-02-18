@@ -53,14 +53,13 @@ const HEBREW_MONTHS = [
   'דצמבר',
 ];
 
-// פורמט מטבע
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('he-IL', {
-    style: 'currency',
-    currency: 'ILS',
+  const formatted = new Intl.NumberFormat('he-IL', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(Math.abs(amount));
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}₪${formatted}`;
 }
 
 interface ComparisonData {
@@ -241,39 +240,38 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 pb-24 md:pb-6">
       {/* כותרת ראשית */}
       <div>
-        <h1 className="text-3xl font-bold">דוחות וניתוחים</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">דוחות וניתוחים</h1>
         <p className="text-muted-foreground mt-1">
           דוחות חודשיים, השוואות ומגמות לאורך זמן
         </p>
       </div>
 
       {/* Tabs ראשי */}
-      <Tabs defaultValue="monthly" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="monthly" className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">דוח חודשי</span>
-            <span className="sm:hidden">חודשי</span>
-          </TabsTrigger>
-          <TabsTrigger value="budget" className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">תקציב</span>
-            <span className="sm:hidden">תקציב</span>
-          </TabsTrigger>
-          <TabsTrigger value="comparison" className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">השוואה</span>
-            <span className="sm:hidden">השוואה</span>
-          </TabsTrigger>
-          <TabsTrigger value="trends" className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">מגמות</span>
-            <span className="sm:hidden">מגמות</span>
-          </TabsTrigger>
-          <TabsTrigger value="more" className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">חיסכון/הלוואות</span>
-            <span className="sm:hidden">עוד</span>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="monthly" className="space-y-4 md:space-y-6">
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-full min-w-max sm:grid sm:grid-cols-5">
+            <TabsTrigger value="monthly" className="text-xs sm:text-sm px-3 sm:px-4">
+              <span className="hidden sm:inline">דוח חודשי</span>
+              <span className="sm:hidden">חודשי</span>
+            </TabsTrigger>
+            <TabsTrigger value="budget" className="text-xs sm:text-sm px-3 sm:px-4">
+              תקציב
+            </TabsTrigger>
+            <TabsTrigger value="comparison" className="text-xs sm:text-sm px-3 sm:px-4">
+              השוואה
+            </TabsTrigger>
+            <TabsTrigger value="trends" className="text-xs sm:text-sm px-3 sm:px-4">
+              מגמות
+            </TabsTrigger>
+            <TabsTrigger value="more" className="text-xs sm:text-sm px-3 sm:px-4">
+              <span className="hidden sm:inline">חיסכון/הלוואות</span>
+              <span className="sm:hidden">עוד</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Tab 1: דוח חודשי */}
         <TabsContent value="monthly" className="space-y-6">
@@ -306,7 +304,7 @@ export default function ReportsPage() {
               </Card>
 
               {/* סיכום טקסטואלי */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -314,7 +312,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-lg sm:text-2xl font-bold text-green-600">
                       {formatCurrency(monthlyReport.summary.totalIncome)}
                     </div>
                   </CardContent>
@@ -322,12 +320,12 @@ export default function ReportsPage() {
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                       הוצאות קבועות
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-orange-600">
+                    <div className="text-lg sm:text-2xl font-bold text-orange-600">
                       {formatCurrency(monthlyReport.summary.fixedExpenses)}
                     </div>
                   </CardContent>
@@ -335,12 +333,12 @@ export default function ReportsPage() {
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                       הוצאות משתנות
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-red-600">
+                    <div className="text-lg sm:text-2xl font-bold text-red-600">
                       {formatCurrency(monthlyReport.summary.variableExpenses)}
                     </div>
                   </CardContent>
@@ -354,7 +352,7 @@ export default function ReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div
-                      className={`text-2xl font-bold ${
+                      className={`text-lg sm:text-2xl font-bold ${
                         monthlyReport.summary.balance >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}
                     >
@@ -365,7 +363,7 @@ export default function ReportsPage() {
               </div>
 
               {/* גרפים */}
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-4 md:gap-6 md:grid-cols-2">
                 {/* גרף עוגה - הוצאות לפי קטגוריה */}
                 <Card>
                   <CardHeader>
@@ -374,9 +372,9 @@ export default function ReportsPage() {
                   <CardContent>
                     {monthlyReport.expensesByCategory.length > 0 &&
                      monthlyReport.expensesByCategory.some((c) => c.amount > 0) ? (
-                      <div className="w-full overflow-x-auto">
-                        <div className="min-w-[400px]">
-                          <ResponsiveContainer width="100%" height={300}>
+                      <div className="w-full overflow-x-auto -mx-2 px-2">
+                        <div className="min-w-[300px]">
+                          <ResponsiveContainer width="100%" height={280}>
                             <PieChart>
                               <Pie
                                 data={monthlyReport.expensesByCategory.slice(0, 8)}
@@ -418,8 +416,8 @@ export default function ReportsPage() {
                   <CardContent>
                     {monthlyReport.expensesByWeek.length > 0 &&
                      monthlyReport.expensesByWeek.some((w) => w.amount > 0) ? (
-                      <div className="w-full overflow-x-auto">
-                        <div className="min-w-[400px]">
+                      <div className="w-full overflow-x-auto -mx-2 px-2">
+                        <div className="min-w-[300px]">
                           <ResponsiveContainer width="100%" height={250}>
                             <BarChart data={monthlyReport.expensesByWeek}>
                               <CartesianGrid strokeDasharray="3 3" />
@@ -722,9 +720,9 @@ export default function ReportsPage() {
                   <CardTitle>השוואת הוצאות לפי קטגוריה</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="w-full overflow-x-auto">
-                    <div className="min-w-[400px]">
-                      <ResponsiveContainer width="100%" height={400}>
+                  <div className="w-full overflow-x-auto -mx-2 px-2">
+                    <div className="min-w-[320px]">
+                      <ResponsiveContainer width="100%" height={350}>
                         <BarChart
                           data={comparisonData.categoryComparison.slice(0, 10)}
                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -811,26 +809,28 @@ export default function ReportsPage() {
               <CardTitle>ניתוח מגמות</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium">מספר חודשים:</label>
-                <Select
-                  value={trendMonths.toString()}
-                  onValueChange={(val) => setTrendMonths(parseInt(val))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="6">6 חודשים</SelectItem>
-                    <SelectItem value="12">12 חודשים</SelectItem>
-                    <SelectItem value="18">18 חודשים</SelectItem>
-                    <SelectItem value="24">24 חודשים</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button onClick={loadTrend} disabled={loadingTrend}>
-                  {loadingTrend && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                  טען
-                </Button>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <label className="text-sm font-medium shrink-0">מספר חודשים:</label>
+                <div className="flex items-center gap-3">
+                  <Select
+                    value={trendMonths.toString()}
+                    onValueChange={(val) => setTrendMonths(parseInt(val))}
+                  >
+                    <SelectTrigger className="w-[140px] sm:w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 חודשים</SelectItem>
+                      <SelectItem value="12">12 חודשים</SelectItem>
+                      <SelectItem value="18">18 חודשים</SelectItem>
+                      <SelectItem value="24">24 חודשים</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={loadTrend} disabled={loadingTrend}>
+                    {loadingTrend && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                    טען
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -842,7 +842,7 @@ export default function ReportsPage() {
           ) : trendData ? (
             <>
               {/* סטטיסטיקות */}
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-2 sm:gap-4 grid-cols-2 md:grid-cols-4">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -850,7 +850,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-lg sm:text-2xl font-bold text-green-600">
                       {formatCurrency(trendData.statistics.avgIncome)}
                     </div>
                   </CardContent>
@@ -858,12 +858,12 @@ export default function ReportsPage() {
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                       ממוצע הוצאות
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-red-600">
+                    <div className="text-lg sm:text-2xl font-bold text-red-600">
                       {formatCurrency(trendData.statistics.avgExpenses)}
                     </div>
                   </CardContent>
@@ -871,12 +871,12 @@ export default function ReportsPage() {
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                       הכנסות מקסימליות
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-lg sm:text-2xl font-bold">
                       {formatCurrency(trendData.statistics.highestIncome)}
                     </div>
                   </CardContent>
@@ -884,12 +884,12 @@ export default function ReportsPage() {
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                       הוצאות מקסימליות
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-lg sm:text-2xl font-bold">
                       {formatCurrency(trendData.statistics.highestExpenses)}
                     </div>
                   </CardContent>
@@ -905,9 +905,9 @@ export default function ReportsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="w-full overflow-x-auto">
-                    <div className="min-w-[400px]">
-                      <ResponsiveContainer width="100%" height={400}>
+                  <div className="w-full overflow-x-auto -mx-2 px-2">
+                    <div className="min-w-[320px]">
+                      <ResponsiveContainer width="100%" height={350}>
                         <LineChart
                           data={trendData.data}
                           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -996,25 +996,22 @@ export default function ReportsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 text-center">
-                  <div className="flex-1 rounded-lg bg-emerald-50 p-3">
-                    <div className="text-xs text-emerald-600 font-medium">הכנסות</div>
-                    <div className="text-lg font-bold text-emerald-700">{formatCurrency(budgetFlow.totalIncome)}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                  <div className="rounded-lg bg-emerald-50 p-3">
+                    <div className="text-[10px] sm:text-xs text-emerald-600 font-medium">הכנסות</div>
+                    <div className="text-sm sm:text-lg font-bold text-emerald-700">{formatCurrency(budgetFlow.totalIncome)}</div>
                   </div>
-                  <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0 self-center hidden sm:block" />
-                  <div className="flex-1 rounded-lg bg-orange-50 p-3">
-                    <div className="text-xs text-orange-600 font-medium">קבועות</div>
-                    <div className="text-lg font-bold text-orange-700">-{formatCurrency(budgetFlow.fixedExpenses)}</div>
+                  <div className="rounded-lg bg-orange-50 p-3">
+                    <div className="text-[10px] sm:text-xs text-orange-600 font-medium">קבועות</div>
+                    <div className="text-sm sm:text-lg font-bold text-orange-700">-{formatCurrency(budgetFlow.fixedExpenses)}</div>
                   </div>
-                  <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0 self-center hidden sm:block" />
-                  <div className="flex-1 rounded-lg bg-blue-50 p-3">
-                    <div className="text-xs text-blue-600 font-medium">נותר למשתנות</div>
-                    <div className="text-lg font-bold text-blue-700">{formatCurrency(budgetFlow.availableForVariable)}</div>
+                  <div className="rounded-lg bg-blue-50 p-3">
+                    <div className="text-[10px] sm:text-xs text-blue-600 font-medium">נותר למשתנות</div>
+                    <div className="text-sm sm:text-lg font-bold text-blue-700">{formatCurrency(budgetFlow.availableForVariable)}</div>
                   </div>
-                  <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0 self-center hidden sm:block" />
-                  <div className={`flex-1 rounded-lg p-3 ${budgetFlow.netRemaining >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                    <div className={`text-xs font-medium ${budgetFlow.netRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>יתרה סופית</div>
-                    <div className={`text-lg font-bold ${budgetFlow.netRemaining >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(budgetFlow.netRemaining)}</div>
+                  <div className={`rounded-lg p-3 ${budgetFlow.netRemaining >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    <div className={`text-[10px] sm:text-xs font-medium ${budgetFlow.netRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>יתרה סופית</div>
+                    <div className={`text-sm sm:text-lg font-bold ${budgetFlow.netRemaining >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(budgetFlow.netRemaining)}</div>
                   </div>
                 </div>
               </CardContent>

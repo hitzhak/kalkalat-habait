@@ -292,7 +292,7 @@ function TransactionItem({
               )}
             >
               {isIncome ? '+' : '-'}
-              {transaction.amount.toLocaleString('he-IL')}₪
+              ₪{transaction.amount.toLocaleString('he-IL')}
             </p>
           </div>
           {transaction.notes && (

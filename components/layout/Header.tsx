@@ -9,7 +9,7 @@ function HeaderContent() {
   const { monthYearDisplay, goToNextMonth, goToPrevMonth } = useMonthNavigation();
 
   return (
-    <div className="flex items-center justify-center gap-4 p-4">
+    <div className="flex items-center justify-center gap-4 px-4 py-[1.125rem]">
       <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
         <ChevronRight className="h-5 w-5" />
       </Button>
@@ -26,7 +26,7 @@ function HeaderContent() {
 export function Header() {
   return (
     <header className="border-b bg-white shadow-sm">
-      <Suspense fallback={<div className="h-14" />}>
+      <Suspense fallback={<div className="h-[3.75rem]" />}>
         <HeaderContent />
       </Suspense>
     </header>

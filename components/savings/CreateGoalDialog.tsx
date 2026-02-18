@@ -233,8 +233,8 @@ export function CreateGoalDialog() {
                 <p className="text-sm text-slate-600">
                   יעד:{" "}
                   {targetAmount
-                    ? `${Number(targetAmount).toLocaleString("he-IL")}₪`
-                    : "0₪"}
+                    ? `₪${Number(targetAmount).toLocaleString("he-IL")}`
+                    : "₪0"}
                 </p>
               </div>
             </div>

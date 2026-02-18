@@ -63,7 +63,7 @@ export function RemainingBudget({ categories }: CategoryGridProps) {
                 onClick={() => setSelectedCategory(cat)}
                 className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full hover:bg-red-100 transition-colors"
               >
-                {cat.name} ({cat.remaining < 0 ? '-' : ''}{Math.abs(cat.remaining)}₪)
+                {cat.name} ({cat.remaining < 0 ? '-' : ''}₪{Math.abs(cat.remaining)})
               </button>
             ))}
           </div>

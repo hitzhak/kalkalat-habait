@@ -107,7 +107,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
 
       toast({
         title: "הפקדה נוספה בהצלחה",
-        description: `הופקדו ${Number(depositAmount).toLocaleString("he-IL")}₪`,
+        description: `הופקדו ₪${Number(depositAmount).toLocaleString("he-IL")}`,
       });
 
       setIsDepositOpen(false);
@@ -214,8 +214,8 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
           />
           <div className="flex justify-between items-center text-sm">
             <span className="font-medium text-slate-700">
-              {Number(goal.currentAmount).toLocaleString("he-IL")}₪ מתוך{" "}
-              {Number(goal.targetAmount).toLocaleString("he-IL")}₪
+              ₪{Number(goal.currentAmount).toLocaleString("he-IL")} מתוך{" "}
+              ₪{Number(goal.targetAmount).toLocaleString("he-IL")}
             </span>
             <span className="text-slate-500">{Math.round(progress)}%</span>
           </div>
@@ -237,7 +237,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
             <div className="flex items-center gap-2 text-slate-600">
               <Icons.TrendingUp className="w-4 h-4" />
               <span>
-                נדרש: {monthlyRequired.toLocaleString("he-IL")}₪/חודש
+                נדרש: ₪{monthlyRequired.toLocaleString("he-IL")}/חודש
               </span>
             </div>
           )}
@@ -284,7 +284,6 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     className="text-lg"
-                    autoFocus
                   />
                 </div>
 

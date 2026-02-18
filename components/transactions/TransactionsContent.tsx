@@ -83,19 +83,19 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
         <Card className="p-2.5 sm:p-4">
           <p className="text-[11px] sm:text-sm text-slate-600">הכנסות</p>
           <p className="mt-1 text-base sm:text-2xl font-bold text-green-600">
-            {summary?.totalIncome?.toLocaleString('he-IL')}₪
+            ₪{summary?.totalIncome?.toLocaleString('he-IL')}
           </p>
         </Card>
         <Card className="p-2.5 sm:p-4">
           <p className="text-[11px] sm:text-sm text-slate-600">הוצאות</p>
           <p className="mt-1 text-base sm:text-2xl font-bold text-red-600">
-            {summary?.totalExpenses?.toLocaleString('he-IL')}₪
+            ₪{summary?.totalExpenses?.toLocaleString('he-IL')}
           </p>
         </Card>
         <Card className="p-2.5 sm:p-4">
           <p className="text-[11px] sm:text-sm text-slate-600">מאזן</p>
           <p className={`mt-1 text-base sm:text-2xl font-bold ${(summary?.balance ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {(summary?.balance ?? 0) >= 0 ? '+' : ''}{(summary?.balance ?? 0).toLocaleString('he-IL')}₪
+            {(summary?.balance ?? 0) >= 0 ? '+' : ''}₪{(summary?.balance ?? 0).toLocaleString('he-IL')}
           </p>
         </Card>
       </div>
@@ -109,7 +109,7 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
           <TabsTrigger value="income" className="text-xs sm:text-sm">הכנסות</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab} className="mt-4">
+        <TabsContent value={activeTab} className="mt-4 min-h-[400px]">
           {filteredTransactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4">
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">

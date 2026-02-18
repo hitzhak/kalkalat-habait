@@ -9,7 +9,7 @@ import { getBudgetForMonth, upsertBudgetItem, copyBudgetFromPreviousMonth } from
 import { useMonthNavigation } from '@/hooks/useMonthNavigation';
 import { formatCurrency } from '@/lib/formatters';
 import { getBudgetTailwindBg } from '@/lib/colors';
-import { Check, Copy, Loader2, X } from 'lucide-react';
+import { Check, Copy, Loader2, Pencil, X } from 'lucide-react';
 import { toast } from 'sonner';
 import * as Icons from 'lucide-react';
 
@@ -163,7 +163,6 @@ export function BudgetAllocation() {
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             className="w-20 h-8 text-sm"
-                            autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleSave(cat.id);
                               if (e.key === 'Escape') setEditingId(null);
@@ -180,9 +179,10 @@ export function BudgetAllocation() {
                       ) : (
                         <button
                           onClick={() => { setEditingId(cat.id); setEditValue(cat.plannedAmount.toString()); }}
-                          className="text-sm font-bold text-slate-700 hover:text-cyan-600 transition-colors tabular-nums"
+                          className="group flex items-center gap-1.5 text-sm font-bold tabular-nums border border-dashed border-slate-300 rounded-md px-2.5 py-1.5 text-slate-700 hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50/50 transition-all"
                         >
                           {formatCurrency(cat.plannedAmount)}
+                          <Pencil className="h-3 w-3 text-slate-400 group-hover:text-cyan-500 transition-colors" />
                         </button>
                       )}
                     </div>

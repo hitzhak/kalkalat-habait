@@ -196,13 +196,13 @@ export function TransactionForm({
         await updateTransaction(transaction.id, data);
         toast({
           title: 'העסקה עודכנה',
-          description: `${categoryName} — ${data.amount.toLocaleString('he-IL')}₪`,
+          description: `${categoryName} — ₪${data.amount.toLocaleString('he-IL')}`,
         });
       } else {
         await createTransaction(data);
         toast({
           title: 'העסקה נוספה',
-          description: `${data.amount.toLocaleString('he-IL')}₪ ב${categoryName}`,
+          description: `₪${data.amount.toLocaleString('he-IL')} ב${categoryName}`,
         });
       }
 
@@ -324,7 +324,6 @@ export function TransactionForm({
             type="number"
             step="0.01"
             placeholder="0"
-            autoFocus
             inputMode="decimal"
             className="text-left pr-8 h-14 text-2xl font-bold"
             {...register('amount', {

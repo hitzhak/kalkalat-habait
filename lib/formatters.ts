@@ -1,7 +1,7 @@
 /**
  * פורמט מספר למטבע עברי (שקלים)
  * @param amount - הסכום לפורמט
- * @returns מחרוזת מעוצבת, לדוגמה: 1,234₪ או -1,234₪
+ * @returns מחרוזת מעוצבת, לדוגמה: ₪1,234 או -₪1,234
  */
 export function formatCurrency(amount: number): string {
   const formatted = new Intl.NumberFormat('he-IL', {
@@ -10,7 +10,7 @@ export function formatCurrency(amount: number): string {
   }).format(Math.abs(amount));
   
   const sign = amount < 0 ? '-' : '';
-  return `${sign}${formatted}₪`;
+  return `${sign}₪${formatted}`;
 }
 
 /**
