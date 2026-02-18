@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Receipt, LayoutList, BarChart3, Settings } from 'lucide-react';
+import { Home, Receipt, BarChart3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'ראשי', icon: Home },
   { href: '/transactions', label: 'עסקאות', icon: Receipt },
-  { href: '/budget', label: 'תקציב', icon: LayoutList },
   { href: '/reports', label: 'דוחות', icon: BarChart3 },
   { href: '/settings', label: 'הגדרות', icon: Settings },
 ];
@@ -18,7 +17,7 @@ export function MobileNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white/95 backdrop-blur-sm shadow-lg md:hidden">
-      <div className="grid h-14 grid-cols-5 items-center pb-safe">
+      <div className="grid h-14 grid-cols-4 items-center pb-safe">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

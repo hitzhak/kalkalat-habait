@@ -11,7 +11,9 @@ import { cn } from '@/lib/utils';
 import { TransactionType, CategoryType, Transaction } from '@/types';
 import { createTransaction, updateTransaction } from '@/app/actions/transactions';
 import { getParentCategories } from '@/app/actions/categories';
+import { getBudgetForMonth } from '@/app/actions/budgets';
 import { useMonthNavigation } from '@/hooks/useMonthNavigation';
+import { formatCurrency } from '@/lib/formatters';
 
 import {
   Sheet,
@@ -90,6 +92,13 @@ export function TransactionForm({
     transaction?.type || TransactionType.EXPENSE
   );
   const [isDesktop, setIsDesktop] = useState(false);
+  const [budgetData, setBudgetData] = useState<Array<{
+    id: string;
+    name: string;
+    plannedAmount: number;
+    actualSpent: number;
+    remaining: number;
+  }>>([]);
   const { selectedMonth, selectedYear } = useMonthNavigation();
   const { toast } = useToast();
 
@@ -123,6 +132,22 @@ export function TransactionForm({
     loadCategories();
   }, [selectedType]);
 
+  useEffect(() => {
+    if (open && selectedType === TransactionType.EXPENSE) {
+      getBudgetForMonth(selectedMonth, selectedYear)
+        .then((data) => {
+          setBudgetData(data.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            plannedAmount: d.plannedAmount,
+            actualSpent: d.actualSpent,
+            remaining: d.remaining,
+          })));
+        })
+        .catch(() => setBudgetData([]));
+    }
+  }, [open, selectedMonth, selectedYear, selectedType]);
+
   // ברירת מחדל: תאריך היום
   const defaultDate = transaction?.date
     ? new Date(transaction.date)
@@ -151,6 +176,7 @@ export function TransactionForm({
   });
 
   const selectedCategoryId = watch('categoryId');
+  const watchedAmount = watch('amount');
   const selectedDate = watch('date');
   const isFixed = watch('isFixed');
   const isRecurring = watch('isRecurring');
@@ -240,6 +266,26 @@ export function TransactionForm({
     );
   };
 
+  const BudgetFeedback = () => {
+    if (selectedType !== TransactionType.EXPENSE || !selectedCategoryId || !watchedAmount || watchedAmount <= 0) {
+      return null;
+    }
+    const catBudget = budgetData.find(b => b.id === selectedCategoryId);
+    if (!catBudget || catBudget.plannedAmount <= 0) return null;
+
+    const afterSpend = catBudget.remaining - watchedAmount;
+    const isOver = afterSpend < 0;
+
+    return (
+      <div className={`text-sm px-3 py-2 rounded-lg ${isOver ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+        {isOver
+          ? `⚠️ חריגה! נשאר ${formatCurrency(catBudget.remaining)}, מבקש ${formatCurrency(watchedAmount)}`
+          : `⚡ נשאר ב${catBudget.name}: ${formatCurrency(catBudget.remaining)} → ${formatCurrency(afterSpend)}`
+        }
+      </div>
+    );
+  };
+
   // תוכן הטופס
   const FormContent = () => (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -296,6 +342,9 @@ export function TransactionForm({
 
       {/* בחירת קטגוריה */}
       <CategorySelector />
+
+      {/* Live budget feedback */}
+      <BudgetFeedback />
 
       {/* כפתור פרטים נוספים */}
       <Button

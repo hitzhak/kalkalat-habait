@@ -2,6 +2,8 @@ import { getTransactionsPageData } from '@/app/actions/transactions';
 import { TransactionsContent } from '@/components/transactions/TransactionsContent';
 import { getMonthYearFromParams } from '@/lib/monthYear';
 
+export const revalidate = 60;
+
 interface PageProps {
   searchParams: { month?: string; year?: string };
 }

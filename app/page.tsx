@@ -2,6 +2,8 @@ import { getDashboardData } from './actions/dashboard';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { getMonthYearFromParams } from '@/lib/monthYear';
 
+export const revalidate = 60;
+
 interface PageProps {
   searchParams: { month?: string; year?: string };
 }

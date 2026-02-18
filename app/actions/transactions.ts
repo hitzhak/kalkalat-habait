@@ -523,3 +523,36 @@ export async function generateRecurringTransactions(month: number, year: number)
     throw new Error('שגיאה ביצירת עסקאות חוזרות');
   }
 }
+
+/**
+ * קבלת עסקאות לפי קטגוריה וחודש
+ */
+export async function getTransactionsByCategory(categoryId: string, month: number, year: number) {
+  try {
+    const validated = MonthYearSchema.parse({ month, year });
+    const startDate = new Date(validated.year, validated.month - 1, 1);
+    const endDate = new Date(validated.year, validated.month, 0, 23, 59, 59, 999);
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        categoryId,
+        date: { gte: startDate, lte: endDate },
+      },
+      include: {
+        category: {
+          select: { id: true, name: true, icon: true, color: true, type: true, isFixed: true },
+        },
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    return transactions.map((tx) => ({
+      ...tx,
+      amount: decimalToNumber(tx.amount),
+      date: tx.date.toISOString(),
+    }));
+  } catch (error) {
+    console.error('Error fetching category transactions:', error);
+    throw new Error('שגיאה בטעינת עסקאות הקטגוריה');
+  }
+}

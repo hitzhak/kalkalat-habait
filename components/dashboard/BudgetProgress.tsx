@@ -27,7 +27,7 @@ export function BudgetProgress({
           <div className="text-center py-8">
             <p className="text-slate-500 mb-4">לא הוגדר תקציב חודשי</p>
             <Link
-              href="/budget"
+              href="/settings"
               className="inline-flex items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 transition-colors"
             >
               הגדר תקציב עכשיו

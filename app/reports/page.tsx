@@ -13,11 +13,16 @@ import {
 } from '@/components/ui/select';
 import { useMonthNavigation } from '@/hooks/useMonthNavigation';
 import { getMonthlyReport, getComparisonData, getTrendData, getReportsPageData } from '@/app/actions/reports';
+import { getBudgetFlowSummary } from '@/app/actions/dashboard';
+import { getBudgetForMonth } from '@/app/actions/budgets';
+import { getSavingsGoals } from '@/app/actions/savings';
+import { getLoans, getLoansSummary } from '@/app/actions/loans';
 import type { MonthlyReportData, BudgetData } from '@/lib/export';
-import { Download, FileSpreadsheet, FileText, TrendingUp, BarChart3, Loader2 } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, TrendingUp, BarChart3, Loader2, Wallet, Target, Landmark, ArrowLeft } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { LineChart, Line } from 'recharts';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 
 // צבעים לגרפים
@@ -115,10 +120,42 @@ export default function ReportsPage() {
   const [loadingTrend, setLoadingTrend] = useState(false);
   const [trendMonths, setTrendMonths] = useState(12);
 
-  // טעינת כל הנתונים בקריאה מאוחדת אחת (3 round-trips → 1)
+  // State for Budget Flow (moved from dashboard)
+  const [budgetFlow, setBudgetFlow] = useState<any>(null);
+  const [budgetCategories, setBudgetCategories] = useState<any[]>([]);
+
+  // State for Savings & Loans
+  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
+  const [loans, setLoans] = useState<any[]>([]);
+  const [loansSummary, setLoansSummary] = useState<any>(null);
+
   useEffect(() => {
     loadAllData();
+    loadExtraData();
   }, [currentMonth, currentYear]);
+
+  const loadExtraData = async () => {
+    try {
+      const [flow, budget, goals, loansResult, loanSum] = await Promise.all([
+        getBudgetFlowSummary(currentMonth, currentYear),
+        getBudgetForMonth(currentMonth, currentYear),
+        getSavingsGoals(),
+        getLoans(),
+        getLoansSummary(),
+      ]);
+      setBudgetFlow(flow);
+      setBudgetCategories(budget);
+      setSavingsGoals(goals);
+      if (loansResult.success && 'data' in loansResult) {
+        setLoans(loansResult.data);
+      }
+      if (loanSum.success && 'data' in loanSum) {
+        setLoansSummary(loanSum.data);
+      }
+    } catch {
+      // non-critical, ignore
+    }
+  };
 
   const loadAllData = async () => {
     try {
@@ -215,21 +252,26 @@ export default function ReportsPage() {
 
       {/* Tabs ראשי */}
       <Tabs defaultValue="monthly" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="monthly" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="monthly" className="text-xs sm:text-sm">
             <span className="hidden sm:inline">דוח חודשי</span>
             <span className="sm:hidden">חודשי</span>
           </TabsTrigger>
-          <TabsTrigger value="comparison" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">השוואת חודשים</span>
+          <TabsTrigger value="budget" className="text-xs sm:text-sm">
+            <span className="hidden sm:inline">תקציב</span>
+            <span className="sm:hidden">תקציב</span>
+          </TabsTrigger>
+          <TabsTrigger value="comparison" className="text-xs sm:text-sm">
+            <span className="hidden sm:inline">השוואה</span>
             <span className="sm:hidden">השוואה</span>
           </TabsTrigger>
-          <TabsTrigger value="trends" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
+          <TabsTrigger value="trends" className="text-xs sm:text-sm">
             <span className="hidden sm:inline">מגמות</span>
             <span className="sm:hidden">מגמות</span>
+          </TabsTrigger>
+          <TabsTrigger value="more" className="text-xs sm:text-sm">
+            <span className="hidden sm:inline">חיסכון/הלוואות</span>
+            <span className="sm:hidden">עוד</span>
           </TabsTrigger>
         </TabsList>
 
@@ -940,6 +982,189 @@ export default function ReportsPage() {
               </Card>
             </>
           ) : null}
+        </TabsContent>
+
+        {/* Tab: Budget Flow & Budget vs Actual */}
+        <TabsContent value="budget" className="space-y-6">
+          {/* Budget Flow */}
+          {budgetFlow && budgetFlow.totalIncome > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5 text-cyan-600" />
+                  זרימת תקציב חודשי
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 text-center">
+                  <div className="flex-1 rounded-lg bg-emerald-50 p-3">
+                    <div className="text-xs text-emerald-600 font-medium">הכנסות</div>
+                    <div className="text-lg font-bold text-emerald-700">{formatCurrency(budgetFlow.totalIncome)}</div>
+                  </div>
+                  <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0 self-center hidden sm:block" />
+                  <div className="flex-1 rounded-lg bg-orange-50 p-3">
+                    <div className="text-xs text-orange-600 font-medium">קבועות</div>
+                    <div className="text-lg font-bold text-orange-700">-{formatCurrency(budgetFlow.fixedExpenses)}</div>
+                  </div>
+                  <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0 self-center hidden sm:block" />
+                  <div className="flex-1 rounded-lg bg-blue-50 p-3">
+                    <div className="text-xs text-blue-600 font-medium">נותר למשתנות</div>
+                    <div className="text-lg font-bold text-blue-700">{formatCurrency(budgetFlow.availableForVariable)}</div>
+                  </div>
+                  <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0 self-center hidden sm:block" />
+                  <div className={`flex-1 rounded-lg p-3 ${budgetFlow.netRemaining >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    <div className={`text-xs font-medium ${budgetFlow.netRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>יתרה סופית</div>
+                    <div className={`text-lg font-bold ${budgetFlow.netRemaining >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(budgetFlow.netRemaining)}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Budget vs Actual table */}
+          {budgetCategories.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>תקציב מול בפועל</CardTitle>
+                <CardDescription>השוואת הקצאת תקציב להוצאות בפועל</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-right py-3 px-4 font-medium">קטגוריה</th>
+                        <th className="text-right py-3 px-4 font-medium">תקציב</th>
+                        <th className="text-right py-3 px-4 font-medium">בפועל</th>
+                        <th className="text-right py-3 px-4 font-medium">נותר</th>
+                        <th className="text-right py-3 px-4 font-medium">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {budgetCategories
+                        .filter((c: any) => c.plannedAmount > 0)
+                        .map((cat: any) => (
+                        <tr key={cat.id} className="border-b">
+                          <td className="py-3 px-4 font-medium">{cat.name}</td>
+                          <td className="py-3 px-4">{formatCurrency(cat.plannedAmount)}</td>
+                          <td className="py-3 px-4">{formatCurrency(cat.actualSpent)}</td>
+                          <td className={`py-3 px-4 font-bold ${cat.remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(cat.remaining)}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Progress
+                                value={Math.min(cat.usagePercent, 100)}
+                                className="h-2 w-16"
+                                indicatorClassName={cat.usagePercent >= 100 ? 'bg-red-500' : cat.usagePercent >= 80 ? 'bg-yellow-500' : 'bg-emerald-500'}
+                              />
+                              <span className="text-xs">{Math.round(cat.usagePercent)}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!budgetFlow && budgetCategories.length === 0 && (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Wallet className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-muted-foreground">אין נתוני תקציב להצגה</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Tab: Savings & Loans */}
+        <TabsContent value="more" className="space-y-6">
+          {/* Savings Goals */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-emerald-600" />
+                מטרות חיסכון
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {savingsGoals.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6">אין מטרות חיסכון עדיין</p>
+              ) : (
+                <div className="space-y-4">
+                  {savingsGoals.map((goal: any) => {
+                    const pct = goal.targetAmount > 0 ? (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100 : 0;
+                    return (
+                      <div key={goal.id} className="space-y-2 p-3 rounded-lg bg-slate-50">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{goal.name}</span>
+                          <span className="text-sm text-slate-500">
+                            {formatCurrency(Number(goal.currentAmount))} / {formatCurrency(Number(goal.targetAmount))}
+                          </span>
+                        </div>
+                        <Progress
+                          value={Math.min(pct, 100)}
+                          className="h-2"
+                          indicatorClassName={pct >= 100 ? 'bg-emerald-500' : 'bg-cyan-500'}
+                        />
+                        <div className="text-xs text-slate-400 text-left">{Math.round(pct)}%</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Loans */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Landmark className="h-5 w-5 text-amber-600" />
+                הלוואות וחובות
+              </CardTitle>
+              {loansSummary && (
+                <CardDescription>
+                  סה&quot;כ חוב: {formatCurrency(Number(loansSummary.totalDebt || 0))} · תשלום חודשי: {formatCurrency(Number(loansSummary.totalMonthlyPayment || 0))}
+                </CardDescription>
+              )}
+            </CardHeader>
+            <CardContent>
+              {loans.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6">אין הלוואות פעילות</p>
+              ) : (
+                <div className="space-y-3">
+                  {loans.map((loan: any) => {
+                    const paidPct = Number(loan.originalAmount) > 0
+                      ? ((Number(loan.originalAmount) - Number(loan.remainingAmount)) / Number(loan.originalAmount)) * 100
+                      : 0;
+                    return (
+                      <div key={loan.id} className="p-3 rounded-lg bg-slate-50 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{loan.name}</span>
+                          <span className="text-sm font-bold text-slate-700">
+                            {formatCurrency(Number(loan.remainingAmount))}
+                          </span>
+                        </div>
+                        <Progress
+                          value={Math.min(paidPct, 100)}
+                          className="h-2"
+                          indicatorClassName="bg-amber-500"
+                        />
+                        <div className="flex justify-between text-xs text-slate-400">
+                          <span>שולם {Math.round(paidPct)}%</span>
+                          <span>תשלום: {formatCurrency(Number(loan.monthlyPayment))}/חודש</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

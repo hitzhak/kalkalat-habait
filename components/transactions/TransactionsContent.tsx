@@ -8,7 +8,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type TabValue = 'all' | 'income' | 'expense' | 'fixed';
+type TabValue = 'all' | 'variable' | 'fixed' | 'income';
 
 interface Transaction {
   id: string;
@@ -43,7 +43,7 @@ interface TransactionsContentProps {
 export function TransactionsContent({ initialTransactions, initialSummary, month, year }: TransactionsContentProps) {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions as Transaction[]);
   const [summary, setSummary] = useState<TransactionSummary | null>(initialSummary);
-  const [activeTab, setActiveTab] = useState<TabValue>('all');
+  const [activeTab, setActiveTab] = useState<TabValue>('variable');
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -59,9 +59,9 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
 
   const filteredTransactions = transactions.filter((tx) => {
     switch (activeTab) {
-      case 'income': return tx.type === TransactionType.INCOME;
-      case 'expense': return tx.type === TransactionType.EXPENSE;
+      case 'variable': return tx.type === TransactionType.EXPENSE && !tx.isFixed;
       case 'fixed': return tx.isFixed;
+      case 'income': return tx.type === TransactionType.INCOME;
       default: return true;
     }
   });
@@ -78,7 +78,7 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
 
   return (
     <div className="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 pb-24 md:pb-6">
-      {/* Summary cards - compact on mobile */}
+      {/* Summary cards */}
       <div className="grid gap-2 sm:gap-4 grid-cols-3">
         <Card className="p-2.5 sm:p-4">
           <p className="text-[11px] sm:text-sm text-slate-600">הכנסות</p>
@@ -104,9 +104,9 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all" className="text-xs sm:text-sm">הכל</TabsTrigger>
-          <TabsTrigger value="income" className="text-xs sm:text-sm">הכנסות</TabsTrigger>
-          <TabsTrigger value="expense" className="text-xs sm:text-sm">הוצאות</TabsTrigger>
+          <TabsTrigger value="variable" className="text-xs sm:text-sm">משתנות</TabsTrigger>
           <TabsTrigger value="fixed" className="text-xs sm:text-sm">קבועות</TabsTrigger>
+          <TabsTrigger value="income" className="text-xs sm:text-sm">הכנסות</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-4">

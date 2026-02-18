@@ -164,3 +164,31 @@ html, body {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+/* Budget progress bar animation */
+@keyframes progressFill {
+  from { transform: translateX(100%); }
+}
+
+[data-state="complete"] > [role="progressbar"] > div,
+.progress-animated > div {
+  animation: progressFill 600ms ease-out;
+}
+
+/* Number count-up illusion via opacity */
+.hero-number {
+  animation: fadeInUp 400ms ease-out both;
+}
+
+/* Category card stagger */
+.category-grid > * {
+  animation: fadeInUp 300ms ease-out both;
+}
+.category-grid > *:nth-child(1) { animation-delay: 0ms; }
+.category-grid > *:nth-child(2) { animation-delay: 50ms; }
+.category-grid > *:nth-child(3) { animation-delay: 100ms; }
+.category-grid > *:nth-child(4) { animation-delay: 150ms; }
+.category-grid > *:nth-child(5) { animation-delay: 200ms; }
+.category-grid > *:nth-child(6) { animation-delay: 250ms; }
+.category-grid > *:nth-child(7) { animation-delay: 300ms; }
+.category-grid > *:nth-child(8) { animation-delay: 350ms; }

@@ -59,6 +59,7 @@ import { CategoryType } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { BudgetAllocation } from '@/components/settings/BudgetAllocation';
 
 // פורמט מטבע
 function formatCurrency(amount: number): string {
@@ -555,7 +556,10 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* 2. ניהול קטגוריות */}
+      {/* 2. תקציב חודשי */}
+      <BudgetAllocation />
+
+      {/* 3. ניהול קטגוריות */}
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

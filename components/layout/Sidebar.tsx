@@ -6,20 +6,14 @@ import {
   Home,
   Wallet,
   Receipt,
-  LayoutList,
-  Target,
-  Landmark,
   BarChart3,
   Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', label: 'דשבורד', icon: Home },
-  { href: '/transactions', label: 'הכנסות והוצאות', icon: Receipt },
-  { href: '/budget', label: 'תקציב', icon: LayoutList },
-  { href: '/savings', label: 'מטרות חיסכון', icon: Target },
-  { href: '/loans', label: 'הלוואות וחובות', icon: Landmark },
+  { href: '/', label: 'ראשי', icon: Home },
+  { href: '/transactions', label: 'עסקאות', icon: Receipt },
   { href: '/reports', label: 'דוחות', icon: BarChart3 },
 ];
 
@@ -34,13 +28,11 @@ export function Sidebar() {
 
   return (
     <aside className="fixed right-0 top-0 z-40 hidden h-screen w-60 flex-col border-l bg-white shadow-sm md:flex">
-      {/* לוגו */}
       <div className="flex items-center gap-2 border-b p-6">
         <Wallet className="h-6 w-6 text-cyan-600" />
         <h1 className="text-xl font-bold text-slate-800">כלכלת הבית</h1>
       </div>
 
-      {/* ניווט ראשי */}
       <nav className="flex-1 space-y-1 p-4">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -64,7 +56,6 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* הגדרות בתחתית */}
       <div className="border-t p-4">
         <Link
           href={bottomNavItem.href}

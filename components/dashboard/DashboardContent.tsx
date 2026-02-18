@@ -1,32 +1,21 @@
 'use client';
 
 import { getDashboardData } from '@/app/actions/dashboard';
-import { SummaryCards } from '@/components/dashboard/SummaryCards';
+import { BudgetSummaryHero } from '@/components/dashboard/BudgetSummaryHero';
+import { AffordabilityChecker } from '@/components/dashboard/AffordabilityChecker';
 import { RemainingBudget } from '@/components/dashboard/RemainingBudget';
 import { BudgetAlerts } from '@/components/dashboard/BudgetAlerts';
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
-import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
-import { WeeklyBarChart } from '@/components/charts/WeeklyBarChart';
 import { DbConnectionError } from '@/components/DbConnectionError';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { Plus, ArrowLeft, Wallet } from 'lucide-react';
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('he-IL', {
-    style: 'currency',
-    currency: 'ILS',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+import { Plus, Wallet } from 'lucide-react';
 
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full max-w-md text-center space-y-5">
         <div className="w-20 h-20 mx-auto bg-cyan-50 rounded-full flex items-center justify-center">
-          <Plus className="w-10 h-10 text-cyan-400" />
+          <Wallet className="w-10 h-10 text-cyan-400" />
         </div>
         <div className="space-y-2">
           <h2 className="text-xl font-bold text-slate-800">
@@ -52,7 +41,7 @@ function EmptyState() {
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/budget"
+            href="/settings"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-cyan-700 transition-colors"
           >
             הגדר תקציב
@@ -79,7 +68,7 @@ interface DashboardContentProps {
   year: number;
 }
 
-export function DashboardContent({ data, error, month, year }: DashboardContentProps) {
+export function DashboardContent({ data, error }: DashboardContentProps) {
   if (error) return <DbConnectionError />;
   if (!data) return <EmptyState />;
 
@@ -93,8 +82,10 @@ export function DashboardContent({ data, error, month, year }: DashboardContentP
 
   if (!hasData) return <EmptyState />;
 
-  const availableForVariable = data.budgetFlow.availableForVariable;
-  const averageWeeklyBudget = availableForVariable > 0 ? availableForVariable / 4.5 : 0;
+  const totalBudget = data.budgetSummary.totalBudget;
+  const totalSpent = data.budgetSummary.totalSpent;
+  const remaining = totalBudget - totalSpent;
+  const utilizationPercent = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
   const monthNames = [
     'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -115,7 +106,7 @@ export function DashboardContent({ data, error, month, year }: DashboardContentP
               </div>
               <p className="text-sm text-cyan-900 truncate">
                 <span className="font-medium">{recurringGenerated.count} עסקאות חוזרות</span>
-                {' '}נוצרו ל{monthNames[month - 1]}
+                {' '}נוצרו
               </p>
             </div>
             <Link href="/transactions" className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-700 transition-colors shrink-0">
@@ -125,67 +116,30 @@ export function DashboardContent({ data, error, month, year }: DashboardContentP
         </div>
       )}
 
-      {/* Summary strip */}
-      <SummaryCards
-        totalIncome={data.summary.totalIncome}
-        totalExpenses={data.summary.totalExpenses}
-        balance={data.summary.balance}
-        previousMonthIncome={data.previousSummary.totalIncome}
-        previousMonthExpenses={data.previousSummary.totalExpenses}
-        previousMonthBalance={data.previousSummary.balance}
+      {/* HERO: Budget summary */}
+      <BudgetSummaryHero
+        totalBudget={totalBudget}
+        totalSpent={totalSpent}
+        remaining={remaining}
+        utilizationPercent={utilizationPercent}
       />
 
-      {/* HERO: Remaining Budget per Category */}
+      {/* "Can I afford?" checker */}
+      <AffordabilityChecker
+        categories={data.budgetByCategory}
+        totalRemaining={remaining}
+      />
+
+      {/* Category grid */}
       <RemainingBudget
         categories={data.budgetByCategory}
-        totalRemaining={data.budgetSummary.totalBudget - data.budgetSummary.totalSpent}
-        totalBudget={data.budgetSummary.totalBudget}
-        totalSpent={data.budgetSummary.totalSpent}
+        totalRemaining={remaining}
+        totalBudget={totalBudget}
+        totalSpent={totalSpent}
       />
 
       {/* Budget alerts */}
       {data.alerts.length > 0 && <BudgetAlerts alerts={data.alerts} />}
-
-      {/* Budget flow — desktop only */}
-      {data.budgetFlow.totalIncome > 0 && (
-        <Card className="hidden md:block">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Wallet className="h-5 w-5 text-cyan-600" />
-              זרימת תקציב חודשי
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-0 text-center">
-              <div className="flex-1 rounded-lg bg-emerald-50 p-3">
-                <div className="text-xs text-emerald-600 font-medium">הכנסות</div>
-                <div className="text-lg font-bold text-emerald-700">{formatCurrency(data.budgetFlow.totalIncome)}</div>
-              </div>
-              <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0" />
-              <div className="flex-1 rounded-lg bg-orange-50 p-3">
-                <div className="text-xs text-orange-600 font-medium">קבועות (ב-{data.budgetFlow.payday} לחודש)</div>
-                <div className="text-lg font-bold text-orange-700">-{formatCurrency(data.budgetFlow.fixedExpenses)}</div>
-              </div>
-              <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0" />
-              <div className="flex-1 rounded-lg bg-blue-50 p-3">
-                <div className="text-xs text-blue-600 font-medium">נותר למשתנות</div>
-                <div className="text-lg font-bold text-blue-700">{formatCurrency(data.budgetFlow.availableForVariable)}</div>
-              </div>
-              <ArrowLeft className="h-5 w-5 text-slate-400 mx-1 shrink-0" />
-              <div className={`flex-1 rounded-lg p-3 ${data.budgetFlow.netRemaining >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                <div className={`text-xs font-medium ${data.budgetFlow.netRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>יתרה סופית</div>
-                <div className={`text-lg font-bold ${data.budgetFlow.netRemaining >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(data.budgetFlow.netRemaining)}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Charts — desktop only */}
-      <div className="hidden md:grid md:grid-cols-2 gap-4">
-        <ExpensePieChart data={data.expensesByCategory} />
-        <WeeklyBarChart data={data.weeklyExpenses} averageWeeklyBudget={averageWeeklyBudget} />
-      </div>
 
       {/* Recent transactions */}
       <RecentTransactions transactions={transactions} />
