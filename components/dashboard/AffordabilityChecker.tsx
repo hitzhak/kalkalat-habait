@@ -43,12 +43,12 @@ export function AffordabilityChecker({ categories, totalRemaining, onCheck }: Af
   };
 
   return (
-    <Card className="border-dashed border-cyan-300 bg-cyan-50/30">
+    <Card className="border-dashed border-border bg-primary-50/30">
       <CardContent className="py-4 px-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-600 shrink-0">💡 רוצה להוציא</span>
+          <span className="text-sm font-medium text-muted-foreground shrink-0">💡 רוצה להוציא</span>
           <div className="relative flex-1 max-w-[160px]">
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">₪</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₪</span>
             <Input
               type="number"
               inputMode="decimal"
@@ -66,13 +66,13 @@ export function AffordabilityChecker({ categories, totalRemaining, onCheck }: Af
             size="sm"
             onClick={handleCheck}
             disabled={!amount || parseFloat(amount) <= 0}
-            className="bg-cyan-600 hover:bg-cyan-700 h-9"
+            className="bg-primary-500 hover:bg-primary-600 h-9"
           >
             <Search className="h-4 w-4 ml-1" />
             בדוק
           </Button>
           {checkedAmount && (
-            <Button size="sm" variant="ghost" onClick={clearCheck} className="h-9 text-xs text-slate-500">
+            <Button size="sm" variant="ghost" onClick={clearCheck} className="h-9 text-xs text-muted-foreground">
               נקה
             </Button>
           )}
@@ -82,7 +82,7 @@ export function AffordabilityChecker({ categories, totalRemaining, onCheck }: Af
           <div className="mt-3 space-y-1.5">
             {/* Overall check */}
             <div className={`text-sm font-medium px-2 py-1 rounded ${
-              checkedAmount <= totalRemaining ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'
+              checkedAmount <= totalRemaining ? 'text-income-500 bg-primary-50' : 'text-expense-500 bg-secondary'
             }`}>
               {checkedAmount <= totalRemaining
                 ? `✅ מהתקציב הכללי: ${formatCurrency(totalRemaining)} → ${formatCurrency(totalRemaining - checkedAmount)}`
@@ -98,16 +98,16 @@ export function AffordabilityChecker({ categories, totalRemaining, onCheck }: Af
                   const canAfford = cat.remaining >= checkedAmount;
                   const willBeWarning = canAfford && (cat.remaining - checkedAmount) < (cat.plannedAmount * 0.2);
                   let indicator = '✅';
-                  let textColor = 'text-green-700';
-                  let bg = 'bg-green-50';
+                  let textColor = 'text-income-500';
+                  let bg = 'bg-primary-50';
                   if (!canAfford) {
                     indicator = '❌';
-                    textColor = 'text-red-700';
-                    bg = 'bg-red-50';
+                    textColor = 'text-expense-500';
+                    bg = 'bg-secondary';
                   } else if (willBeWarning) {
                     indicator = '⚠️';
-                    textColor = 'text-yellow-700';
-                    bg = 'bg-yellow-50';
+                    textColor = 'text-warning-500';
+                    bg = 'bg-warning-500/20';
                   }
 
                   return (

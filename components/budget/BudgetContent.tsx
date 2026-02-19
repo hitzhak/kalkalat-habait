@@ -83,7 +83,7 @@ export function BudgetContent({ initialBudgetData, initialSummary, month, year }
     <div className="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
           תקציב חודשי
         </h1>
         <Button variant="outline" size="sm" onClick={handleCopyFromPreviousMonth} disabled={copying} className="gap-1 sm:gap-2 text-xs sm:text-sm">
@@ -98,26 +98,26 @@ export function BudgetContent({ initialBudgetData, initialSummary, month, year }
         <Card className="p-3 sm:p-4 md:p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div className="space-y-0.5">
-              <p className="text-xs sm:text-sm text-slate-600">סה&quot;כ מתוכנן</p>
-              <p className="text-lg sm:text-xl font-bold text-slate-800">{formatCurrency(summary.totalPlanned)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">סה&quot;כ מתוכנן</p>
+              <p className="text-lg sm:text-xl font-bold text-foreground">{formatCurrency(summary.totalPlanned)}</p>
             </div>
             <div className="space-y-0.5">
-              <p className="text-xs sm:text-sm text-slate-600">סה&quot;כ בפועל</p>
-              <p className="text-lg sm:text-xl font-bold text-cyan-600">{formatCurrency(summary.totalActual)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">סה&quot;כ בפועל</p>
+              <p className="text-lg sm:text-xl font-bold text-primary-500">{formatCurrency(summary.totalActual)}</p>
             </div>
             <div className="space-y-0.5">
-              <p className="text-xs sm:text-sm text-slate-600">סה&quot;כ נותר</p>
-              <p className={`text-lg sm:text-xl font-bold ${summary.totalRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              <p className="text-xs sm:text-sm text-muted-foreground">סה&quot;כ נותר</p>
+              <p className={`text-lg sm:text-xl font-bold ${summary.totalRemaining >= 0 ? 'text-income-500' : 'text-expense-500'}`}>
                 {formatCurrency(summary.totalRemaining)}
               </p>
             </div>
             <div className="space-y-0.5">
-              <p className="text-xs sm:text-sm text-slate-600">ניצול</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">ניצול</p>
               <p className={`text-lg sm:text-xl font-bold ${
-                summary.totalUsagePercent >= 100 ? 'text-red-600' :
+                summary.totalUsagePercent >= 100 ? 'text-expense-500' :
                 summary.totalUsagePercent >= 90 ? 'text-orange-600' :
-                summary.totalUsagePercent >= 70 ? 'text-yellow-600' :
-                'text-emerald-600'
+                summary.totalUsagePercent >= 70 ? 'text-warning-500' :
+                'text-income-500'
               }`}>
                 {summary.totalUsagePercent.toFixed(0)}%
               </p>
@@ -130,13 +130,13 @@ export function BudgetContent({ initialBudgetData, initialSummary, month, year }
       {budgetData.length === 0 ? (
         <Card className="p-4 sm:p-6">
           <div className="flex flex-col items-center justify-center py-12 px-4">
-            <div className="w-20 h-20 bg-cyan-50 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-10 h-10 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-10 h-10 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">לא הוגדר תקציב</h2>
-            <p className="text-slate-500 text-center text-sm max-w-md mb-4">
+            <h2 className="text-xl font-bold text-foreground mb-2">לא הוגדר תקציב</h2>
+            <p className="text-muted-foreground text-center text-sm max-w-md mb-4">
               התחל בהגדרת תקציב חודשי כדי לעקוב אחר ההוצאות שלך
             </p>
             <Button onClick={handleCopyFromPreviousMonth} disabled={copying} className="gap-2">

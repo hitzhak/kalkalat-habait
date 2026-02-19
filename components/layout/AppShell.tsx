@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavigationProgress />
-      <div className="flex min-h-screen bg-slate-50">
+        <div className="flex min-h-screen bg-background">
         <Sidebar />
         <div className="flex flex-1 flex-col md:mr-60">
           <Header />

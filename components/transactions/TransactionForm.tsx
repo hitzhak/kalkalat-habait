@@ -241,10 +241,10 @@ export function TransactionForm({
           >
             <CategoryIcon icon={selectedCategory.icon} color={selectedCategory.color} />
             <span className="mr-2 font-medium">{selectedCategory.name}</span>
-            <span className="text-xs text-slate-400 mr-auto">שנה</span>
+            <span className="text-xs text-muted-foreground mr-auto">שנה</span>
           </Button>
         ) : (
-          <div className="max-h-[140px] overflow-y-auto rounded-lg border border-slate-100 p-1.5">
+          <div className="max-h-[140px] overflow-y-auto rounded-lg border border-border/50 p-1.5">
             <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-4 sm:gap-2">
               {categories.map((category) => (
                 <button
@@ -253,8 +253,8 @@ export function TransactionForm({
                   className={cn(
                     'flex flex-col items-center gap-1 p-2 rounded-lg border transition-all text-center',
                     selectedCategoryId === category.id
-                      ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-500'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500'
+                      : 'border-border hover:border-border hover:bg-secondary'
                   )}
                   onClick={() => setValue('categoryId', category.id)}
                 >
@@ -283,7 +283,7 @@ export function TransactionForm({
     const isOver = afterSpend < 0;
 
     return (
-      <div className={`text-sm px-3 py-2 rounded-lg ${isOver ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+      <div className={`text-sm px-3 py-2 rounded-lg ${isOver ? 'bg-expense-50 text-expense-600' : 'bg-income-50 text-income-600'}`}>
         {isOver
           ? `⚠️ חריגה! נשאר ${formatCurrency(catBudget.remaining)}, מבקש ${formatCurrency(watchedAmount)}`
           : `⚡ נשאר ב${catBudget.name}: ${formatCurrency(catBudget.remaining)} → ${formatCurrency(afterSpend)}`
@@ -302,7 +302,7 @@ export function TransactionForm({
           variant={selectedType === TransactionType.EXPENSE ? 'default' : 'outline'}
           className={cn(
             'flex-1',
-            selectedType === TransactionType.EXPENSE && 'bg-red-500 hover:bg-red-600'
+            selectedType === TransactionType.EXPENSE && 'bg-expense-500 hover:bg-expense-600'
           )}
           onClick={() => setSelectedType(TransactionType.EXPENSE)}
         >
@@ -313,7 +313,7 @@ export function TransactionForm({
           variant={selectedType === TransactionType.INCOME ? 'default' : 'outline'}
           className={cn(
             'flex-1',
-            selectedType === TransactionType.INCOME && 'bg-green-500 hover:bg-green-600'
+            selectedType === TransactionType.INCOME && 'bg-income-500 hover:bg-income-600'
           )}
           onClick={() => setSelectedType(TransactionType.INCOME)}
         >
@@ -340,7 +340,7 @@ export function TransactionForm({
               },
             })}
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-slate-400 font-medium">₪</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground font-medium">₪</span>
         </div>
         {errors.amount && <p className="text-sm text-red-500">{String(errors.amount.message)}</p>}
       </div>
@@ -397,7 +397,7 @@ export function TransactionForm({
             <input
               type="checkbox"
               id="isFixed"
-              className="h-5 w-5 rounded border-slate-300"
+              className="h-5 w-5 rounded border-border"
               {...register('isFixed')}
             />
           </div>
@@ -408,7 +408,7 @@ export function TransactionForm({
             <input
               type="checkbox"
               id="isRecurring"
-              className="h-5 w-5 rounded border-slate-300"
+              className="h-5 w-5 rounded border-border"
               {...register('isRecurring')}
             />
           </div>

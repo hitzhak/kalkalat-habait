@@ -116,9 +116,9 @@ export function BudgetAllocation() {
         ) : (
           <div className="space-y-4">
             {/* Total summary */}
-            <div className="rounded-lg bg-slate-50 p-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-600">סה&quot;כ מוקצה</span>
-              <span className="text-lg font-bold text-slate-800">{formatCurrency(totalAllocated)}</span>
+            <div className="rounded-lg bg-secondary p-3 flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">סה&quot;כ מוקצה</span>
+              <span className="text-lg font-bold text-foreground">{formatCurrency(totalAllocated)}</span>
             </div>
 
             {/* Category list */}
@@ -129,13 +129,13 @@ export function BudgetAllocation() {
                 const IconEl = getCategoryIcon(cat.icon);
 
                 return (
-                  <div key={cat.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50">
+                  <div key={cat.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-secondary">
                     {/* Icon + Name */}
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {IconEl && (
                         <div
                           className="w-7 h-7 rounded flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: (cat.color || '#0891B2') + '20', color: cat.color || '#0891B2' }}
+                          style={{ backgroundColor: (cat.color || '#0073EA') + '20', color: cat.color || '#0073EA' }}
                         >
                           {IconEl}
                         </div>
@@ -170,19 +170,19 @@ export function BudgetAllocation() {
                             disabled={saving}
                           />
                           <button onClick={() => handleSave(cat.id)} disabled={saving} className="p-1">
-                            <Check className="h-4 w-4 text-emerald-600" />
+                            <Check className="h-4 w-4 text-income-500" />
                           </button>
                           <button onClick={() => setEditingId(null)} disabled={saving} className="p-1">
-                            <X className="h-4 w-4 text-red-500" />
+                            <X className="h-4 w-4 text-expense-500" />
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => { setEditingId(cat.id); setEditValue(cat.plannedAmount.toString()); }}
-                          className="group flex items-center gap-1.5 text-sm font-bold tabular-nums border border-dashed border-slate-300 rounded-md px-2.5 py-1.5 text-slate-700 hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50/50 transition-all"
+                          className="group flex items-center gap-1.5 text-sm font-bold tabular-nums border border-dashed border-border rounded-md px-2.5 py-1.5 text-foreground hover:border-primary-500 hover:text-primary-500 hover:bg-primary-50/50 transition-all"
                         >
                           {formatCurrency(cat.plannedAmount)}
-                          <Pencil className="h-3 w-3 text-slate-400 group-hover:text-cyan-500 transition-colors" />
+                          <Pencil className="h-3 w-3 text-muted-foreground group-hover:text-primary-500 transition-colors" />
                         </button>
                       )}
                     </div>

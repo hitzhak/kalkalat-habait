@@ -23,7 +23,7 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
           <CardTitle className="text-lg">הוצאות לפי קטגוריה</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center text-slate-500">
+          <div className="h-64 flex items-center justify-center text-muted-foreground">
             אין נתוני הוצאות להצגה
           </div>
         </CardContent>
@@ -75,12 +75,12 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
       const data = payload[0];
       const percent = ((data.value / total) * 100).toFixed(1);
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-slate-200">
-          <p className="font-semibold text-slate-800">{data.name}</p>
-          <p className="text-sm text-slate-600">
+        <div className="bg-white p-3 rounded-lg shadow-lg border border-border">
+          <p className="font-semibold text-foreground">{data.name}</p>
+          <p className="text-sm text-muted-foreground">
             {formatCurrency(data.value)}
           </p>
-          <p className="text-xs text-slate-500">{percent}%</p>
+          <p className="text-xs text-muted-foreground">{percent}%</p>
         </div>
       );
     }
@@ -124,7 +124,7 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
                 align="center"
                 iconType="circle"
                 formatter={(value) => (
-                  <span className="text-sm text-slate-700">{value}</span>
+                  <span className="text-sm text-foreground">{value}</span>
                 )}
               />
             </PieChart>

@@ -56,7 +56,7 @@ export function BudgetAlerts({ alerts }: BudgetAlertsProps) {
                       <p className={`font-medium ${alertColor}`}>
                         {alert.categoryName}
                       </p>
-                      <p className="text-sm text-slate-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {formatCurrency(alert.spentAmount)} מתוך{' '}
                         {formatCurrency(alert.budgetAmount)}
                       </p>

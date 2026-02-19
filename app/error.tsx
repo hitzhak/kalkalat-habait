@@ -27,8 +27,8 @@ export default function Error({
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
           <AlertCircle className="h-7 w-7 text-red-600" />
         </div>
-        <h2 className="text-xl font-semibold text-slate-800">אירעה שגיאה</h2>
-        <p className="text-slate-600">
+        <h2 className="text-xl font-semibold text-foreground">אירעה שגיאה</h2>
+        <p className="text-muted-foreground">
           {isDbError
             ? 'לא ניתן להתחבר למסד הנתונים. ייתכן שמשתני הסביבה (DATABASE_URL / DIRECT_URL) ב-Vercel לא מוגדרים או שהפרויקט ב-Supabase מושהה.'
             : 'משהו השתבש. נסה לרענן את הדף או לחזור לדף הבית.'}

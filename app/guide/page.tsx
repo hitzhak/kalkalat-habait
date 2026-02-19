@@ -18,7 +18,7 @@ const sections = [
   {
     icon: Wallet,
     title: 'מה זה כלכלת הבית?',
-    color: '#0891B2',
+    color: '#0073EA',
     content:
       'אפליקציה לניהול תקציב משפחתי חודשי. עוקבים אחרי הכנסות והוצאות, מגדירים תקציב לכל קטגוריה, ורואים בזמן אמת כמה נשאר להוציא.',
   },
@@ -85,7 +85,7 @@ export default function GuidePage() {
     <div className="p-3 sm:p-4 md:p-6 space-y-6 max-w-3xl mx-auto pb-24 md:pb-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-          <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 shrink-0 text-cyan-600" />
+          <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 shrink-0 text-primary-500" />
           מדריך שימוש
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -110,7 +110,7 @@ export default function GuidePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-slate-600 leading-relaxed">{section.content}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
               </CardContent>
             </Card>
           );
@@ -124,8 +124,8 @@ export default function GuidePage() {
         <CardContent>
           <ul className="space-y-2">
             {tips.map((tip, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
-                <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+              <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                   {idx + 1}
                 </span>
                 {tip}
@@ -138,7 +138,7 @@ export default function GuidePage() {
       <div className="flex justify-center">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-6 py-3 text-sm font-medium text-white hover:bg-cyan-700 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-500 px-6 py-3 text-sm font-semibold text-white hover:bg-primary-600 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
           חזרה לדשבורד

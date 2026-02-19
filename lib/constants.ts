@@ -198,7 +198,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: DefaultCategory[] = [
   {
     name: 'רכב',
     icon: 'Car',
-    color: '#06B6D4', // cyan-500
+    color: '#0073EA',
     type: CategoryType.EXPENSE,
     isFixed: false,
     subCategories: ['דלק', 'שטיפה', 'טיפולים'],
@@ -259,13 +259,13 @@ export const APP_CONFIG = {
 // =========== צבעים ===========
 
 export const COLORS = {
-  primary: '#0891B2', // cyan-600
-  success: '#10B981', // emerald-500
-  danger: '#EF4444', // red-500
-  warning: '#F59E0B', // amber-500
-  info: '#3B82F6', // blue-500
-  background: '#F8FAFC', // slate-50
-  cardBg: '#FFFFFF', // white
-  textPrimary: '#1E293B', // slate-800
-  textSecondary: '#64748B', // slate-500
+  primary: '#0073EA',
+  success: '#00C875',
+  danger: '#E2445C',
+  warning: '#FDAB3D',
+  info: '#579BFC',
+  background: '#F4F5F7',
+  cardBg: '#FFFFFF',
+  textPrimary: '#323338',
+  textSecondary: '#676879',
 };

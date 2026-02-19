@@ -12,7 +12,7 @@ function HeaderContent() {
   return (
     <div className="flex items-center justify-between px-4 py-[1.125rem]">
       <Link href="/guide" className="md:hidden">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary-500">
           <HelpCircle className="h-5 w-5" />
         </Button>
       </Link>
@@ -21,7 +21,7 @@ function HeaderContent() {
           <ChevronRight className="h-5 w-5" />
         </Button>
         <div className="min-w-[180px] text-center">
-          <h2 className="text-lg font-semibold text-slate-800">{monthYearDisplay}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{monthYearDisplay}</h2>
         </div>
         <Button variant="ghost" size="icon" onClick={goToPrevMonth} className="h-8 w-8">
           <ChevronLeft className="h-5 w-5" />

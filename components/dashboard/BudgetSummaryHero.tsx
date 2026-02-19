@@ -22,7 +22,7 @@ export function BudgetSummaryHero({
   const clampedPercent = Math.min(utilizationPercent, 100);
   const isOverBudget = remaining < 0;
   const barColorClass = getBudgetTailwindBg(utilizationPercent);
-  const remainingColor = isOverBudget ? 'text-red-600' : 'text-emerald-600';
+  const remainingColor = isOverBudget ? 'text-expense-500' : 'text-income-500';
   const bgColor = isOverBudget ? 'bg-red-50' : 'bg-emerald-50/50';
 
   return (
@@ -30,8 +30,8 @@ export function BudgetSummaryHero({
       <CardContent className="py-6 px-5">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2">
-            <Wallet className="h-5 w-5 text-slate-500" />
-            <span className="text-sm font-medium text-slate-600">
+            <Wallet className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">
               {isOverBudget ? 'חריגה מהתקציב' : 'נשאר להוציא החודש'}
             </span>
           </div>
@@ -46,7 +46,7 @@ export function BudgetSummaryHero({
             indicatorClassName={barColorClass}
           />
 
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <span>מתוך {formatCurrency(totalBudget)}</span>
             <span>·</span>
             <span>ניצלת {formatPercent(utilizationPercent)}</span>

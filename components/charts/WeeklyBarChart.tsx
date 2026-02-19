@@ -31,7 +31,7 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
           <CardTitle className="text-lg">הוצאות משתנות לפי שבוע</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center text-slate-500">
+          <div className="h-64 flex items-center justify-center text-muted-foreground">
             אין נתוני הוצאות שבועיות להצגה
           </div>
         </CardContent>
@@ -63,13 +63,13 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
     if (active && payload && payload.length) {
       const data = payload[0];
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-slate-200">
-          <p className="font-semibold text-slate-800">{data.payload.weekLabel}</p>
-          <p className="text-sm text-cyan-600 font-medium">
+        <div className="bg-white p-3 rounded-lg shadow-lg border border-border">
+          <p className="font-semibold text-foreground">{data.payload.weekLabel}</p>
+          <p className="text-sm text-primary-500 font-medium">
             {formatCurrency(data.value)}
           </p>
           {averageWeeklyBudget && (
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               ממוצע: {formatCurrency(averageWeeklyBudget)}
             </p>
           )}
@@ -90,7 +90,7 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
       <CardHeader>
         <CardTitle className="text-lg">הוצאות משתנות לפי שבוע</CardTitle>
         {averageWeeklyBudget && (
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             ממוצע שבועי רצוי: {formatCurrency(averageWeeklyBudget)}
           </p>
         )}
@@ -119,13 +119,13 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
               {averageWeeklyBudget && (
                 <ReferenceLine
                   y={averageWeeklyBudget}
-                  stroke="#f59e0b"
+                  stroke="#FDAB3D"
                   strokeDasharray="5 5"
                   strokeWidth={2}
                   label={{
                     value: 'ממוצע רצוי',
                     position: 'insideTopRight',
-                    fill: '#f59e0b',
+                    fill: '#FDAB3D',
                     fontSize: 11,
                   }}
                 />
@@ -133,7 +133,7 @@ export function WeeklyBarChart({ data, averageWeeklyBudget }: WeeklyBarChartProp
               
               <Bar
                 dataKey="amount"
-                fill="#0891B2"
+                fill="#0073EA"
                 radius={[8, 8, 0, 0]}
                 maxBarSize={60}
                 animationBegin={0}

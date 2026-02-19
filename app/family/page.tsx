@@ -141,14 +141,14 @@ export default function FamilyPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
       </div>
     );
   }
 
   if (!info) {
     return (
-      <div className="text-center py-20 text-slate-500">
+      <div className="text-center py-20 text-muted-foreground">
         לא נמצאו נתונים
       </div>
     );
@@ -159,7 +159,7 @@ export default function FamilyPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-cyan-600" />
+            <Users className="h-6 w-6 text-primary-500" />
             {editingName ? (
               <div className="flex items-center gap-2">
                 <Input
@@ -182,7 +182,7 @@ export default function FamilyPage() {
                 {isOwner && (
                   <button
                     onClick={() => setEditingName(true)}
-                    className="text-slate-400 hover:text-cyan-600 transition-colors"
+                    className="text-muted-foreground hover:text-primary-500 transition-colors"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -205,15 +205,15 @@ export default function FamilyPage() {
                 className="flex items-center justify-between rounded-lg border p-3"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-600 font-semibold text-sm">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-500 font-semibold text-sm">
                     {(member.displayName || member.userId).charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-foreground">
                         {member.displayName || 'חבר'}
                         {member.isCurrentUser && (
-                          <span className="text-slate-400 text-sm mr-1">(אתה)</span>
+                          <span className="text-muted-foreground text-sm mr-1">(אתה)</span>
                         )}
                       </span>
                       {member.role === 'OWNER' && (
@@ -223,7 +223,7 @@ export default function FamilyPage() {
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-muted-foreground">
                       הצטרף {new Date(member.joinedAt).toLocaleDateString('he-IL')}
                     </span>
                   </div>
@@ -231,7 +231,7 @@ export default function FamilyPage() {
                 {isOwner && !member.isCurrentUser && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-500">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-expense-500">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
@@ -263,13 +263,13 @@ export default function FamilyPage() {
             <>
               <Separator />
               <div>
-                <h3 className="text-sm font-medium text-slate-500 mb-2">הזמנות פעילות</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">הזמנות פעילות</h3>
                 {info.pendingInvites.map((inv) => (
                   <div key={inv.id} className="flex items-center justify-between text-sm py-1">
-                    <span className="text-slate-600 truncate max-w-[200px]">
+                    <span className="text-muted-foreground truncate max-w-[200px]">
                       ...{inv.token.slice(-8)}
                     </span>
-                    <span className="text-slate-400">
+                    <span className="text-muted-foreground/70">
                       פג {new Date(inv.expiresAt).toLocaleDateString('he-IL')}
                     </span>
                   </div>

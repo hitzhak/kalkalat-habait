@@ -14,41 +14,41 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full max-w-md text-center space-y-5">
-        <div className="w-20 h-20 mx-auto bg-cyan-50 rounded-full flex items-center justify-center">
-          <Wallet className="w-10 h-10 text-cyan-400" />
+        <div className="w-20 h-20 mx-auto bg-primary-50 rounded-full flex items-center justify-center">
+          <Wallet className="w-10 h-10 text-primary-500" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-slate-800">
+          <h2 className="text-xl font-bold text-foreground">
             ברוך הבא לכלכלת הבית!
           </h2>
-          <p className="text-slate-500 text-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             3 צעדים פשוטים להתחלה:
           </p>
           <div className="text-right space-y-2 max-w-xs mx-auto">
             <div className="flex items-center gap-3 text-sm">
-              <span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold shrink-0">1</span>
-              <span className="text-slate-600">הגדר תקציב חודשי לכל קטגוריה</span>
+              <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold shrink-0">1</span>
+              <span className="text-muted-foreground">הגדר תקציב חודשי לכל קטגוריה</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold shrink-0">2</span>
-              <span className="text-slate-600">הזן הוצאות והכנסות בלחיצה על +</span>
+              <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold shrink-0">2</span>
+              <span className="text-muted-foreground">הזן הוצאות והכנסות בלחיצה על +</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-xs font-bold shrink-0">3</span>
-              <span className="text-slate-600">עקוב אחרי כמה נשאר להוציא</span>
+              <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold shrink-0">3</span>
+              <span className="text-muted-foreground">עקוב אחרי כמה נשאר להוציא</span>
             </div>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/settings"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-cyan-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-600 transition-colors"
           >
             הגדר תקציב
           </Link>
           <Link
             href="/transactions"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-600 text-cyan-600 px-5 py-2.5 text-sm font-medium hover:bg-cyan-50 transition-colors"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary-500 text-primary-500 px-5 py-2.5 text-sm font-medium hover:bg-primary-50 transition-colors"
           >
             <Plus className="w-4 h-4" />
             הוסף עסקה
@@ -96,20 +96,20 @@ export function DashboardContent({ data, error }: DashboardContentProps) {
     <div className="space-y-4 md:space-y-6">
       {/* Recurring transactions banner */}
       {recurringGenerated && recurringGenerated.count > 0 && (
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 shadow-sm">
+        <div className="rounded-lg border border-border bg-primary-50 p-3 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100 shrink-0">
-                <svg className="h-4 w-4 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 shrink-0">
+                <svg className="h-4 w-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </div>
-              <p className="text-sm text-cyan-900 truncate">
+              <p className="text-sm text-primary-600 truncate">
                 <span className="font-medium">{recurringGenerated.count} עסקאות חוזרות</span>
                 {' '}נוצרו
               </p>
             </div>
-            <Link href="/transactions" className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-700 transition-colors shrink-0">
+            <Link href="/transactions" className="rounded-md bg-primary-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-600 transition-colors shrink-0">
               צפה
             </Link>
           </div>

@@ -102,7 +102,7 @@ function CategoryRow({
     <div
       className={`flex items-center gap-3 p-2.5 sm:p-3 rounded-lg border transition-all ${
         indent ? 'me-4 sm:me-6 border-dashed' : ''
-      } ${isActive ? 'bg-white border-slate-200' : 'bg-slate-50/70 border-slate-100 opacity-60'}`}
+      } ${isActive ? 'bg-white border-border' : 'bg-secondary/70 border-border/50 opacity-60'}`}
     >
       <Switch
         checked={isActive}
@@ -115,10 +115,10 @@ function CategoryRow({
             {category.name}
           </span>
           {category.isDefault && (
-            <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded shrink-0">מערכת</span>
+            <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded shrink-0">מערכת</span>
           )}
           {!isActive && (
-            <span className="text-[10px] bg-red-50 text-red-400 px-1.5 py-0.5 rounded shrink-0">כבוי</span>
+            <span className="text-[10px] bg-expense-50 text-expense-400 px-1.5 py-0.5 rounded shrink-0">כבוי</span>
           )}
         </div>
         <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
@@ -126,7 +126,7 @@ function CategoryRow({
         </div>
       </div>
       {!category.isDefault && (
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600 shrink-0" onClick={() => onEdit(category)}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary-500 shrink-0" onClick={() => onEdit(category)}>
           <Edit2 className="h-3.5 w-3.5" />
         </Button>
       )}
@@ -152,8 +152,8 @@ function CategoryGroup({
   const isActive = parent.isActive;
   return (
     <Collapsible open={isOpen} onOpenChange={onToggleOpen}>
-      <div className={`border rounded-xl overflow-hidden transition-all ${isActive ? 'border-slate-200' : 'border-slate-100 opacity-60'}`}>
-        <div className={`flex items-center gap-3 p-3 transition-colors ${isActive ? 'bg-slate-50/50 hover:bg-slate-100/50' : 'bg-slate-50/30'}`}>
+      <div className={`border rounded-xl overflow-hidden transition-all ${isActive ? 'border-border' : 'border-border/50 opacity-60'}`}>
+        <div className={`flex items-center gap-3 p-3 transition-colors ${isActive ? 'bg-secondary/50 hover:bg-secondary' : 'bg-secondary/30'}`}>
           <Switch
             checked={isActive}
             onCheckedChange={() => onToggleActive(parent.id)}
@@ -161,20 +161,20 @@ function CategoryGroup({
           />
           <CollapsibleTrigger asChild>
             <button className="flex items-center gap-3 flex-1 min-w-0 text-right">
-              <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? '' : '-rotate-90 rtl:rotate-90'}`} />
+              <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? '' : '-rotate-90 rtl:rotate-90'}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold truncate text-sm sm:text-base">{parent.name}</span>
                   {children.length > 0 && (
-                    <span className="text-[10px] bg-cyan-50 text-cyan-600 font-medium px-1.5 py-0.5 rounded-full shrink-0">
+                    <span className="text-[10px] bg-primary-50 text-primary-500 font-medium px-1.5 py-0.5 rounded-full shrink-0">
                       {children.length}
                     </span>
                   )}
                   {parent.isDefault && (
-                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded shrink-0">מערכת</span>
+                    <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded shrink-0">מערכת</span>
                   )}
                   {!isActive && (
-                    <span className="text-[10px] bg-red-50 text-red-400 px-1.5 py-0.5 rounded shrink-0">כבוי</span>
+                    <span className="text-[10px] bg-expense-50 text-expense-400 px-1.5 py-0.5 rounded shrink-0">כבוי</span>
                   )}
                 </div>
                 <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
@@ -184,14 +184,14 @@ function CategoryGroup({
             </button>
           </CollapsibleTrigger>
           {!parent.isDefault && (
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600 shrink-0" onClick={() => onEdit(parent)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary-500 shrink-0" onClick={() => onEdit(parent)}>
               <Edit2 className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>
         <CollapsibleContent>
           {children.length > 0 && (
-            <div className="p-2 space-y-1.5 border-t border-slate-100 bg-white">
+            <div className="p-2 space-y-1.5 border-t border-border/50 bg-white">
               {children.map((child) => (
                 <CategoryRow
                   key={child.id}
@@ -670,7 +670,7 @@ export default function SettingsPage() {
                   id="category-color"
                   value={categoryForm.color}
                   onChange={(e) => setCategoryForm({ ...categoryForm, color: e.target.value })}
-                  placeholder="#0891B2"
+                  placeholder="#0073EA"
                 />
                 {categoryForm.color && (
                   <div

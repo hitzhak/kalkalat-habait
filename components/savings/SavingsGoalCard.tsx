@@ -156,17 +156,17 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
               className="p-3 rounded-lg"
               style={{
                 backgroundColor: `${goal.color}20`,
-                color: goal.color || "#0891B2",
+                color: goal.color || "#0073EA",
               }}
             >
               <IconComponent className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-slate-800">
+              <h3 className="font-semibold text-lg text-foreground">
                 {goal.name}
               </h3>
               {goal.isCompleted && (
-                <span className="text-sm text-emerald-600 font-medium">
+                <span className="text-sm text-income-500 font-medium">
                   ✓ הושלמה
                 </span>
               )}
@@ -176,7 +176,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
           {/* תפריט פעולות */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-slate-400">
+              <Button variant="ghost" size="sm" className="text-muted-foreground">
                 <Icons.Trash2 className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
@@ -192,7 +192,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
                 <AlertDialogCancel>ביטול</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDelete}
-                  className="bg-red-500 hover:bg-red-600"
+                  className="bg-expense-500 hover:bg-expense-600"
                 >
                   מחק
                 </AlertDialogAction>
@@ -208,23 +208,23 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
             className="h-3"
             style={
               {
-                "--progress-background": goal.color || "#0891B2",
+                "--progress-background": goal.color || "#0073EA",
               } as React.CSSProperties
             }
           />
           <div className="flex justify-between items-center text-sm">
-            <span className="font-medium text-slate-700">
+            <span className="font-medium text-foreground">
               ₪{Number(goal.currentAmount).toLocaleString("he-IL")} מתוך{" "}
               ₪{Number(goal.targetAmount).toLocaleString("he-IL")}
             </span>
-            <span className="text-slate-500">{Math.round(progress)}%</span>
+            <span className="text-muted-foreground">{Math.round(progress)}%</span>
           </div>
         </div>
 
         {/* פרטים נוספים */}
         <div className="space-y-2 text-sm">
           {goal.targetDate && (
-            <div className="flex items-center gap-2 text-slate-600">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Icons.Calendar className="w-4 h-4" />
               <span>
                 יעד:{" "}
@@ -234,7 +234,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
           )}
 
           {monthlyRequired && monthlyRequired > 0 && !goal.isCompleted && (
-            <div className="flex items-center gap-2 text-slate-600">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Icons.TrendingUp className="w-4 h-4" />
               <span>
                 נדרש: ₪{monthlyRequired.toLocaleString("he-IL")}/חודש
@@ -243,7 +243,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
           )}
 
           {goal.isCompleted && (
-            <div className="flex items-center gap-2 text-emerald-600">
+            <div className="flex items-center gap-2 text-income-500">
               <Icons.CheckCircle2 className="w-4 h-4" />
               <span>מטרה הושגה! 🎉</span>
             </div>
@@ -257,7 +257,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
               <Button
                 className="w-full"
                 style={{
-                  backgroundColor: goal.color || "#0891B2",
+                  backgroundColor: goal.color || "#0073EA",
                 }}
               >
                 <Icons.Plus className="w-4 h-4 ml-2" />
@@ -322,7 +322,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
                     className="flex-1"
                     disabled={isLoading}
                     style={{
-                      backgroundColor: goal.color || "#0891B2",
+                      backgroundColor: goal.color || "#0073EA",
                     }}
                   >
                     {isLoading ? "מוסיף..." : "הוסף הפקדה"}

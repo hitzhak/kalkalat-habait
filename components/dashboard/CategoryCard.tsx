@@ -31,9 +31,9 @@ function getCategoryIcon(iconName: string | null) {
 }
 
 function getRemainingColor(remaining: number, usagePercent: number) {
-  if (remaining < 0 || usagePercent >= 100) return 'text-red-600';
-  if (usagePercent >= 85) return 'text-yellow-600';
-  return 'text-emerald-600';
+  if (remaining < 0 || usagePercent >= 100) return 'text-expense-500';
+  if (usagePercent >= 85) return 'text-warning-500';
+  return 'text-income-500';
 }
 
 export function CategoryCard({ category, onClick }: CategoryCardProps) {
@@ -52,12 +52,12 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
           {IconEl && (
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: (category.color || '#0891B2') + '20', color: category.color || '#0891B2' }}
+              style={{ backgroundColor: (category.color || '#0073EA') + '20', color: category.color || '#0073EA' }}
             >
               {IconEl}
             </div>
           )}
-          <span className="text-sm font-medium text-slate-700 truncate">{name}</span>
+          <span className="text-sm font-medium text-foreground truncate">{name}</span>
         </div>
 
         <div className={`text-lg font-bold ${remainingTextColor}`}>
@@ -70,7 +70,7 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
           indicatorClassName={barColorClass}
         />
 
-        <div className="text-[11px] text-slate-400">
+        <div className="text-[11px] text-muted-foreground">
           מתוך {formatCurrency(plannedAmount)}
         </div>
       </CardContent>

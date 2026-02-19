@@ -36,13 +36,13 @@ export function MobileNav() {
               href={buildHref(item.href)}
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 py-1.5 transition-all duration-200',
-                isActive ? 'text-cyan-600' : 'text-slate-400 active:text-slate-600'
+                isActive ? 'text-primary-500' : 'text-muted-foreground active:text-foreground'
               )}
             >
-              <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-cyan-600')} />
+              <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary-500')} />
               <span className={cn(
                 'text-[10px] leading-tight',
-                isActive ? 'font-bold text-cyan-600' : 'font-medium'
+                isActive ? 'font-bold text-primary-500' : 'font-medium'
               )}>
                 {item.label}
               </span>

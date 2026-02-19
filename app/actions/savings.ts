@@ -52,7 +52,7 @@ export async function createSavingsGoal(data: {
         targetAmount: new Prisma.Decimal(data.targetAmount),
         targetDate: data.targetDate || null,
         icon: data.icon || "Target",
-        color: data.color || "#0891B2",
+        color: data.color || "#0073EA",
         monthlyTarget: data.monthlyTarget
           ? new Prisma.Decimal(data.monthlyTarget)
           : null,

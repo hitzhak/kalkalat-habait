@@ -35,18 +35,18 @@ export function SummaryCards({
       <div className="grid grid-cols-3 gap-2 md:hidden">
         <Card className="bg-white rounded-xl shadow-sm">
           <CardContent className="p-3 text-center">
-            <p className="text-[11px] text-slate-500">הכנסות</p>
-            <p className="text-base font-bold text-emerald-500 mt-0.5">
+            <p className="text-[11px] text-muted-foreground">הכנסות</p>
+            <p className="text-base font-bold text-income-500 mt-0.5">
               {formatCurrency(totalIncome)}
             </p>
             {previousMonthIncome > 0 && (
               <div className="flex items-center justify-center gap-0.5 mt-1">
                 {incomeChange >= 0 ? (
-                  <TrendingUp className="w-3 h-3 text-emerald-500" />
+                  <TrendingUp className="w-3 h-3 text-income-500" />
                 ) : (
-                  <TrendingDown className="w-3 h-3 text-red-500" />
+                  <TrendingDown className="w-3 h-3 text-expense-500" />
                 )}
-                <span className={`text-[10px] ${incomeChange >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                <span className={`text-[10px] ${incomeChange >= 0 ? 'text-income-500' : 'text-expense-500'}`}>
                   {formatPercent(Math.abs(incomeChange))}
                 </span>
               </div>
@@ -56,18 +56,18 @@ export function SummaryCards({
 
         <Card className="bg-white rounded-xl shadow-sm">
           <CardContent className="p-3 text-center">
-            <p className="text-[11px] text-slate-500">הוצאות</p>
-            <p className="text-base font-bold text-red-500 mt-0.5">
+            <p className="text-[11px] text-muted-foreground">הוצאות</p>
+            <p className="text-base font-bold text-expense-500 mt-0.5">
               {formatCurrency(totalExpenses)}
             </p>
             {previousMonthExpenses > 0 && (
               <div className="flex items-center justify-center gap-0.5 mt-1">
                 {expensesChange >= 0 ? (
-                  <TrendingUp className="w-3 h-3 text-red-500" />
+                  <TrendingUp className="w-3 h-3 text-expense-500" />
                 ) : (
-                  <TrendingDown className="w-3 h-3 text-emerald-500" />
+                  <TrendingDown className="w-3 h-3 text-income-500" />
                 )}
-                <span className={`text-[10px] ${expensesChange >= 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                <span className={`text-[10px] ${expensesChange >= 0 ? 'text-expense-500' : 'text-income-500'}`}>
                   {formatPercent(Math.abs(expensesChange))}
                 </span>
               </div>
@@ -77,11 +77,11 @@ export function SummaryCards({
 
         <Card className="bg-white rounded-xl shadow-sm">
           <CardContent className="p-3 text-center">
-            <p className="text-[11px] text-slate-500">מאזן</p>
-            <p className={`text-base font-bold mt-0.5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+            <p className="text-[11px] text-muted-foreground">מאזן</p>
+            <p className={`text-base font-bold mt-0.5 ${balance >= 0 ? 'text-income-500' : 'text-expense-500'}`}>
               {formatCurrency(balance)}
             </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
+            <p className="text-[10px] text-muted-foreground mt-0.5">
               {balance >= 0 ? 'עודף' : 'גירעון'}
             </p>
           </CardContent>
@@ -94,28 +94,28 @@ export function SummaryCards({
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-slate-500 mb-1">הכנסות</p>
-                <p className="text-2xl font-bold text-emerald-500">
+                <p className="text-sm text-muted-foreground mb-1">הכנסות</p>
+                <p className="text-2xl font-bold text-income-500">
                   {formatCurrency(totalIncome)}
                 </p>
                 {previousMonthIncome > 0 && (
                   <div className="flex items-center gap-1 mt-2">
                     {incomeChange >= 0 ? (
                       <>
-                        <TrendingUp className="w-4 h-4 text-emerald-500" />
-                        <span className="text-sm text-emerald-500">{formatPercent(Math.abs(incomeChange))}</span>
+                        <TrendingUp className="w-4 h-4 text-income-500" />
+                        <span className="text-sm text-income-500">{formatPercent(Math.abs(incomeChange))}</span>
                       </>
                     ) : (
                       <>
-                        <TrendingDown className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-red-500">{formatPercent(Math.abs(incomeChange))}</span>
+                        <TrendingDown className="w-4 h-4 text-expense-500" />
+                        <span className="text-sm text-expense-500">{formatPercent(Math.abs(incomeChange))}</span>
                       </>
                     )}
                   </div>
                 )}
               </div>
               <div className="p-3 bg-emerald-50 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-emerald-500" />
+                <TrendingUp className="w-6 h-6 text-income-500" />
               </div>
             </div>
           </CardContent>
@@ -125,28 +125,28 @@ export function SummaryCards({
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-slate-500 mb-1">הוצאות</p>
-                <p className="text-2xl font-bold text-red-500">
+                <p className="text-sm text-muted-foreground mb-1">הוצאות</p>
+                <p className="text-2xl font-bold text-expense-500">
                   {formatCurrency(totalExpenses)}
                 </p>
                 {previousMonthExpenses > 0 && (
                   <div className="flex items-center gap-1 mt-2">
                     {expensesChange >= 0 ? (
                       <>
-                        <TrendingUp className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-red-500">{formatPercent(Math.abs(expensesChange))}</span>
+                        <TrendingUp className="w-4 h-4 text-expense-500" />
+                        <span className="text-sm text-expense-500">{formatPercent(Math.abs(expensesChange))}</span>
                       </>
                     ) : (
                       <>
-                        <TrendingDown className="w-4 h-4 text-emerald-500" />
-                        <span className="text-sm text-emerald-500">{formatPercent(Math.abs(expensesChange))}</span>
+                        <TrendingDown className="w-4 h-4 text-income-500" />
+                        <span className="text-sm text-income-500">{formatPercent(Math.abs(expensesChange))}</span>
                       </>
                     )}
                   </div>
                 )}
               </div>
               <div className="p-3 bg-red-50 rounded-lg">
-                <TrendingDown className="w-6 h-6 text-red-500" />
+                <TrendingDown className="w-6 h-6 text-expense-500" />
               </div>
             </div>
           </CardContent>
@@ -156,14 +156,14 @@ export function SummaryCards({
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-slate-500 mb-1">מאזן</p>
-                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                <p className="text-sm text-muted-foreground mb-1">מאזן</p>
+                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-income-500' : 'text-expense-500'}`}>
                   {formatCurrency(balance)}
                 </p>
-                <p className="text-sm text-slate-500 mt-1">{balance >= 0 ? 'עודף' : 'גירעון'}</p>
+                <p className="text-sm text-muted-foreground mt-1">{balance >= 0 ? 'עודף' : 'גירעון'}</p>
               </div>
               <div className={`p-3 rounded-lg ${balance >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                <Scale className={`w-6 h-6 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
+                <Scale className={`w-6 h-6 ${balance >= 0 ? 'text-income-500' : 'text-expense-500'}`} />
               </div>
             </div>
           </CardContent>

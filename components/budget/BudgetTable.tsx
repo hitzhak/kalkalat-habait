@@ -114,23 +114,23 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
   const getProgressColor = (alertLevel: string) => {
     switch (alertLevel) {
       case 'success':
-        return 'bg-emerald-500';
+        return 'bg-income-500';
       case 'warning':
-        return 'bg-yellow-500';
+        return 'bg-warning-500';
       case 'danger':
         return 'bg-orange-500';
       case 'error':
-        return 'bg-red-500';
+        return 'bg-expense-500';
       default:
-        return 'bg-slate-500';
+        return 'bg-muted-foreground';
     }
   };
 
   const getRemainingColor = (remaining: number, usagePercent: number) => {
-    if (remaining < 0 || usagePercent >= 100) return 'text-red-600';
+    if (remaining < 0 || usagePercent >= 100) return 'text-expense-500';
     if (usagePercent >= 90) return 'text-orange-600';
-    if (usagePercent >= 70) return 'text-yellow-600';
-    return 'text-emerald-600';
+    if (usagePercent >= 70) return 'text-warning-500';
+    return 'text-income-500';
   };
 
   const renderMobileCategoryRow = (category: BudgetCategory, isChild: boolean = false) => {
@@ -139,7 +139,7 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
     const hasChildren = !isChild && category.children && category.children.length > 0;
 
     return (
-      <div key={category.id} className={isChild ? 'mr-3 border-r-2 border-slate-200 pr-3' : ''}>
+      <div key={category.id} className={isChild ? 'mr-3 border-r-2 border-border pr-3' : ''}>
         <div className="py-3 px-3">
           {/* Row 1: Icon + Name + Remaining */}
           <div className="flex items-center justify-between gap-2">
@@ -150,9 +150,9 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                   onClick={() => toggleCategory(category.id)}
                 >
                   {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-slate-400" />
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   )}
                 </button>
               )}
@@ -175,7 +175,7 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
 
           {/* Row 2: Budget info + edit + progress */}
           <div className="mt-1.5 flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 shrink-0">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
               {isEditing ? (
                 <div className="flex items-center gap-1">
                   <Input
@@ -190,22 +190,22 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                     disabled={saving}
                   />
                   <button onClick={() => saveBudget(category.id)} disabled={saving} className="p-0.5">
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    <Check className="h-3.5 w-3.5 text-income-500" />
                   </button>
                   <button onClick={cancelEditing} disabled={saving} className="p-0.5">
-                    <X className="h-3.5 w-3.5 text-red-500" />
+                    <X className="h-3.5 w-3.5 text-expense-500" />
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => startEditing(category.id, category.plannedAmount)}
-                  className="flex items-center gap-0.5 hover:text-slate-700 transition-colors"
+                  className="flex items-center gap-0.5 hover:text-foreground transition-colors"
                 >
                   <span>{formatCurrency(category.plannedAmount)}</span>
                   <Edit2 className="h-2.5 w-2.5" />
                 </button>
               )}
-              <span className="text-slate-300">|</span>
+              <span className="text-muted-foreground/30">|</span>
               <span>{formatCurrency(category.actualSpent)} בפועל</span>
             </div>
             <div className="flex items-center gap-1.5 flex-1">
@@ -218,7 +218,7 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                 {category.usagePercent.toFixed(0)}%
               </span>
               {category.usagePercent >= 100 && (
-                <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                <AlertTriangle className="h-3.5 w-3.5 text-expense-500 shrink-0" />
               )}
             </div>
           </div>
@@ -243,8 +243,8 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
       <div key={category.id}>
         <div
           className={`grid grid-cols-[1fr_120px_120px_120px_100px] gap-4 p-4 ${
-            isChild ? 'bg-slate-50 border-r-4 border-slate-200 mr-4' : 'bg-white'
-          } border-b hover:bg-slate-50/50 transition-colors`}
+            isChild ? 'bg-secondary border-r-4 border-border mr-4' : 'bg-white'
+          } border-b hover:bg-secondary/50 transition-colors`}
         >
           {/* Category */}
           <div className="flex items-center gap-2 min-w-0">
@@ -287,31 +287,31 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
                   disabled={saving}
                 />
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveBudget(category.id)} disabled={saving}>
-                  <Check className="h-4 w-4 text-emerald-600" />
+                  <Check className="h-4 w-4 text-income-500" />
                 </Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={cancelEditing} disabled={saving}>
-                  <X className="h-4 w-4 text-red-600" />
+                  <X className="h-4 w-4 text-expense-500" />
                 </Button>
               </div>
             ) : (
               <button
                 onClick={() => startEditing(category.id, category.plannedAmount)}
-                className="group flex items-center gap-1 hover:bg-slate-100 px-2 py-1 rounded transition-colors"
+                className="group flex items-center gap-1 hover:bg-secondary px-2 py-1 rounded transition-colors"
               >
-                <span className="font-medium text-slate-800">{formatCurrency(category.plannedAmount)}</span>
-                <Edit2 className="h-3 w-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="font-medium text-foreground">{formatCurrency(category.plannedAmount)}</span>
+                <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             )}
           </div>
 
           {/* Actual */}
           <div className="flex items-center justify-end">
-            <span className="font-medium text-cyan-600">{formatCurrency(category.actualSpent)}</span>
+            <span className="font-medium text-primary-500">{formatCurrency(category.actualSpent)}</span>
           </div>
 
           {/* Remaining */}
           <div className="flex items-center justify-end">
-            <span className={`font-bold ${category.remaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            <span className={`font-bold ${category.remaining >= 0 ? 'text-income-500' : 'text-expense-500'}`}>
               {formatCurrency(category.remaining)}
             </span>
           </div>
@@ -321,12 +321,12 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
             <span className={`font-bold text-sm ${getRemainingColor(category.remaining, category.usagePercent)}`}>
               {category.usagePercent.toFixed(0)}%
             </span>
-            {category.usagePercent >= 100 && <AlertTriangle className="h-4 w-4 text-red-600" />}
+            {category.usagePercent >= 100 && <AlertTriangle className="h-4 w-4 text-expense-500" />}
           </div>
         </div>
 
         {/* Progress bar */}
-        <div className={`px-4 pb-2 ${isChild ? 'bg-slate-50 mr-4' : 'bg-white'}`}>
+        <div className={`px-4 pb-2 ${isChild ? 'bg-secondary mr-4' : 'bg-white'}`}>
           <Progress
             value={Math.min(category.usagePercent, 100)}
             className="h-2"
@@ -354,13 +354,13 @@ export function BudgetTable({ data, month, year, onUpdate }: BudgetTableProps) {
       {/* Desktop layout */}
       <div className="hidden md:block">
         {/* Table header */}
-        <div className="bg-slate-100 border-b">
+        <div className="bg-secondary border-b">
           <div className="grid grid-cols-[1fr_120px_120px_120px_100px] gap-4 p-4">
-            <div className="text-sm font-semibold text-slate-700">קטגוריה</div>
-            <div className="text-sm font-semibold text-slate-700 text-left">תקציב</div>
-            <div className="text-sm font-semibold text-slate-700 text-left">בפועל</div>
-            <div className="text-sm font-semibold text-slate-700 text-left">נותר</div>
-            <div className="text-sm font-semibold text-slate-700 text-left">%</div>
+            <div className="text-sm font-semibold text-foreground">קטגוריה</div>
+            <div className="text-sm font-semibold text-foreground text-left">תקציב</div>
+            <div className="text-sm font-semibold text-foreground text-left">בפועל</div>
+            <div className="text-sm font-semibold text-foreground text-left">נותר</div>
+            <div className="text-sm font-semibold text-foreground text-left">%</div>
           </div>
         </div>
 

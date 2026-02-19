@@ -27,14 +27,14 @@ import { toast } from 'sonner';
 
 // צבעים לגרפים
 const COLORS = [
-  '#0891B2', // Cyan-600
-  '#10B981', // Emerald-500
-  '#F59E0B', // Amber-500
-  '#EF4444', // Red-500
-  '#8B5CF6', // Violet-500
-  '#EC4899', // Pink-500
-  '#6366F1', // Indigo-500
-  '#14B8A6', // Teal-500
+  '#0073EA',
+  '#00C875',
+  '#FDAB3D',
+  '#E2445C',
+  '#A25DDC',
+  '#FF158A',
+  '#579BFC',
+  '#CAB641',
 ];
 
 // שמות חודשים בעברית
@@ -312,7 +312,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold text-green-600">
+                    <div className="text-lg sm:text-2xl font-bold text-income-500">
                       {formatCurrency(monthlyReport.summary.totalIncome)}
                     </div>
                   </CardContent>
@@ -325,7 +325,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold text-orange-600">
+                    <div className="text-lg sm:text-2xl font-bold text-warning-600">
                       {formatCurrency(monthlyReport.summary.fixedExpenses)}
                     </div>
                   </CardContent>
@@ -338,7 +338,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold text-red-600">
+                    <div className="text-lg sm:text-2xl font-bold text-expense-500">
                       {formatCurrency(monthlyReport.summary.variableExpenses)}
                     </div>
                   </CardContent>
@@ -353,7 +353,7 @@ export default function ReportsPage() {
                   <CardContent>
                     <div
                       className={`text-lg sm:text-2xl font-bold ${
-                        monthlyReport.summary.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                        monthlyReport.summary.balance >= 0 ? 'text-income-500' : 'text-expense-500'
                       }`}
                     >
                       {formatCurrency(monthlyReport.summary.balance)}
@@ -396,7 +396,7 @@ export default function ReportsPage() {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <BarChart3 className="h-12 w-12 text-slate-300 mb-3" />
+                        <BarChart3 className="h-12 w-12 text-muted-foreground/30 mb-3" />
                         <p className="text-sm text-muted-foreground">
                           אין נתוני הוצאות להצגה בחודש זה
                         </p>
@@ -424,14 +424,14 @@ export default function ReportsPage() {
                               <XAxis dataKey="weekName" />
                               <YAxis />
                               <Tooltip formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''} />
-                              <Bar dataKey="amount" fill="#0891B2" />
+                              <Bar dataKey="amount" fill="#0073EA" />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <BarChart3 className="h-12 w-12 text-slate-300 mb-3" />
+                        <BarChart3 className="h-12 w-12 text-muted-foreground/30 mb-3" />
                         <p className="text-sm text-muted-foreground">
                           אין נתוני הוצאות שבועיות להצגה בחודש זה
                         </p>
@@ -474,13 +474,13 @@ export default function ReportsPage() {
             <Card className="animate-in fade-in duration-300">
               <CardContent className="py-16">
                 <div className="flex flex-col items-center justify-center">
-                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-                    <FileText className="w-12 h-12 text-slate-400" />
+                  <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center mb-6">
+                    <FileText className="w-12 h-12 text-muted-foreground" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
                     אין מספיק נתונים להצגת דוח
                   </h2>
-                  <p className="text-slate-600 text-center max-w-md">
+                  <p className="text-muted-foreground text-center max-w-md">
                     התחל בהוספת עסקאות כדי לראות דוחות מפורטים ומגמות
                   </p>
                 </div>
@@ -613,8 +613,8 @@ export default function ReportsPage() {
                         <span
                           className={`font-bold ${
                             comparisonData.summary.changes.incomeChange >= 0
-                              ? 'text-green-600'
-                              : 'text-red-600'
+                              ? 'text-income-500'
+                              : 'text-expense-500'
                           }`}
                         >
                           {comparisonData.summary.changes.incomeChange >= 0 ? '+' : ''}
@@ -651,8 +651,8 @@ export default function ReportsPage() {
                         <span
                           className={`font-bold ${
                             comparisonData.summary.changes.expensesChange <= 0
-                              ? 'text-green-600'
-                              : 'text-red-600'
+                              ? 'text-income-500'
+                              : 'text-expense-500'
                           }`}
                         >
                           {comparisonData.summary.changes.expensesChange >= 0 ? '+' : ''}
@@ -676,8 +676,8 @@ export default function ReportsPage() {
                       <span
                         className={`font-medium ${
                           comparisonData.summary.month1.balance >= 0
-                            ? 'text-green-600'
-                            : 'text-red-600'
+                            ? 'text-income-500'
+                            : 'text-expense-500'
                         }`}
                       >
                         {formatCurrency(comparisonData.summary.month1.balance)}
@@ -688,8 +688,8 @@ export default function ReportsPage() {
                       <span
                         className={`font-medium ${
                           comparisonData.summary.month2.balance >= 0
-                            ? 'text-green-600'
-                            : 'text-red-600'
+                            ? 'text-income-500'
+                            : 'text-expense-500'
                         }`}
                       >
                         {formatCurrency(comparisonData.summary.month2.balance)}
@@ -701,8 +701,8 @@ export default function ReportsPage() {
                         <span
                           className={`font-bold ${
                             comparisonData.summary.changes.balanceChange >= 0
-                              ? 'text-green-600'
-                              : 'text-red-600'
+                              ? 'text-income-500'
+                              : 'text-expense-500'
                           }`}
                         >
                           {comparisonData.summary.changes.balanceChange >= 0 ? '+' : ''}
@@ -734,12 +734,12 @@ export default function ReportsPage() {
                           <Legend />
                           <Bar
                             dataKey="month1Amount"
-                            fill="#0891B2"
+                            fill="#0073EA"
                             name={comparisonData.summary.month1.monthName}
                           />
                           <Bar
                             dataKey="month2Amount"
-                            fill="#10B981"
+                            fill="#00C875"
                             name={comparisonData.summary.month2.monthName}
                           />
                         </BarChart>
@@ -779,9 +779,9 @@ export default function ReportsPage() {
                               <span
                                 className={
                                   cat.changeDirection === 'increase'
-                                    ? 'text-red-600'
+                                    ? 'text-expense-500'
                                     : cat.changeDirection === 'decrease'
-                                    ? 'text-green-600'
+                                    ? 'text-income-500'
                                     : ''
                                 }
                               >
@@ -850,7 +850,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold text-green-600">
+                    <div className="text-lg sm:text-2xl font-bold text-income-500">
                       {formatCurrency(trendData.statistics.avgIncome)}
                     </div>
                   </CardContent>
@@ -863,7 +863,7 @@ export default function ReportsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold text-red-600">
+                    <div className="text-lg sm:text-2xl font-bold text-expense-500">
                       {formatCurrency(trendData.statistics.avgExpenses)}
                     </div>
                   </CardContent>
@@ -920,7 +920,7 @@ export default function ReportsPage() {
                           <Line
                             type="monotone"
                             dataKey="income"
-                            stroke="#10B981"
+                            stroke="#00C875"
                             strokeWidth={2}
                             name="הכנסות"
                             dot={{ r: 4 }}
@@ -928,7 +928,7 @@ export default function ReportsPage() {
                           <Line
                             type="monotone"
                             dataKey="expenses"
-                            stroke="#EF4444"
+                            stroke="#E2445C"
                             strokeWidth={2}
                             name="הוצאות"
                             dot={{ r: 4 }}
@@ -960,15 +960,15 @@ export default function ReportsPage() {
                         {trendData.data.map((row, index) => (
                           <tr key={index} className="border-b">
                             <td className="py-3 px-4">{row.monthYear}</td>
-                            <td className="py-3 px-4 text-green-600">
+                            <td className="py-3 px-4 text-income-500">
                               {formatCurrency(row.income)}
                             </td>
-                            <td className="py-3 px-4 text-red-600">
+                            <td className="py-3 px-4 text-expense-500">
                               {formatCurrency(row.expenses)}
                             </td>
                             <td
                               className={`py-3 px-4 font-medium ${
-                                row.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                                row.balance >= 0 ? 'text-income-500' : 'text-expense-500'
                               }`}
                             >
                               {formatCurrency(row.balance)}
@@ -991,7 +991,7 @@ export default function ReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Wallet className="h-5 w-5 text-cyan-600" />
+                  <Wallet className="h-5 w-5 text-primary-500" />
                   זרימת תקציב חודשי
                 </CardTitle>
               </CardHeader>
@@ -1010,8 +1010,8 @@ export default function ReportsPage() {
                     <div className="text-sm sm:text-lg font-bold text-blue-700">{formatCurrency(budgetFlow.availableForVariable)}</div>
                   </div>
                   <div className={`rounded-lg p-3 ${budgetFlow.netRemaining >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                    <div className={`text-[10px] sm:text-xs font-medium ${budgetFlow.netRemaining >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>יתרה סופית</div>
-                    <div className={`text-sm sm:text-lg font-bold ${budgetFlow.netRemaining >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(budgetFlow.netRemaining)}</div>
+                    <div className={`text-[10px] sm:text-xs font-medium ${budgetFlow.netRemaining >= 0 ? 'text-income-600' : 'text-expense-500'}`}>יתרה סופית</div>
+                    <div className={`text-sm sm:text-lg font-bold ${budgetFlow.netRemaining >= 0 ? 'text-income-700' : 'text-expense-600'}`}>{formatCurrency(budgetFlow.netRemaining)}</div>
                   </div>
                 </div>
               </CardContent>
@@ -1045,7 +1045,7 @@ export default function ReportsPage() {
                           <td className="py-3 px-4 font-medium">{cat.name}</td>
                           <td className="py-3 px-4">{formatCurrency(cat.plannedAmount)}</td>
                           <td className="py-3 px-4">{formatCurrency(cat.actualSpent)}</td>
-                          <td className={`py-3 px-4 font-bold ${cat.remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <td className={`py-3 px-4 font-bold ${cat.remaining >= 0 ? 'text-income-500' : 'text-expense-500'}`}>
                             {formatCurrency(cat.remaining)}
                           </td>
                           <td className="py-3 px-4">
@@ -1053,7 +1053,7 @@ export default function ReportsPage() {
                               <Progress
                                 value={Math.min(cat.usagePercent, 100)}
                                 className="h-2 w-16"
-                                indicatorClassName={cat.usagePercent >= 100 ? 'bg-red-500' : cat.usagePercent >= 80 ? 'bg-yellow-500' : 'bg-emerald-500'}
+                                indicatorClassName={cat.usagePercent >= 100 ? 'bg-expense-500' : cat.usagePercent >= 80 ? 'bg-warning-500' : 'bg-income-500'}
                               />
                               <span className="text-xs">{Math.round(cat.usagePercent)}%</span>
                             </div>
@@ -1070,7 +1070,7 @@ export default function ReportsPage() {
           {!budgetFlow && budgetCategories.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center">
-                <Wallet className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <Wallet className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground">אין נתוני תקציב להצגה</p>
               </CardContent>
             </Card>
@@ -1095,19 +1095,19 @@ export default function ReportsPage() {
                   {savingsGoals.map((goal: any) => {
                     const pct = goal.targetAmount > 0 ? (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100 : 0;
                     return (
-                      <div key={goal.id} className="space-y-2 p-3 rounded-lg bg-slate-50">
+                      <div key={goal.id} className="space-y-2 p-3 rounded-lg bg-secondary">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{goal.name}</span>
-                          <span className="text-sm text-slate-500">
+                          <span className="text-sm text-muted-foreground">
                             {formatCurrency(Number(goal.currentAmount))} / {formatCurrency(Number(goal.targetAmount))}
                           </span>
                         </div>
                         <Progress
                           value={Math.min(pct, 100)}
                           className="h-2"
-                          indicatorClassName={pct >= 100 ? 'bg-emerald-500' : 'bg-cyan-500'}
+                          indicatorClassName={pct >= 100 ? 'bg-income-500' : 'bg-primary-500'}
                         />
-                        <div className="text-xs text-slate-400 text-left">{Math.round(pct)}%</div>
+                        <div className="text-xs text-muted-foreground text-left">{Math.round(pct)}%</div>
                       </div>
                     );
                   })}
@@ -1139,10 +1139,10 @@ export default function ReportsPage() {
                       ? ((Number(loan.originalAmount) - Number(loan.remainingAmount)) / Number(loan.originalAmount)) * 100
                       : 0;
                     return (
-                      <div key={loan.id} className="p-3 rounded-lg bg-slate-50 space-y-2">
+                      <div key={loan.id} className="p-3 rounded-lg bg-secondary space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{loan.name}</span>
-                          <span className="text-sm font-bold text-slate-700">
+                          <span className="text-sm font-bold text-foreground">
                             {formatCurrency(Number(loan.remainingAmount))}
                           </span>
                         </div>
@@ -1151,7 +1151,7 @@ export default function ReportsPage() {
                           className="h-2"
                           indicatorClassName="bg-amber-500"
                         />
-                        <div className="flex justify-between text-xs text-slate-400">
+                        <div className="flex justify-between text-xs text-muted-foreground">
                           <span>שולם {Math.round(paidPct)}%</span>
                           <span>תשלום: {formatCurrency(Number(loan.monthlyPayment))}/חודש</span>
                         </div>

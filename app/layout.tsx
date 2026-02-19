@@ -14,7 +14,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0891B2",
+  themeColor: "#0073EA",
 };
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" className={`${heebo.variable} bg-slate-50`}>
+    <html lang="he" dir="rtl" className={`${heebo.variable} bg-background`}>
       <body className={heebo.className}>
         <AppShell>
           {children}

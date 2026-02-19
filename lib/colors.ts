@@ -1,14 +1,14 @@
 export const budgetColors = {
-  healthy: '#22c55e',
-  warning: '#eab308',
-  danger: '#ef4444',
-  exceeded: '#991b1b',
+  healthy: '#00C875',
+  warning: '#FDAB3D',
+  danger: '#E2445C',
+  exceeded: '#872637',
 };
 
 export const transactionColors = {
-  income: '#22c55e',
-  expense: '#ef4444',
-  fixed: '#6b7280',
+  income: '#00C875',
+  expense: '#E2445C',
+  fixed: '#676879',
 };
 
 export function getBudgetColor(percentUsed: number): string {
@@ -25,13 +25,13 @@ export function getBudgetStatus(percentUsed: number): 'healthy' | 'warning' | 'd
 }
 
 export function getBudgetTailwindBg(percentUsed: number): string {
-  if (percentUsed <= 60) return 'bg-green-500';
-  if (percentUsed <= 85) return 'bg-yellow-500';
-  return 'bg-red-500';
+  if (percentUsed <= 60) return 'bg-income-500';
+  if (percentUsed <= 85) return 'bg-warning-500';
+  return 'bg-expense-500';
 }
 
 export function getBudgetTailwindText(percentUsed: number): string {
-  if (percentUsed <= 60) return 'text-green-600';
-  if (percentUsed <= 85) return 'text-yellow-600';
-  return 'text-red-600';
+  if (percentUsed <= 60) return 'text-income-600';
+  if (percentUsed <= 85) return 'text-warning-600';
+  return 'text-expense-600';
 }

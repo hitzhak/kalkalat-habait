@@ -111,15 +111,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cyan-50 to-slate-50 flex items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-background flex items-center justify-center p-4" dir="rtl">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center space-y-3 pb-2">
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center">
-              <Wallet className="h-8 w-8 text-cyan-600" />
+            <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center">
+              <Wallet className="h-8 w-8 text-primary-500" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-800">כלכלת הבית</CardTitle>
+          <CardTitle className="text-2xl font-bold text-foreground">כלכלת הבית</CardTitle>
           <CardDescription className="text-base">
             {mode === 'login' ? 'התחבר כדי לנהל את התקציב שלך' : 'צור חשבון חדש'}
           </CardDescription>
@@ -158,7 +158,7 @@ export default function LoginPage() {
 
           <div className="relative">
             <Separator />
-            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-slate-400">
+            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-muted-foreground">
               או
             </span>
           </div>
@@ -190,10 +190,10 @@ export default function LoginPage() {
               />
               {fieldErrors.password && <p className="text-sm text-red-500">{fieldErrors.password}</p>}
               {mode === 'signup' && !fieldErrors.password && (
-                <p className="text-xs text-slate-400">מינימום 6 תווים</p>
+                <p className="text-xs text-muted-foreground">מינימום 6 תווים</p>
               )}
             </div>
-            <Button type="submit" disabled={loading} className="w-full h-12 text-base font-medium bg-cyan-600 hover:bg-cyan-700">
+            <Button type="submit" disabled={loading} className="w-full h-12 text-base font-medium bg-primary-500 hover:bg-primary-600">
               {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
@@ -205,13 +205,13 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="text-center text-sm text-slate-500">
+          <div className="text-center text-sm text-muted-foreground">
             {mode === 'login' ? (
               <p>
                 אין לך חשבון?{' '}
                 <button
                   onClick={() => setMode('signup')}
-                  className="text-cyan-600 hover:text-cyan-700 font-medium"
+                  className="text-primary-500 hover:text-primary-600 font-medium"
                 >
                   הרשם כאן
                 </button>
@@ -221,7 +221,7 @@ export default function LoginPage() {
                 כבר יש לך חשבון?{' '}
                 <button
                   onClick={() => setMode('login')}
-                  className="text-cyan-600 hover:text-cyan-700 font-medium"
+                  className="text-primary-500 hover:text-primary-600 font-medium"
                 >
                   התחבר
                 </button>

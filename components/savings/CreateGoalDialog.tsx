@@ -35,10 +35,10 @@ const AVAILABLE_ICONS = [
 
 // צבעים אפשריים
 const AVAILABLE_COLORS = [
-  { value: "#0891B2", label: "כחול" },
-  { value: "#10B981", label: "ירוק" },
-  { value: "#F59E0B", label: "כתום" },
-  { value: "#EF4444", label: "אדום" },
+  { value: "#0073EA", label: "כחול" },
+  { value: "#00C875", label: "ירוק" },
+  { value: "#FDAB3D", label: "כתום" },
+  { value: "#E2445C", label: "אדום" },
   { value: "#8B5CF6", label: "סגול" },
   { value: "#EC4899", label: "ורוד" },
   { value: "#6366F1", label: "אינדיגו" },
@@ -54,7 +54,7 @@ export function CreateGoalDialog() {
   const [targetAmount, setTargetAmount] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("Target");
-  const [selectedColor, setSelectedColor] = useState("#0891B2");
+  const [selectedColor, setSelectedColor] = useState("#0073EA");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +89,7 @@ export function CreateGoalDialog() {
       setTargetAmount("");
       setTargetDate("");
       setSelectedIcon("Target");
-      setSelectedColor("#0891B2");
+      setSelectedColor("#0073EA");
       setIsOpen(false);
     } catch (error) {
       toast({
@@ -105,7 +105,7 @@ export function CreateGoalDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-cyan-600 hover:bg-cyan-700">
+        <Button className="bg-primary-500 hover:bg-primary-600">
           <Plus className="w-4 h-4 ml-2" />
           מטרה חדשה
         </Button>
@@ -155,7 +155,7 @@ export function CreateGoalDialog() {
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               המערכת תחשב אוטומטית את ההפקדה החודשית הנדרשת
             </p>
           </div>
@@ -175,8 +175,8 @@ export function CreateGoalDialog() {
                     onClick={() => setSelectedIcon(icon.name)}
                     className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
                       selectedIcon === icon.name
-                        ? "border-cyan-600 bg-cyan-50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-border bg-white hover:border-border"
                     }`}
                     title={icon.label}
                   >
@@ -198,8 +198,8 @@ export function CreateGoalDialog() {
                   onClick={() => setSelectedColor(color.value)}
                   className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 ${
                     selectedColor === color.value
-                      ? "border-slate-800 ring-2 ring-slate-300"
-                      : "border-slate-200"
+                      ? "border-foreground ring-2 ring-border"
+                      : "border-border"
                   }`}
                   style={{ backgroundColor: color.value }}
                   title={color.label}
@@ -209,8 +209,8 @@ export function CreateGoalDialog() {
           </div>
 
           {/* תצוגה מקדימה */}
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <p className="text-sm text-slate-600 mb-3">תצוגה מקדימה:</p>
+          <div className="bg-secondary rounded-lg p-4 border border-border">
+            <p className="text-sm text-muted-foreground mb-3">תצוגה מקדימה:</p>
             <div className="flex items-center gap-3">
               <div
                 className="p-3 rounded-lg"
@@ -227,10 +227,10 @@ export function CreateGoalDialog() {
                 })()}
               </div>
               <div>
-                <p className="font-semibold text-slate-800">
+                <p className="font-semibold text-foreground">
                   {name || "שם המטרה"}
                 </p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-muted-foreground">
                   יעד:{" "}
                   {targetAmount
                     ? `₪${Number(targetAmount).toLocaleString("he-IL")}`
@@ -252,7 +252,7 @@ export function CreateGoalDialog() {
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-cyan-600 hover:bg-cyan-700"
+              className="flex-1 bg-primary-500 hover:bg-primary-600"
               disabled={isLoading}
             >
               {isLoading ? "יוצר..." : "צור מטרה"}

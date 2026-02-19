@@ -34,14 +34,14 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           <CardTitle className="text-lg">עסקאות אחרונות</CardTitle>
           <Link
             href="/transactions"
-            className="text-sm text-cyan-600 hover:text-cyan-700 flex items-center gap-1"
+            className="text-sm text-primary-500 hover:text-primary-600 flex items-center gap-1"
           >
             צפה בכל העסקאות
             <ArrowLeft className="w-4 h-4 rotate-180" />
           </Link>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-muted-foreground">
             אין עסקאות להצגה
           </div>
         </CardContent>
@@ -55,7 +55,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
         <CardTitle className="text-lg">עסקאות אחרונות</CardTitle>
         <Link
           href="/transactions"
-          className="text-sm text-cyan-600 hover:text-cyan-700 flex items-center gap-1 transition-colors"
+          className="text-sm text-primary-500 hover:text-primary-600 flex items-center gap-1 transition-colors"
         >
           צפה בכל העסקאות
           <ArrowLeft className="w-4 h-4 rotate-180" />
@@ -80,7 +80,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             return (
               <div
                 key={transaction.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
               >
                 {/* אייקון קטגוריה */}
                 <div
@@ -103,10 +103,10 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
 
                 {/* פרטי עסקה */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-800 truncate">
+                  <p className="font-medium text-foreground truncate">
                     {transaction.category.name}
                   </p>
-                  <p className="text-xs text-slate-500">{relativeDate}</p>
+                  <p className="text-xs text-muted-foreground">{relativeDate}</p>
                 </div>
 
                 {/* סכום */}
@@ -114,8 +114,8 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                   <p
                     className={`font-bold ${
                       transaction.type === 'INCOME'
-                        ? 'text-emerald-500'
-                        : 'text-red-500'
+                        ? 'text-income-500'
+                        : 'text-expense-500'
                     }`}
                   >
                     {transaction.type === 'INCOME' ? '+' : '-'}
