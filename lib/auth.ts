@@ -1,7 +1,14 @@
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/db';
 
-export async function getHouseholdId(): Promise<string> {
+/**
+ * Request-scoped cached auth lookup.
+ * React.cache() deduplicates within a single server request,
+ * so calling getHouseholdId() 9 times in getDashboardData()
+ * only hits Supabase + DB once.
+ */
+export const getHouseholdId = cache(async (): Promise<string> => {
   const supabase = createClient();
   const {
     data: { user },
@@ -16,7 +23,7 @@ export async function getHouseholdId(): Promise<string> {
   });
 
   if (!member) {
-    const household = await prisma.household.create({
+    await prisma.household.create({
       data: {
         name: 'הבית שלי',
         members: { create: { userId: user.id, role: 'OWNER' } },
@@ -29,9 +36,9 @@ export async function getHouseholdId(): Promise<string> {
   }
 
   return member!.householdId;
-}
+});
 
-export async function getAuthUserId(): Promise<string> {
+export const getAuthUserId = cache(async (): Promise<string> => {
   const supabase = createClient();
   const {
     data: { user },
@@ -42,4 +49,4 @@ export async function getAuthUserId(): Promise<string> {
   }
 
   return user.id;
-}
+});

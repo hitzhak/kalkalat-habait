@@ -26,60 +26,47 @@ function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
+type SpentByCategoryMap = Map<string, number>;
+
 /**
- * חישוב סה"כ הוצאות בפועל לקטגוריה בחודש — householdId required
+ * Fetch ALL expense transactions for a month in ONE query,
+ * then return a Map<categoryId, totalSpent> for O(1) lookups.
  */
-async function calculateActualSpent(
-  categoryId: string,
+async function buildSpentMap(
+  householdId: string,
   month: number,
-  year: number,
-  includeChildren: boolean = false,
-  householdId: string
-): Promise<number> {
+  year: number
+): Promise<SpentByCategoryMap> {
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-  const categoryIds = [categoryId];
-  
-  if (includeChildren) {
-    const childCategories = await prisma.category.findMany({
-      where: { parentId: categoryId },
-      select: { id: true },
-    });
-    categoryIds.push(...childCategories.map((child: { id: string }) => child.id));
-  }
 
   const transactions = await prisma.transaction.findMany({
     where: {
       householdId,
-      categoryId: {
-        in: categoryIds,
-      },
       type: TransactionType.EXPENSE,
-      date: {
-        gte: startDate,
-        lte: endDate,
-      },
+      date: { gte: startDate, lte: endDate },
     },
+    select: { categoryId: true, amount: true },
   });
 
-  return transactions.reduce(
-    (sum: number, tx: { amount: Prisma.Decimal }) => sum + decimalToNumber(tx.amount),
-    0
-  );
+  const map: SpentByCategoryMap = new Map();
+  for (const tx of transactions) {
+    const prev = map.get(tx.categoryId) || 0;
+    map.set(tx.categoryId, prev + decimalToNumber(tx.amount));
+  }
+  return map;
 }
 
-async function getBudgetItem(householdId: string, categoryId: string, month: number, year: number) {
-  return await prisma.budgetItem.findUnique({
-    where: {
-      householdId_categoryId_month_year: {
-        householdId,
-        categoryId,
-        month,
-        year,
-      },
-    },
-  });
+function getSpentForCategory(
+  spentMap: SpentByCategoryMap,
+  categoryId: string,
+  childIds: string[] = []
+): number {
+  let total = spentMap.get(categoryId) || 0;
+  for (const childId of childIds) {
+    total += spentMap.get(childId) || 0;
+  }
+  return total;
 }
 
 // ========== Server Actions ==========
@@ -92,115 +79,100 @@ export async function getBudgetForMonth(month: number, year: number) {
     const householdId = await getHouseholdId();
     const validated = MonthYearSchema.parse({ month, year });
 
-    const categories = await withRetry(() =>
-      prisma.category.findMany({
+    const [categories, spentMap, allBudgetItems] = await Promise.all([
+      withRetry(() =>
+        prisma.category.findMany({
+          where: {
+            type: 'EXPENSE',
+            isActive: true,
+            parentId: null,
+            OR: [{ isDefault: true }, { householdId }],
+          },
+          include: {
+            children: {
+              where: { isActive: true },
+              orderBy: { sortOrder: 'asc' },
+            },
+            budgetItems: {
+              where: {
+                householdId,
+                month: validated.month,
+                year: validated.year,
+              },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        })
+      ),
+      buildSpentMap(householdId, validated.month, validated.year),
+      prisma.budgetItem.findMany({
         where: {
-          type: 'EXPENSE',
-          isActive: true,
-          parentId: null,
-          OR: [{ isDefault: true }, { householdId }],
+          householdId,
+          month: validated.month,
+          year: validated.year,
         },
-        include: {
-          children: {
-            where: {
-              isActive: true,
-            },
-            orderBy: {
-              sortOrder: 'asc',
-            },
-          },
-          budgetItems: {
-            where: {
-              householdId,
-              month: validated.month,
-              year: validated.year,
-            },
-          },
-        },
-        orderBy: {
-          sortOrder: 'asc',
-        },
-      })
-    );
+      }),
+    ]);
 
     if (categories.length === 0) {
       return [];
     }
 
-    const budgetData = await Promise.all(
-      categories.map(async (category) => {
-        const budgetItem = category.budgetItems[0];
-        const plannedAmount = budgetItem ? decimalToNumber(budgetItem.plannedAmount) : 0;
+    const budgetItemMap = new Map(allBudgetItems.map((b) => [b.categoryId, b]));
 
-        const actualSpent = await calculateActualSpent(
-          category.id,
-          validated.month,
-          validated.year,
-          true,
-          householdId
-        );
+    const budgetData = categories.map((category) => {
+      const budgetItem = category.budgetItems[0];
+      const plannedAmount = budgetItem ? decimalToNumber(budgetItem.plannedAmount) : 0;
+      const childIds = category.children.map((c) => c.id);
+      const actualSpent = getSpentForCategory(spentMap, category.id, childIds);
 
-        const remaining = plannedAmount - actualSpent;
-        const usagePercent = plannedAmount > 0 ? (actualSpent / plannedAmount) * 100 : 0;
+      const remaining = plannedAmount - actualSpent;
+      const usagePercent = plannedAmount > 0 ? (actualSpent / plannedAmount) * 100 : 0;
 
-        let alertLevel: 'success' | 'warning' | 'danger' | 'error' = 'success';
-        if (usagePercent >= 100) {
-          alertLevel = 'error';
-        } else if (usagePercent >= 90) {
-          alertLevel = 'danger';
-        } else if (usagePercent >= 70) {
-          alertLevel = 'warning';
-        }
+      let alertLevel: 'success' | 'warning' | 'danger' | 'error' = 'success';
+      if (usagePercent >= 100) {
+        alertLevel = 'error';
+      } else if (usagePercent >= 90) {
+        alertLevel = 'danger';
+      } else if (usagePercent >= 70) {
+        alertLevel = 'warning';
+      }
 
-        const childrenData = await Promise.all(
-          category.children.map(async (child) => {
-            const childBudgetItem = await getBudgetItem(
-              householdId,
-              child.id,
-              validated.month,
-              validated.year
-            );
-            const childPlanned = childBudgetItem
-              ? decimalToNumber(childBudgetItem.plannedAmount)
-              : 0;
-            const childActual = await calculateActualSpent(
-              child.id,
-              validated.month,
-              validated.year,
-              false,
-              householdId
-            );
-            const childRemaining = childPlanned - childActual;
-            const childUsagePercent =
-              childPlanned > 0 ? (childActual / childPlanned) * 100 : 0;
-
-            return {
-              id: child.id,
-              name: child.name,
-              icon: child.icon,
-              color: child.color,
-              plannedAmount: Math.round(childPlanned * 100) / 100,
-              actualSpent: Math.round(childActual * 100) / 100,
-              remaining: Math.round(childRemaining * 100) / 100,
-              usagePercent: Math.round(childUsagePercent * 100) / 100,
-            };
-          })
-        );
+      const childrenData = category.children.map((child) => {
+        const childBudgetItem = budgetItemMap.get(child.id);
+        const childPlanned = childBudgetItem
+          ? decimalToNumber(childBudgetItem.plannedAmount)
+          : 0;
+        const childActual = getSpentForCategory(spentMap, child.id);
+        const childRemaining = childPlanned - childActual;
+        const childUsagePercent =
+          childPlanned > 0 ? (childActual / childPlanned) * 100 : 0;
 
         return {
-          id: category.id,
-          name: category.name,
-          icon: category.icon,
-          color: category.color,
-          plannedAmount: Math.round(plannedAmount * 100) / 100,
-          actualSpent: Math.round(actualSpent * 100) / 100,
-          remaining: Math.round(remaining * 100) / 100,
-          usagePercent: Math.round(usagePercent * 100) / 100,
-          alertLevel,
-          children: childrenData,
+          id: child.id,
+          name: child.name,
+          icon: child.icon,
+          color: child.color,
+          plannedAmount: Math.round(childPlanned * 100) / 100,
+          actualSpent: Math.round(childActual * 100) / 100,
+          remaining: Math.round(childRemaining * 100) / 100,
+          usagePercent: Math.round(childUsagePercent * 100) / 100,
         };
-      })
-    );
+      });
+
+      return {
+        id: category.id,
+        name: category.name,
+        icon: category.icon,
+        color: category.color,
+        plannedAmount: Math.round(plannedAmount * 100) / 100,
+        actualSpent: Math.round(actualSpent * 100) / 100,
+        remaining: Math.round(remaining * 100) / 100,
+        usagePercent: Math.round(usagePercent * 100) / 100,
+        alertLevel,
+        children: childrenData,
+      };
+    });
 
     return budgetData;
   } catch (error) {
@@ -367,23 +339,43 @@ export async function getBudgetSummary(month: number, year: number) {
     const householdId = await getHouseholdId();
     const validated = MonthYearSchema.parse({ month, year });
 
-    const budgetItems = await withRetry(() =>
-      prisma.budgetItem.findMany({
-        where: {
-          householdId,
-          month: validated.month,
-          year: validated.year,
-        },
-        include: {
-          category: {
-            select: {
-              id: true,
-              parentId: true,
+    const [budgetItems, spentMap, childCategories] = await Promise.all([
+      withRetry(() =>
+        prisma.budgetItem.findMany({
+          where: {
+            householdId,
+            month: validated.month,
+            year: validated.year,
+          },
+          include: {
+            category: {
+              select: {
+                id: true,
+                parentId: true,
+              },
             },
           },
+        })
+      ),
+      buildSpentMap(householdId, validated.month, validated.year),
+      prisma.category.findMany({
+        where: {
+          parentId: { not: null },
+          isActive: true,
+          OR: [{ isDefault: true }, { householdId }],
         },
-      })
-    );
+        select: { id: true, parentId: true },
+      }),
+    ]);
+
+    const childrenByParent = new Map<string, string[]>();
+    for (const child of childCategories) {
+      if (child.parentId) {
+        const siblings = childrenByParent.get(child.parentId) || [];
+        siblings.push(child.id);
+        childrenByParent.set(child.parentId, siblings);
+      }
+    }
 
     const mainCategoryItems = budgetItems.filter((item) => !item.category.parentId);
 
@@ -394,14 +386,8 @@ export async function getBudgetSummary(month: number, year: number) {
 
     let totalActual = 0;
     for (const item of mainCategoryItems) {
-      const actual = await calculateActualSpent(
-        item.categoryId,
-        validated.month,
-        validated.year,
-        true,
-        householdId
-      );
-      totalActual += actual;
+      const childIds = childrenByParent.get(item.categoryId) || [];
+      totalActual += getSpentForCategory(spentMap, item.categoryId, childIds);
     }
 
     const totalRemaining = totalPlanned - totalActual;

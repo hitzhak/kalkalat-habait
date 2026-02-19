@@ -1,9 +1,9 @@
 'use server';
 
-import { prisma } from '@/lib/db';
+import { prisma, withRetry } from '@/lib/db';
+import { TransactionType } from '@/types';
 import { Prisma } from '@prisma/client';
-import { getTransactionsSummary, getTransactions } from './transactions';
-import { getBudgetForMonth } from './budgets';
+import { getTransactions } from './transactions';
 import { getHouseholdId } from '@/lib/auth';
 
 function decimalToNumber(decimal: Prisma.Decimal): number {
@@ -23,18 +23,11 @@ export async function getExpensesByCategory(month: number, year: number) {
       where: {
         householdId,
         type: 'EXPENSE',
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
+        date: { gte: startDate, lte: endDate },
       },
       include: {
         category: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
+          select: { id: true, name: true, color: true },
         },
       },
     });
@@ -47,8 +40,7 @@ export async function getExpensesByCategory(month: number, year: number) {
     transactions.forEach((tx) => {
       const categoryId = tx.category.id;
       if (categoryMap.has(categoryId)) {
-        const existing = categoryMap.get(categoryId)!;
-        existing.totalAmount += decimalToNumber(tx.amount);
+        categoryMap.get(categoryId)!.totalAmount += decimalToNumber(tx.amount);
       } else {
         categoryMap.set(categoryId, {
           categoryId: tx.category.id,
@@ -80,32 +72,22 @@ export async function getWeeklyVariableExpenses(month: number, year: number) {
         householdId,
         type: 'EXPENSE',
         isFixed: false,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
+        date: { gte: startDate, lte: endDate },
       },
     });
 
     const weekMap = new Map<number, number>();
-
     transactions.forEach((tx) => {
       const week = tx.weekNumber || 0;
       if (week > 0) {
-        const current = weekMap.get(week) || 0;
-        weekMap.set(week, current + decimalToNumber(tx.amount));
+        weekMap.set(week, (weekMap.get(week) || 0) + decimalToNumber(tx.amount));
       }
     });
 
-    const weeklyData = [];
-    for (let week = 1; week <= 5; week++) {
-      weeklyData.push({
-        week,
-        amount: Math.round((weekMap.get(week) || 0) * 100) / 100,
-      });
-    }
-
-    return weeklyData;
+    return Array.from({ length: 5 }, (_, i) => ({
+      week: i + 1,
+      amount: Math.round((weekMap.get(i + 1) || 0) * 100) / 100,
+    }));
   } catch (error) {
     console.error('Error fetching weekly expenses:', error);
     throw new Error('שגיאה בטעינת הוצאות שבועיות');
@@ -121,47 +103,35 @@ export async function getBudgetAlerts(month: number, year: number) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const budgetItems = await prisma.budgetItem.findMany({
-      where: {
-        householdId,
-        month,
-        year,
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            color: true,
-          },
+    const [budgetItems, transactions] = await Promise.all([
+      prisma.budgetItem.findMany({
+        where: { householdId, month, year },
+        include: {
+          category: { select: { id: true, name: true, icon: true, color: true } },
         },
-      },
-    });
-
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        householdId,
-        type: 'EXPENSE',
-        date: {
-          gte: startDate,
-          lte: endDate,
+      }),
+      prisma.transaction.findMany({
+        where: {
+          householdId,
+          type: 'EXPENSE',
+          date: { gte: startDate, lte: endDate },
         },
-      },
-    });
+      }),
+    ]);
 
     const spentByCategory = new Map<string, number>();
     transactions.forEach((tx) => {
-      const current = spentByCategory.get(tx.categoryId) || 0;
-      spentByCategory.set(tx.categoryId, current + decimalToNumber(tx.amount));
+      spentByCategory.set(
+        tx.categoryId,
+        (spentByCategory.get(tx.categoryId) || 0) + decimalToNumber(tx.amount)
+      );
     });
 
-    const alerts = budgetItems
+    return budgetItems
       .map((budget) => {
         const spent = spentByCategory.get(budget.categoryId) || 0;
         const budgetAmount = decimalToNumber(budget.plannedAmount);
         const usagePercent = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
-
         return {
           categoryId: budget.categoryId,
           categoryName: budget.category.name,
@@ -173,8 +143,6 @@ export async function getBudgetAlerts(month: number, year: number) {
       })
       .filter((alert) => alert.usagePercent >= 80)
       .sort((a, b) => b.usagePercent - a.usagePercent);
-
-    return alerts;
   } catch (error) {
     console.error('Error fetching budget alerts:', error);
     throw new Error('שגיאה בטעינת התראות תקציב');
@@ -190,31 +158,23 @@ export async function getTotalBudgetSummary(month: number, year: number) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const budgetItems = await prisma.budgetItem.findMany({
-      where: {
-        householdId,
-        month,
-        year,
-        category: { parentId: null },
-      },
-    });
+    const [budgetItems, transactions] = await Promise.all([
+      prisma.budgetItem.findMany({
+        where: { householdId, month, year, category: { parentId: null } },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          householdId,
+          type: 'EXPENSE',
+          date: { gte: startDate, lte: endDate },
+        },
+      }),
+    ]);
 
     const totalBudget = budgetItems.reduce(
       (sum, item) => sum + decimalToNumber(item.plannedAmount),
       0
     );
-
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        householdId,
-        type: 'EXPENSE',
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-    });
-
     const totalSpent = transactions.reduce(
       (sum, tx) => sum + decimalToNumber(tx.amount),
       0
@@ -249,10 +209,7 @@ export async function getPreviousMonthSummary(month: number, year: number) {
     const transactions = await prisma.transaction.findMany({
       where: {
         householdId,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
+        date: { gte: startDate, lte: endDate },
       },
     });
 
@@ -268,12 +225,10 @@ export async function getPreviousMonthSummary(month: number, year: number) {
       }
     });
 
-    const balance = totalIncome - totalExpenses;
-
     return {
       totalIncome: Math.round(totalIncome * 100) / 100,
       totalExpenses: Math.round(totalExpenses * 100) / 100,
-      balance: Math.round(balance * 100) / 100,
+      balance: Math.round((totalIncome - totalExpenses) * 100) / 100,
     };
   } catch (error) {
     console.error('Error fetching previous month summary:', error);
@@ -354,30 +309,212 @@ export async function getBudgetFlowSummary(month: number, year: number) {
 }
 
 /**
- * טעינה מאוחדת של כל נתוני הדשבורד - קריאה אחת במקום 7.
+ * Optimized dashboard loader — fetches householdId once, shared data in
+ * parallel, then computes all dashboard widgets from those shared datasets.
+ * Reduces ~32 DB round-trips to ~7.
  */
 export async function getDashboardData(month: number, year: number) {
+  const householdId = await getHouseholdId();
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+  let prevMonth = month - 1;
+  let prevYear = year;
+  if (prevMonth === 0) { prevMonth = 12; prevYear = year - 1; }
+  const prevStartDate = new Date(prevYear, prevMonth - 1, 1);
+  const prevEndDate = new Date(prevYear, prevMonth, 0, 23, 59, 59, 999);
+
   const [
-    summary,
-    previousSummary,
+    allTransactions,
+    prevTransactions,
+    budgetItems,
+    categories,
+    settings,
     transactionsResult,
-    expensesByCategory,
-    weeklyExpenses,
-    budgetSummary,
-    alerts,
-    budgetFlow,
-    budgetByCategory,
   ] = await Promise.all([
-    getTransactionsSummary(month, year),
-    getPreviousMonthSummary(month, year),
+    prisma.transaction.findMany({
+      where: { householdId, date: { gte: startDate, lte: endDate } },
+      include: {
+        category: { select: { id: true, name: true, icon: true, color: true, type: true, isFixed: true, parentId: true } },
+      },
+    }),
+    prisma.transaction.findMany({
+      where: { householdId, date: { gte: prevStartDate, lte: prevEndDate } },
+    }),
+    prisma.budgetItem.findMany({
+      where: { householdId, month, year },
+      include: { category: { select: { id: true, name: true, icon: true, color: true, parentId: true } } },
+    }),
+    withRetry(() =>
+      prisma.category.findMany({
+        where: {
+          type: 'EXPENSE', isActive: true, parentId: null,
+          OR: [{ isDefault: true }, { householdId }],
+        },
+        include: {
+          children: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
+          budgetItems: { where: { householdId, month, year } },
+        },
+        orderBy: { sortOrder: 'asc' },
+      })
+    ),
+    prisma.appSettings.findFirst({ where: { householdId } }),
     getTransactions(month, year),
-    getExpensesByCategory(month, year),
-    getWeeklyVariableExpenses(month, year),
-    getTotalBudgetSummary(month, year),
-    getBudgetAlerts(month, year),
-    getBudgetFlowSummary(month, year),
-    getBudgetForMonth(month, year),
   ]);
+
+  // --- summary (from allTransactions) ---
+  let totalIncome = 0, totalExpenses = 0, fixedExpenses = 0, variableExpenses = 0;
+  const weeklySpending: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const spentByCategory = new Map<string, number>();
+  const expCategoryMap = new Map<string, { categoryId: string; categoryName: string; categoryColor?: string; totalAmount: number }>();
+  const weeklyVarMap = new Map<number, number>();
+
+  for (const tx of allTransactions) {
+    const amount = decimalToNumber(tx.amount);
+    if (tx.type === TransactionType.INCOME) {
+      totalIncome += amount;
+    } else if (tx.type === TransactionType.EXPENSE) {
+      totalExpenses += amount;
+      if (tx.isFixed) { fixedExpenses += amount; } else {
+        variableExpenses += amount;
+        const week = tx.weekNumber || 0;
+        if (week >= 1 && week <= 5) { weeklySpending[week] += amount; }
+      }
+      spentByCategory.set(tx.categoryId, (spentByCategory.get(tx.categoryId) || 0) + amount);
+
+      const catId = tx.category.id;
+      if (expCategoryMap.has(catId)) {
+        expCategoryMap.get(catId)!.totalAmount += amount;
+      } else {
+        expCategoryMap.set(catId, {
+          categoryId: catId,
+          categoryName: tx.category.name,
+          categoryColor: tx.category.color || undefined,
+          totalAmount: amount,
+        });
+      }
+
+      if (!tx.isFixed) {
+        const w = tx.weekNumber || 0;
+        if (w > 0) weeklyVarMap.set(w, (weeklyVarMap.get(w) || 0) + amount);
+      }
+    }
+  }
+
+  const summary = {
+    totalIncome: Math.round(totalIncome * 100) / 100,
+    totalExpenses: Math.round(totalExpenses * 100) / 100,
+    balance: Math.round((totalIncome - totalExpenses) * 100) / 100,
+    fixedExpenses: Math.round(fixedExpenses * 100) / 100,
+    variableExpenses: Math.round(variableExpenses * 100) / 100,
+  };
+
+  // --- previous month summary ---
+  let prevIncome = 0, prevExpenses = 0;
+  for (const tx of prevTransactions) {
+    const amount = decimalToNumber(tx.amount);
+    if (tx.type === 'INCOME') prevIncome += amount; else prevExpenses += amount;
+  }
+  const previousSummary = {
+    totalIncome: Math.round(prevIncome * 100) / 100,
+    totalExpenses: Math.round(prevExpenses * 100) / 100,
+    balance: Math.round((prevIncome - prevExpenses) * 100) / 100,
+  };
+
+  // --- expenses by category ---
+  const expensesByCategory = Array.from(expCategoryMap.values()).sort((a, b) => b.totalAmount - a.totalAmount);
+
+  // --- weekly variable expenses ---
+  const weeklyExpenses = Array.from({ length: 5 }, (_, i) => ({
+    week: i + 1,
+    amount: Math.round((weeklyVarMap.get(i + 1) || 0) * 100) / 100,
+  }));
+
+  // --- budget summary (total planned vs total spent) ---
+  const mainBudgetItems = budgetItems.filter((b) => !b.category.parentId);
+  const totalBudget = mainBudgetItems.reduce((s, b) => s + decimalToNumber(b.plannedAmount), 0);
+  const budgetSummary = {
+    totalBudget: Math.round(totalBudget * 100) / 100,
+    totalSpent: Math.round(totalExpenses * 100) / 100,
+  };
+
+  // --- budget alerts (>= 80%) ---
+  const alerts = budgetItems
+    .map((budget) => {
+      const spent = spentByCategory.get(budget.categoryId) || 0;
+      const budgetAmount = decimalToNumber(budget.plannedAmount);
+      const usagePercent = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
+      return {
+        categoryId: budget.categoryId,
+        categoryName: budget.category.name,
+        categoryIcon: budget.category.icon || undefined,
+        budgetAmount,
+        spentAmount: spent,
+        usagePercent: Math.round(usagePercent * 100) / 100,
+      };
+    })
+    .filter((a) => a.usagePercent >= 80)
+    .sort((a, b) => b.usagePercent - a.usagePercent);
+
+  // --- budget flow ---
+  const payday = settings?.payday || 11;
+  const availableForVariable = totalIncome - fixedExpenses;
+  const netRemaining = totalIncome - fixedExpenses - variableExpenses;
+  const budgetFlow = {
+    payday,
+    totalIncome: summary.totalIncome,
+    fixedExpenses: summary.fixedExpenses,
+    availableForVariable: Math.round(availableForVariable * 100) / 100,
+    variableExpenses: summary.variableExpenses,
+    netRemaining: Math.round(netRemaining * 100) / 100,
+    weeklySpending: Object.entries(weeklySpending).map(([week, amount]) => ({
+      week: parseInt(week),
+      amount: Math.round(amount * 100) / 100,
+    })),
+  };
+
+  // --- budget by category (from categories + spentMap) ---
+  const budgetItemMap = new Map(budgetItems.map((b) => [b.categoryId, b]));
+  const budgetByCategory = categories.map((category) => {
+    const bi = category.budgetItems[0];
+    const plannedAmount = bi ? decimalToNumber(bi.plannedAmount) : 0;
+    const childIds = category.children.map((c) => c.id);
+    let actualSpent = spentByCategory.get(category.id) || 0;
+    for (const cid of childIds) actualSpent += spentByCategory.get(cid) || 0;
+
+    const remaining = plannedAmount - actualSpent;
+    const usagePercent = plannedAmount > 0 ? (actualSpent / plannedAmount) * 100 : 0;
+    let alertLevel: 'success' | 'warning' | 'danger' | 'error' = 'success';
+    if (usagePercent >= 100) alertLevel = 'error';
+    else if (usagePercent >= 90) alertLevel = 'danger';
+    else if (usagePercent >= 70) alertLevel = 'warning';
+
+    const childrenData = category.children.map((child) => {
+      const cbi = budgetItemMap.get(child.id);
+      const childPlanned = cbi ? decimalToNumber(cbi.plannedAmount) : 0;
+      const childActual = spentByCategory.get(child.id) || 0;
+      const childRemaining = childPlanned - childActual;
+      const childUsagePercent = childPlanned > 0 ? (childActual / childPlanned) * 100 : 0;
+      return {
+        id: child.id, name: child.name, icon: child.icon, color: child.color,
+        plannedAmount: Math.round(childPlanned * 100) / 100,
+        actualSpent: Math.round(childActual * 100) / 100,
+        remaining: Math.round(childRemaining * 100) / 100,
+        usagePercent: Math.round(childUsagePercent * 100) / 100,
+      };
+    });
+
+    return {
+      id: category.id, name: category.name, icon: category.icon, color: category.color,
+      plannedAmount: Math.round(plannedAmount * 100) / 100,
+      actualSpent: Math.round(actualSpent * 100) / 100,
+      remaining: Math.round(remaining * 100) / 100,
+      usagePercent: Math.round(usagePercent * 100) / 100,
+      alertLevel,
+      children: childrenData,
+    };
+  });
 
   return {
     summary,

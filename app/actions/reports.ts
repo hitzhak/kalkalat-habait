@@ -350,59 +350,54 @@ export async function getTrendData(months: number = 12) {
     const validated = TrendSchema.parse({ months });
 
     const today = new Date();
-    const trendData = [];
+    const oldestDate = new Date(today.getFullYear(), today.getMonth() - (validated.months - 1), 1);
+    const newestDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
 
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        householdId,
+        date: { gte: oldestDate, lte: newestDate },
+      },
+      select: { date: true, type: true, amount: true },
+    });
+
+    const monthlyMap = new Map<string, { income: number; expenses: number }>();
+    for (const tx of transactions) {
+      const m = tx.date.getMonth() + 1;
+      const y = tx.date.getFullYear();
+      const key = `${y}-${m}`;
+      if (!monthlyMap.has(key)) monthlyMap.set(key, { income: 0, expenses: 0 });
+      const bucket = monthlyMap.get(key)!;
+      const amount = decimalToNumber(tx.amount);
+      if (tx.type === TransactionType.INCOME) bucket.income += amount;
+      else if (tx.type === TransactionType.EXPENSE) bucket.expenses += amount;
+    }
+
+    const trendData = [];
     for (let i = validated.months - 1; i >= 0; i--) {
       const targetDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const month = targetDate.getMonth() + 1;
       const year = targetDate.getFullYear();
-
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-      const transactions = await prisma.transaction.findMany({
-        where: {
-          householdId,
-          date: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
-      });
-
-      let income = 0;
-      let expenses = 0;
-
-      transactions.forEach((tx) => {
-        const amount = decimalToNumber(tx.amount);
-        if (tx.type === TransactionType.INCOME) {
-          income += amount;
-        } else if (tx.type === TransactionType.EXPENSE) {
-          expenses += amount;
-        }
-      });
+      const bucket = monthlyMap.get(`${year}-${month}`) || { income: 0, expenses: 0 };
 
       trendData.push({
         month,
         year,
         monthName: getHebrewMonthName(month),
         monthYear: `${getHebrewMonthName(month)} ${year}`,
-        income: Math.round(income * 100) / 100,
-        expenses: Math.round(expenses * 100) / 100,
-        balance: Math.round((income - expenses) * 100) / 100,
+        income: Math.round(bucket.income * 100) / 100,
+        expenses: Math.round(bucket.expenses * 100) / 100,
+        balance: Math.round((bucket.income - bucket.expenses) * 100) / 100,
       });
     }
 
     const avgIncome =
       trendData.length > 0
-        ? Math.round((trendData.reduce((sum, d) => sum + d.income, 0) / trendData.length) * 100) /
-          100
+        ? Math.round((trendData.reduce((sum, d) => sum + d.income, 0) / trendData.length) * 100) / 100
         : 0;
     const avgExpenses =
       trendData.length > 0
-        ? Math.round(
-            (trendData.reduce((sum, d) => sum + d.expenses, 0) / trendData.length) * 100
-          ) / 100
+        ? Math.round((trendData.reduce((sum, d) => sum + d.expenses, 0) / trendData.length) * 100) / 100
         : 0;
 
     return {
