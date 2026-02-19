@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { getTransactionsSummary, getTransactions } from './transactions';
 import { getBudgetForMonth } from './budgets';
+import { getAuthUserId } from '@/lib/auth';
 
 /**
  * המרת Decimal ל-number
@@ -17,11 +18,13 @@ function decimalToNumber(decimal: Prisma.Decimal): number {
  */
 export async function getExpensesByCategory(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         type: 'EXPENSE',
         date: {
           gte: startDate,
@@ -72,13 +75,15 @@ export async function getExpensesByCategory(month: number, year: number) {
  */
 export async function getWeeklyVariableExpenses(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         type: 'EXPENSE',
-        isFixed: false, // רק הוצאות משתנות!
+        isFixed: false,
         date: {
           gte: startDate,
           lte: endDate,
@@ -118,12 +123,14 @@ export async function getWeeklyVariableExpenses(month: number, year: number) {
  */
 export async function getBudgetAlerts(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     // קבלת כל פריטי התקציב לחודש
     const budgetItems = await prisma.budgetItem.findMany({
       where: {
+        userId,
         month,
         year,
       },
@@ -142,6 +149,7 @@ export async function getBudgetAlerts(month: number, year: number) {
     // קבלת עסקאות לחודש
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         type: 'EXPENSE',
         date: {
           gte: startDate,
@@ -188,14 +196,17 @@ export async function getBudgetAlerts(month: number, year: number) {
  */
 export async function getTotalBudgetSummary(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // סה"כ תקציב
+    // סה"כ תקציב — קטגוריות ראשיות בלבד (למניעת ספירה כפולה)
     const budgetItems = await prisma.budgetItem.findMany({
       where: {
+        userId,
         month,
         year,
+        category: { parentId: null },
       },
     });
 
@@ -207,6 +218,7 @@ export async function getTotalBudgetSummary(month: number, year: number) {
     // סה"כ הוצאות
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         type: 'EXPENSE',
         date: {
           gte: startDate,
@@ -235,6 +247,7 @@ export async function getTotalBudgetSummary(month: number, year: number) {
  */
 export async function getPreviousMonthSummary(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     // חישוב חודש קודם
     let prevMonth = month - 1;
     let prevYear = year;
@@ -248,6 +261,7 @@ export async function getPreviousMonthSummary(month: number, year: number) {
 
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         date: {
           gte: startDate,
           lte: endDate,
@@ -281,18 +295,20 @@ export async function getPreviousMonthSummary(month: number, year: number) {
 }
 
 /**
- * סיכום זרימת תקציב לפי מחזור תשלום (payday).
- * מציג: הכנסות -> הוצאות קבועות (ב-payday) -> נותר למשתנות -> הוצאות משתנות בפועל -> יתרה סופית
+ * סיכום זרימת תקציב חודשי.
+ * מציג: הכנסות -> הוצאות קבועות -> נותר למשתנות -> הוצאות משתנות בפועל -> יתרה סופית
  */
 export async function getBudgetFlowSummary(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const [settings, transactions] = await Promise.all([
-      prisma.appSettings.findFirst(),
+      prisma.appSettings.findFirst({ where: { userId } }),
       prisma.transaction.findMany({
         where: {
+          userId,
           date: { gte: startDate, lte: endDate },
         },
       }),

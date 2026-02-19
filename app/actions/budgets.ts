@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma, withRetry } from '@/lib/db';
 import { TransactionType } from '@/types';
 import { Prisma } from '@prisma/client';
+import { getAuthUserId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -35,16 +36,14 @@ async function calculateActualSpent(
   categoryId: string,
   month: number,
   year: number,
-  includeChildren: boolean = false
+  includeChildren: boolean = false,
+  userId?: string
 ): Promise<number> {
-  // תאריכי התחלה וסיום החודש
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-  // רשימת IDs לחיפוש
   const categoryIds = [categoryId];
   
-  // אם צריך לכלול תתי-קטגוריות, שולפים אותן
   if (includeChildren) {
     const childCategories = await prisma.category.findMany({
       where: { parentId: categoryId },
@@ -53,9 +52,9 @@ async function calculateActualSpent(
     categoryIds.push(...childCategories.map((child: { id: string }) => child.id));
   }
 
-  // שליפת עסקאות
   const transactions = await prisma.transaction.findMany({
     where: {
+      ...(userId && { userId }),
       categoryId: {
         in: categoryIds,
       },
@@ -97,6 +96,7 @@ async function getBudgetItem(categoryId: string, month: number, year: number) {
  */
 export async function getBudgetForMonth(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -107,6 +107,7 @@ export async function getBudgetForMonth(month: number, year: number) {
           type: 'EXPENSE',
           isActive: true,
           parentId: null,
+          OR: [{ isDefault: true }, { userId }],
         },
         include: {
           children: {
@@ -147,7 +148,8 @@ export async function getBudgetForMonth(month: number, year: number) {
           category.id,
           validated.month,
           validated.year,
-          true // כולל תתי-קטגוריות
+          true,
+          userId
         );
 
         // חישובים
@@ -179,7 +181,8 @@ export async function getBudgetForMonth(month: number, year: number) {
               child.id,
               validated.month,
               validated.year,
-              false
+              false,
+              userId
             );
             const childRemaining = childPlanned - childActual;
             const childUsagePercent =
@@ -232,6 +235,7 @@ export async function upsertBudgetItem(
   amount: number
 ) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = BudgetItemSchema.parse({ categoryId, month, year, amount });
 
@@ -262,6 +266,7 @@ export async function upsertBudgetItem(
         },
       },
       create: {
+        userId,
         categoryId: validated.categoryId,
         month: validated.month,
         year: validated.year,
@@ -304,6 +309,7 @@ export async function upsertBudgetItem(
  */
 export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYear: number) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = MonthYearSchema.parse({ month: targetMonth, year: targetYear });
 
@@ -318,6 +324,7 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
     // שליפת פריטי תקציב מחודש קודם
     const previousBudgetItems = await prisma.budgetItem.findMany({
       where: {
+        userId,
         month: previousMonth,
         year: previousYear,
       },
@@ -334,15 +341,16 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
     // בדיקה אם כבר קיימים פריטי תקציב בחודש היעד
     const existingItems = await prisma.budgetItem.findMany({
       where: {
+        userId,
         month: validated.month,
         year: validated.year,
       },
     });
 
-    // אם יש פריטים קיימים, נמחק אותם תחילה
     if (existingItems.length > 0) {
       await prisma.budgetItem.deleteMany({
         where: {
+          userId,
           month: validated.month,
           year: validated.year,
         },
@@ -351,6 +359,7 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
 
     // יצירת פריטי תקציב חדשים
     const newBudgetItems = previousBudgetItems.map((item) => ({
+      userId,
       categoryId: item.categoryId,
       month: validated.month,
       year: validated.year,
@@ -378,6 +387,7 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
  */
 export async function getBudgetSummary(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -385,6 +395,7 @@ export async function getBudgetSummary(month: number, year: number) {
     const budgetItems = await withRetry(() =>
       prisma.budgetItem.findMany({
         where: {
+          userId,
           month: validated.month,
           year: validated.year,
         },
@@ -415,7 +426,8 @@ export async function getBudgetSummary(month: number, year: number) {
         item.categoryId,
         validated.month,
         validated.year,
-        true // כולל תתי-קטגוריות
+        true,
+        userId
       );
       totalActual += actual;
     }

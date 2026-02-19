@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { TransactionType } from '@/types';
 import { Prisma } from '@prisma/client';
+import { getAuthUserId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -73,6 +74,7 @@ function getHebrewMonthName(month: number): string {
  */
 export async function getMonthlyReport(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -83,6 +85,7 @@ export async function getMonthlyReport(month: number, year: number) {
     // שליפת כל העסקאות לחודש
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         date: {
           gte: startDate,
           lte: endDate,
@@ -372,6 +375,7 @@ export async function getComparisonData(
  */
 export async function getTrendData(months: number = 12) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = TrendSchema.parse({ months });
 
@@ -391,6 +395,7 @@ export async function getTrendData(months: number = 12) {
       // שליפת עסקאות
       const transactions = await prisma.transaction.findMany({
         where: {
+          userId,
           date: {
             gte: startDate,
             lte: endDate,

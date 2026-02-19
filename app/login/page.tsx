@@ -10,19 +10,49 @@ import { Separator } from '@/components/ui/separator';
 import { Wallet, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
+function getHebrewAuthError(error: unknown): string {
+  const msg = error instanceof Error ? error.message : String(error);
+  const lower = msg.toLowerCase();
+
+  if (lower.includes('invalid login credentials') || lower.includes('invalid_credentials'))
+    return 'אימייל או סיסמה שגויים';
+  if (lower.includes('email not confirmed'))
+    return 'האימייל לא אומת — בדוק את תיבת הדואר';
+  if (lower.includes('user already registered') || lower.includes('already been registered'))
+    return 'כתובת האימייל כבר רשומה — נסה להתחבר';
+  if (lower.includes('password') && lower.includes('at least'))
+    return 'הסיסמה חייבת להכיל לפחות 6 תווים';
+  if (lower.includes('rate limit') || lower.includes('too many requests'))
+    return 'יותר מדי ניסיונות — נסה שוב בעוד דקה';
+  if (lower.includes('network') || lower.includes('fetch'))
+    return 'שגיאת רשת — בדוק את החיבור לאינטרנט';
+  if (lower.includes('email') && lower.includes('invalid'))
+    return 'כתובת אימייל לא תקינה';
+
+  return msg;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const supabase = createClient();
+
+  const validate = (): boolean => {
+    const errors: { email?: string; password?: string } = {};
+    if (!email) errors.email = 'חובה למלא אימייל';
+    else if (!/^\S+@\S+\.\S+$/.test(email)) errors.email = 'כתובת אימייל לא תקינה';
+    if (!password) errors.password = 'חובה למלא סיסמה';
+    else if (password.length < 6) errors.password = 'הסיסמה חייבת להכיל לפחות 6 תווים';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('נא למלא אימייל וסיסמה');
-      return;
-    }
+    if (!validate()) return;
 
     setLoading(true);
     try {
@@ -45,8 +75,7 @@ export default function LoginPage() {
         window.location.href = '/';
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'שגיאה בהתחברות';
-      toast.error(message);
+      toast.error(getHebrewAuthError(error));
     } finally {
       setLoading(false);
     }
@@ -63,8 +92,7 @@ export default function LoginPage() {
       });
       if (error) throw error;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'שגיאה בהתחברות עם Google';
-      toast.error(message);
+      toast.error(getHebrewAuthError(error));
       setLoading(false);
     }
   };
@@ -130,10 +158,11 @@ export default function LoginPage() {
                 type="email"
                 placeholder="name@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-11 text-left"
+                onChange={(e) => { setEmail(e.target.value); setFieldErrors(prev => ({ ...prev, email: undefined })); }}
+                className={`h-11 text-left ${fieldErrors.email ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
                 dir="ltr"
               />
+              {fieldErrors.email && <p className="text-sm text-red-500">{fieldErrors.email}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">סיסמה</Label>
@@ -142,10 +171,14 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-11 text-left"
+                onChange={(e) => { setPassword(e.target.value); setFieldErrors(prev => ({ ...prev, password: undefined })); }}
+                className={`h-11 text-left ${fieldErrors.password ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
                 dir="ltr"
               />
+              {fieldErrors.password && <p className="text-sm text-red-500">{fieldErrors.password}</p>}
+              {mode === 'signup' && !fieldErrors.password && (
+                <p className="text-xs text-slate-400">מינימום 6 תווים</p>
+              )}
             </div>
             <Button type="submit" disabled={loading} className="w-full h-12 text-base font-medium bg-cyan-600 hover:bg-cyan-700">
               {loading ? (

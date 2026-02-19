@@ -5,12 +5,15 @@ import { LoanType } from '@/types';
 import { Prisma } from '@prisma/client';
 import { addMonths, format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
+import { getAuthUserId } from '@/lib/auth';
 
 // === 1. קבלת כל ההלוואות הפעילות ===
 export async function getLoans() {
   try {
+    const userId = await getAuthUserId();
     const loans = await prisma.loan.findMany({
       where: {
+        userId,
         isActive: true,
       },
       include: {
@@ -46,8 +49,10 @@ export async function createLoan(data: {
   notes?: string;
 }) {
   try {
+    const userId = await getAuthUserId();
     const loan = await prisma.loan.create({
       data: {
+        userId,
         name: data.name,
         type: data.type,
         originalAmount: new Prisma.Decimal(data.originalAmount),
@@ -86,6 +91,9 @@ export async function updateLoan(
   }
 ) {
   try {
+    const userId = await getAuthUserId();
+    const existing = await prisma.loan.findFirst({ where: { id, userId } });
+    if (!existing) return { success: false, error: 'הלוואה לא נמצאה' };
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;
@@ -114,6 +122,9 @@ export async function updateLoan(
 // === 4. מחיקת הלוואה ===
 export async function deleteLoan(id: string) {
   try {
+    const userId = await getAuthUserId();
+    const existing = await prisma.loan.findFirst({ where: { id, userId } });
+    if (!existing) return { success: false, error: 'הלוואה לא נמצאה' };
     await prisma.loan.delete({
       where: { id },
     });
@@ -136,9 +147,9 @@ export async function addLoanPayment(
   notes?: string
 ) {
   try {
-    // קבלת ההלוואה הנוכחית
-    const loan = await prisma.loan.findUnique({
-      where: { id: loanId },
+    const userId = await getAuthUserId();
+    const loan = await prisma.loan.findFirst({
+      where: { id: loanId, userId },
     });
 
     if (!loan) {
@@ -182,6 +193,9 @@ export async function addLoanPayment(
 // === 6. קבלת היסטוריית תשלומים להלוואה ===
 export async function getLoanPayments(loanId: string) {
   try {
+    const userId = await getAuthUserId();
+    const loan = await prisma.loan.findFirst({ where: { id: loanId, userId } });
+    if (!loan) return { success: false, error: 'הלוואה לא נמצאה', data: [] };
     const payments = await prisma.loanPayment.findMany({
       where: {
         loanId,
@@ -201,8 +215,10 @@ export async function getLoanPayments(loanId: string) {
 // === 7. סיכום הלוואות ===
 export async function getLoansSummary() {
   try {
+    const userId = await getAuthUserId();
     const loans = await prisma.loan.findMany({
       where: {
+        userId,
         isActive: true,
       },
     });

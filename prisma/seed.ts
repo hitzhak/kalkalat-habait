@@ -293,10 +293,10 @@ async function main() {
   console.log('⚙️ יוצר הגדרות אפליקציה...');
 
   await prisma.appSettings.upsert({
-    where: { id: 'default' },
+    where: { userId: 'system-seed' },
     update: {},
     create: {
-      id: 'default',
+      userId: 'system-seed',
       payday: 11,
       currency: 'ILS',
       startMonth: 1,

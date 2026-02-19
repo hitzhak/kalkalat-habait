@@ -3,13 +3,16 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import { getAuthUserId } from "@/lib/auth";
 
 /**
  * קבלת כל מטרות החיסכון
  */
 export async function getSavingsGoals() {
   try {
+    const userId = await getAuthUserId();
     const goals = await prisma.savingsGoal.findMany({
+      where: { userId },
       include: {
         deposits: {
           orderBy: {
@@ -41,8 +44,10 @@ export async function createSavingsGoal(data: {
   monthlyTarget?: number;
 }) {
   try {
+    const userId = await getAuthUserId();
     const goal = await prisma.savingsGoal.create({
       data: {
+        userId,
         name: data.name,
         targetAmount: new Prisma.Decimal(data.targetAmount),
         targetDate: data.targetDate || null,
@@ -80,6 +85,9 @@ export async function updateSavingsGoal(
   }
 ) {
   try {
+    const userId = await getAuthUserId();
+    const existing = await prisma.savingsGoal.findFirst({ where: { id, userId } });
+    if (!existing) throw new Error('מטרת חיסכון לא נמצאה');
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;
@@ -113,6 +121,9 @@ export async function updateSavingsGoal(
  */
 export async function deleteSavingsGoal(id: string) {
   try {
+    const userId = await getAuthUserId();
+    const existing = await prisma.savingsGoal.findFirst({ where: { id, userId } });
+    if (!existing) throw new Error('מטרת חיסכון לא נמצאה');
     await prisma.savingsGoal.delete({
       where: { id },
     });
@@ -182,6 +193,9 @@ export async function addDeposit(data: {
  */
 export async function getDepositsForGoal(goalId: string) {
   try {
+    const userId = await getAuthUserId();
+    const goal = await prisma.savingsGoal.findFirst({ where: { id: goalId, userId } });
+    if (!goal) throw new Error('מטרת חיסכון לא נמצאה');
     const deposits = await prisma.savingsDeposit.findMany({
       where: {
         goalId,

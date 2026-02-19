@@ -104,15 +104,11 @@ function CategoryRow({
         indent ? 'me-4 sm:me-6 border-dashed' : ''
       } ${isActive ? 'bg-white border-slate-200' : 'bg-slate-50/70 border-slate-100 opacity-60'}`}
     >
-      <div
-        className={`${indent ? 'w-8 h-8' : 'w-9 h-9 sm:w-10 sm:h-10'} rounded-lg flex items-center justify-center shrink-0 transition-opacity`}
-        style={{
-          backgroundColor: (category.color || '#0891B2') + (isActive ? '18' : '10'),
-          color: category.color || '#0891B2',
-        }}
-      >
-        <span className={indent ? 'text-sm' : 'text-base sm:text-lg'}>{category.icon || '📁'}</span>
-      </div>
+      <Switch
+        checked={isActive}
+        onCheckedChange={() => onToggleActive(category.id)}
+        disabled={category.isDefault && !isActive}
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className={`font-medium truncate ${indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>
@@ -129,18 +125,11 @@ function CategoryRow({
           {category.transactionCount} עסקאות • {category.budgetItemCount} תקציבים
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {!category.isDefault && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600" onClick={() => onEdit(category)}>
-            <Edit2 className="h-3.5 w-3.5" />
-          </Button>
-        )}
-        <Switch
-          checked={isActive}
-          onCheckedChange={() => onToggleActive(category.id)}
-          disabled={category.isDefault && !isActive}
-        />
-      </div>
+      {!category.isDefault && (
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600 shrink-0" onClick={() => onEdit(category)}>
+          <Edit2 className="h-3.5 w-3.5" />
+        </Button>
+      )}
     </div>
   );
 }
@@ -165,18 +154,14 @@ function CategoryGroup({
     <Collapsible open={isOpen} onOpenChange={onToggleOpen}>
       <div className={`border rounded-xl overflow-hidden transition-all ${isActive ? 'border-slate-200' : 'border-slate-100 opacity-60'}`}>
         <div className={`flex items-center gap-3 p-3 transition-colors ${isActive ? 'bg-slate-50/50 hover:bg-slate-100/50' : 'bg-slate-50/30'}`}>
+          <Switch
+            checked={isActive}
+            onCheckedChange={() => onToggleActive(parent.id)}
+            disabled={parent.isDefault && !isActive}
+          />
           <CollapsibleTrigger asChild>
             <button className="flex items-center gap-3 flex-1 min-w-0 text-right">
               <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? '' : '-rotate-90 rtl:rotate-90'}`} />
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                style={{
-                  backgroundColor: (parent.color || '#0891B2') + (isActive ? '18' : '10'),
-                  color: parent.color || '#0891B2',
-                }}
-              >
-                <span className="text-lg">{parent.icon || '📁'}</span>
-              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold truncate text-sm sm:text-base">{parent.name}</span>
@@ -198,18 +183,11 @@ function CategoryGroup({
               </div>
             </button>
           </CollapsibleTrigger>
-          <div className="flex items-center gap-2 shrink-0">
-            {!parent.isDefault && (
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600" onClick={() => onEdit(parent)}>
-                <Edit2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            <Switch
-              checked={isActive}
-              onCheckedChange={() => onToggleActive(parent.id)}
-              disabled={parent.isDefault && !isActive}
-            />
-          </div>
+          {!parent.isDefault && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600 shrink-0" onClick={() => onEdit(parent)}>
+              <Edit2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
         <CollapsibleContent>
           {children.length > 0 && (
@@ -359,13 +337,19 @@ export default function SettingsPage() {
     }
   };
 
-  // Toggle קטגוריה
+  // Toggle קטגוריה — optimistic UI
   const handleToggleCategory = async (id: string) => {
+    setCategories(prev =>
+      prev.map(cat => (cat.id === id ? { ...cat, isActive: !cat.isActive } : cat))
+    );
+
     try {
       await toggleCategory(id);
-      await loadCategories();
       toast.success('הקטגוריה עודכנה');
     } catch (error: unknown) {
+      setCategories(prev =>
+        prev.map(cat => (cat.id === id ? { ...cat, isActive: !cat.isActive } : cat))
+      );
       const message = error instanceof Error ? error.message : 'שגיאה בעדכון הקטגוריה';
       toast.error(message);
     }

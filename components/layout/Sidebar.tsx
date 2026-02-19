@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -66,6 +67,18 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t p-4 space-y-1">
+        <Link
+          href="/guide"
+          className={cn(
+            'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200',
+            pathname === '/guide'
+              ? 'bg-cyan-50 text-cyan-600 shadow-sm'
+              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]'
+          )}
+        >
+          <BookOpen className="h-5 w-5" />
+          <span>מדריך</span>
+        </Link>
         <Link
           href={buildHref(bottomNavItem.href)}
           className={cn(

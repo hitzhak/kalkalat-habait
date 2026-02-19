@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { CategoryType } from '@/types';
+import { getAuthUserId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -18,16 +19,16 @@ const GetCategoriesSchema = z.object({
  */
 export async function getCategories(type?: CategoryType) {
   try {
-    // ולידציה
+    const userId = await getAuthUserId();
     if (type) {
       GetCategoriesSchema.parse({ type });
     }
 
-    // שליפת קטגוריות
     const categories = await prisma.category.findMany({
       where: {
         ...(type && { type }),
         isActive: true,
+        OR: [{ isDefault: true }, { userId }],
       },
       include: {
         parent: {
@@ -79,11 +80,12 @@ export async function getCategories(type?: CategoryType) {
  */
 export async function getCategoryTree() {
   try {
-    // שליפת קטגוריות ראשיות בלבד (parentId = null)
+    const userId = await getAuthUserId();
     const categories = await prisma.category.findMany({
       where: {
         parentId: null,
         isActive: true,
+        OR: [{ isDefault: true }, { userId }],
       },
       include: {
         children: {
@@ -182,7 +184,7 @@ export async function getCategoryById(id: string) {
  */
 export async function getParentCategories(type?: CategoryType) {
   try {
-    // ולידציה
+    const userId = await getAuthUserId();
     if (type) {
       GetCategoriesSchema.parse({ type });
     }
@@ -192,6 +194,7 @@ export async function getParentCategories(type?: CategoryType) {
         parentId: null,
         isActive: true,
         ...(type && { type }),
+        OR: [{ isDefault: true }, { userId }],
       },
       select: {
         id: true,
@@ -224,10 +227,12 @@ export async function getParentCategories(type?: CategoryType) {
  */
 export async function getSubCategories(parentId: string) {
   try {
+    const userId = await getAuthUserId();
     const subCategories = await prisma.category.findMany({
       where: {
         parentId,
         isActive: true,
+        OR: [{ isDefault: true }, { userId }],
       },
       select: {
         id: true,

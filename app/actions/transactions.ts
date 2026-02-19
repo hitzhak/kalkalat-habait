@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { TransactionType } from '@/types';
 import { Prisma } from '@prisma/client';
+import { getAuthUserId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -69,6 +70,7 @@ function isDateInMonth(date: Date, month: number, year: number): boolean {
  */
 export async function getTransactions(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -77,16 +79,16 @@ export async function getTransactions(month: number, year: number) {
     const endDate = new Date(validated.year, validated.month, 0, 23, 59, 59, 999);
 
     // בדיקה אם זו כניסה ראשונה לחודש חדש (אין עסקאות בחודש הנוכחי)
-    // רק אם זה החודש הנוכחי או חודש עתידי - לא נצור עסקאות חוזרות לחודשי עבר
+    // רק אם זה החודש הנוכחי — לא נצור עסקאות חוזרות לחודשי עבר או עתיד
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
-    const isCurrentOrFutureMonth =
-      validated.year > currentYear ||
-      (validated.year === currentYear && validated.month >= currentMonth);
+    const isCurrentMonth =
+      validated.year === currentYear && validated.month === currentMonth;
 
     const existingCount = await prisma.transaction.count({
       where: {
+        userId,
         date: {
           gte: startDate,
           lte: endDate,
@@ -94,16 +96,15 @@ export async function getTransactions(month: number, year: number) {
       },
     });
 
-    // אם אין עסקאות בחודש הנוכחי/עתידי, יוצר עסקאות חוזרות מהחודש הקודם
+    // אם אין עסקאות בחודש הנוכחי, יוצר עסקאות חוזרות מהחודש הקודם
     let recurringGenerated = null;
-    if (existingCount === 0 && isCurrentOrFutureMonth) {
+    if (existingCount === 0 && isCurrentMonth) {
       try {
         const result = await generateRecurringTransactions(validated.month, validated.year);
         if (result.count > 0) {
           recurringGenerated = result;
         }
       } catch (error) {
-        // לא נכשל אם יש שגיאה ביצירת עסקאות חוזרות - פשוט נמשיך
         console.error('Error generating recurring transactions:', error);
       }
     }
@@ -111,6 +112,7 @@ export async function getTransactions(month: number, year: number) {
     // שליפת עסקאות (כולל אלה שנוצרו זה עתה)
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         date: {
           gte: startDate,
           lte: endDate,
@@ -156,6 +158,7 @@ export async function getTransactions(month: number, year: number) {
  */
 export async function createTransaction(data: z.infer<typeof TransactionSchema>) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = TransactionSchema.parse(data);
 
@@ -165,6 +168,7 @@ export async function createTransaction(data: z.infer<typeof TransactionSchema>)
     // יצירת העסקה
     const transaction = await prisma.transaction.create({
       data: {
+        userId,
         amount: validated.amount,
         type: validated.type,
         categoryId: validated.categoryId,
@@ -211,12 +215,13 @@ export async function updateTransaction(
   data: Partial<z.infer<typeof TransactionSchema>>
 ) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = UpdateTransactionSchema.parse({ id, ...data });
 
-    // בדיקה שהעסקה קיימת
-    const existing = await prisma.transaction.findUnique({
-      where: { id: validated.id },
+    // בדיקה שהעסקה קיימת ושייכת למשתמש
+    const existing = await prisma.transaction.findFirst({
+      where: { id: validated.id, userId },
     });
 
     if (!existing) {
@@ -280,16 +285,16 @@ export async function updateTransaction(
  */
 export async function deleteTransaction(id: string) {
   try {
-    // בדיקה שהעסקה קיימת
-    const existing = await prisma.transaction.findUnique({
-      where: { id },
+    const userId = await getAuthUserId();
+    // בדיקה שהעסקה קיימת ושייכת למשתמש
+    const existing = await prisma.transaction.findFirst({
+      where: { id, userId },
     });
 
     if (!existing) {
       throw new Error('העסקה לא נמצאה');
     }
 
-    // מחיקת העסקה
     await prisma.transaction.delete({
       where: { id },
     });
@@ -307,6 +312,7 @@ export async function deleteTransaction(id: string) {
  */
 export async function getTransactionsSummary(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -317,6 +323,7 @@ export async function getTransactionsSummary(month: number, year: number) {
     // שליפת כל העסקאות לחודש
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         date: {
           gte: startDate,
           lte: endDate,
@@ -380,6 +387,7 @@ export async function getTransactionsPageData(month: number, year: number) {
  */
 export async function generateRecurringTransactions(month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = MonthYearSchema.parse({ month, year });
 
@@ -401,6 +409,7 @@ export async function generateRecurringTransactions(month: number, year: number)
     // שליפת עסקאות חוזרות מהחודש הקודם
     const recurringTransactions = await prisma.transaction.findMany({
       where: {
+        userId,
         isRecurring: true,
         date: {
           gte: prevStartDate,
@@ -428,6 +437,7 @@ export async function generateRecurringTransactions(month: number, year: number)
     // שליפת עסקאות קיימות בחודש הנוכחי (לבדיקת כפילויות)
     const existingTransactions = await prisma.transaction.findMany({
       where: {
+        userId,
         date: {
           gte: currentStartDate,
           lte: currentEndDate,
@@ -480,6 +490,7 @@ export async function generateRecurringTransactions(month: number, year: number)
       // יצירת העסקה החדשה
       const newTransaction = await prisma.transaction.create({
         data: {
+          userId,
           amount: recurringTx.amount,
           type: recurringTx.type,
           categoryId: recurringTx.categoryId,
@@ -529,12 +540,14 @@ export async function generateRecurringTransactions(month: number, year: number)
  */
 export async function getTransactionsByCategory(categoryId: string, month: number, year: number) {
   try {
+    const userId = await getAuthUserId();
     const validated = MonthYearSchema.parse({ month, year });
     const startDate = new Date(validated.year, validated.month - 1, 1);
     const endDate = new Date(validated.year, validated.month, 0, 23, 59, 59, 999);
 
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId,
         categoryId,
         date: { gte: startDate, lte: endDate },
       },

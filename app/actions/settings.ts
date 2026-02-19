@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { CategoryType } from '@/types';
 import { Prisma } from '@prisma/client';
+import { getAuthUserId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -44,15 +45,15 @@ function decimalToNumber(decimal: Prisma.Decimal): number {
  */
 export async function getSettings() {
   try {
+    const userId = await getAuthUserId();
     let settings = await prisma.appSettings.findUnique({
-      where: { id: 'default' },
+      where: { userId },
     });
 
-    // אם אין הגדרות, צור ברירת מחדל
     if (!settings) {
       settings = await prisma.appSettings.create({
         data: {
-          id: 'default',
+          userId,
           payday: 11,
           currency: 'ILS',
           startMonth: 1,
@@ -78,14 +79,15 @@ export async function getSettings() {
  */
 export async function updateSettings(data: z.infer<typeof SettingsSchema>) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = SettingsSchema.parse(data);
 
     // עדכון או יצירה
     const settings = await prisma.appSettings.upsert({
-      where: { id: 'default' },
+      where: { userId },
       create: {
-        id: 'default',
+        userId,
         ...validated,
       },
       update: validated,
@@ -115,7 +117,11 @@ export async function updateSettings(data: z.infer<typeof SettingsSchema>) {
  */
 export async function getAllCategoriesForManagement() {
   try {
+    const userId = await getAuthUserId();
     const categories = await prisma.category.findMany({
+      where: {
+        OR: [{ isDefault: true }, { userId }],
+      },
       include: {
         parent: {
           select: {
@@ -181,15 +187,17 @@ export async function getAllCategoriesForManagement() {
  */
 export async function createCategory(data: z.infer<typeof CategorySchema>) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = CategorySchema.parse(data);
 
-    // בדיקה שהקטגוריה לא קיימת כבר
+    // בדיקה שהקטגוריה לא קיימת כבר למשתמש זה
     const existing = await prisma.category.findFirst({
       where: {
         name: validated.name,
         type: validated.type,
         parentId: validated.parentId || null,
+        OR: [{ userId }, { isDefault: true }],
       },
     });
 
@@ -201,7 +209,8 @@ export async function createCategory(data: z.infer<typeof CategorySchema>) {
     const category = await prisma.category.create({
       data: {
         ...validated,
-        isDefault: false, // קטגוריות שנוצרות על ידי המשתמש אינן קטגוריות מערכת
+        userId,
+        isDefault: false,
         isActive: true,
       },
       include: {
@@ -248,12 +257,13 @@ export async function updateCategory(
   data: Partial<z.infer<typeof CategorySchema>>
 ) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה
     const validated = UpdateCategorySchema.parse({ id, ...data });
 
-    // בדיקה שהקטגוריה קיימת
-    const existing = await prisma.category.findUnique({
-      where: { id: validated.id },
+    // בדיקה שהקטגוריה קיימת ושייכת למשתמש
+    const existing = await prisma.category.findFirst({
+      where: { id: validated.id, userId },
     });
 
     if (!existing) {
@@ -318,9 +328,10 @@ export async function updateCategory(
  */
 export async function toggleCategory(id: string) {
   try {
-    // בדיקה שהקטגוריה קיימת
-    const category = await prisma.category.findUnique({
-      where: { id },
+    const userId = await getAuthUserId();
+    // בדיקה שהקטגוריה קיימת ונגישה למשתמש
+    const category = await prisma.category.findFirst({
+      where: { id, OR: [{ userId }, { isDefault: true }] },
     });
 
     if (!category) {
@@ -355,7 +366,8 @@ export async function toggleCategory(id: string) {
  */
 export async function exportAllData() {
   try {
-    // שליפת כל הנתונים
+    const userId = await getAuthUserId();
+    // שליפת כל הנתונים של המשתמש
     const [
       settings,
       categories,
@@ -366,11 +378,13 @@ export async function exportAllData() {
       loans,
       loanPayments,
     ] = await Promise.all([
-      prisma.appSettings.findMany(),
+      prisma.appSettings.findMany({ where: { userId } }),
       prisma.category.findMany({
+        where: { OR: [{ userId }, { isDefault: true }] },
         orderBy: [{ type: 'asc' }, { sortOrder: 'asc' }],
       }),
       prisma.transaction.findMany({
+        where: { userId },
         include: {
           category: {
             select: {
@@ -382,6 +396,7 @@ export async function exportAllData() {
         orderBy: { date: 'desc' },
       }),
       prisma.budgetItem.findMany({
+        where: { userId },
         include: {
           category: {
             select: {
@@ -393,15 +408,19 @@ export async function exportAllData() {
         orderBy: [{ year: 'desc' }, { month: 'desc' }],
       }),
       prisma.savingsGoal.findMany({
+        where: { userId },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.savingsDeposit.findMany({
+        where: { goal: { userId } },
         orderBy: { date: 'desc' },
       }),
       prisma.loan.findMany({
+        where: { userId },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.loanPayment.findMany({
+        where: { loan: { userId } },
         orderBy: { date: 'desc' },
       }),
     ]);
@@ -485,6 +504,7 @@ export async function exportAllData() {
  */
 export async function importData(jsonData: any) {
   try {
+    const userId = await getAuthUserId();
     // ולידציה בסיסית
     if (!jsonData || typeof jsonData !== 'object') {
       throw new Error('קובץ JSON לא תקין');
@@ -495,30 +515,26 @@ export async function importData(jsonData: any) {
       throw new Error('קובץ גיבוי לא מזוהה - חסר שדה version');
     }
 
-    // התחלת טרנזקציה
+    // התחלת טרנזקציה — מחיקת נתוני המשתמש בלבד
     await prisma.$transaction(async (tx) => {
-      // מחיקת כל הנתונים הקיימים (למעט קטגוריות מערכת)
-      await tx.loanPayment.deleteMany({});
-      await tx.loan.deleteMany({});
-      await tx.savingsDeposit.deleteMany({});
-      await tx.savingsGoal.deleteMany({});
-      await tx.budgetItem.deleteMany({});
-      await tx.transaction.deleteMany({});
+      await tx.loanPayment.deleteMany({ where: { loan: { userId } } });
+      await tx.loan.deleteMany({ where: { userId } });
+      await tx.savingsDeposit.deleteMany({ where: { goal: { userId } } });
+      await tx.savingsGoal.deleteMany({ where: { userId } });
+      await tx.budgetItem.deleteMany({ where: { userId } });
+      await tx.transaction.deleteMany({ where: { userId } });
       
-      // מחיקת קטגוריות לא-מערכת בלבד
       await tx.category.deleteMany({
-        where: {
-          isDefault: false,
-        },
+        where: { userId, isDefault: false },
       });
 
       // ייבוא הגדרות
       if (jsonData.settings && Array.isArray(jsonData.settings) && jsonData.settings.length > 0) {
         const settingsData = jsonData.settings[0];
         await tx.appSettings.upsert({
-          where: { id: 'default' },
+          where: { userId },
           create: {
-            id: 'default',
+            userId,
             payday: settingsData.payday || 11,
             currency: settingsData.currency || 'ILS',
             startMonth: settingsData.startMonth || 1,
@@ -720,27 +736,25 @@ export async function importData(jsonData: any) {
  */
 export async function resetAllData() {
   try {
+    const userId = await getAuthUserId();
     await prisma.$transaction(async (tx) => {
-      // מחיקת כל הנתונים בסדר הנכון (למניעת שגיאות foreign key)
-      await tx.loanPayment.deleteMany({});
-      await tx.loan.deleteMany({});
-      await tx.savingsDeposit.deleteMany({});
-      await tx.savingsGoal.deleteMany({});
-      await tx.budgetItem.deleteMany({});
-      await tx.transaction.deleteMany({});
+      // מחיקת נתוני המשתמש בלבד
+      await tx.loanPayment.deleteMany({ where: { loan: { userId } } });
+      await tx.loan.deleteMany({ where: { userId } });
+      await tx.savingsDeposit.deleteMany({ where: { goal: { userId } } });
+      await tx.savingsGoal.deleteMany({ where: { userId } });
+      await tx.budgetItem.deleteMany({ where: { userId } });
+      await tx.transaction.deleteMany({ where: { userId } });
       
-      // מחיקת קטגוריות לא-מערכת בלבד
       await tx.category.deleteMany({
-        where: {
-          isDefault: false,
-        },
+        where: { userId, isDefault: false },
       });
 
       // איפוס הגדרות לברירת מחדל
       await tx.appSettings.upsert({
-        where: { id: 'default' },
+        where: { userId },
         create: {
-          id: 'default',
+          userId,
           payday: 11,
           currency: 'ILS',
           startMonth: 1,

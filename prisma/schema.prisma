@@ -14,6 +14,7 @@ datasource db {
 // === קטגוריות ===
 model Category {
   id              String        @id @default(cuid())
+  userId          String?       // מזהה משתמש (null = קטגוריית מערכת)
   name            String        // שם הקטגוריה (עברית)
   icon            String?       // שם אייקון מ-Lucide
   color           String?       // צבע HEX
@@ -29,6 +30,8 @@ model Category {
 
   transactions    Transaction[]
   budgetItems     BudgetItem[]
+
+  @@index([userId])
 }
 
 enum CategoryType {
@@ -39,6 +42,7 @@ enum CategoryType {
 // === עסקאות (הכנסות והוצאות) ===
 model Transaction {
   id              String          @id @default(cuid())
+  userId          String?
   amount          Decimal         @db.Decimal(10, 2)
   type            TransactionType // INCOME / EXPENSE
   categoryId      String
@@ -52,6 +56,7 @@ model Transaction {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
+  @@index([userId])
   @@index([date])
   @@index([categoryId])
   @@index([type, date])
@@ -65,6 +70,7 @@ enum TransactionType {
 // === תקציב חודשי ===
 model BudgetItem {
   id              String   @id @default(cuid())
+  userId          String?
   categoryId      String
   category        Category @relation(fields: [categoryId], references: [id])
   month           Int      // 1-12
@@ -74,12 +80,14 @@ model BudgetItem {
   updatedAt       DateTime @updatedAt
 
   @@unique([categoryId, month, year])
+  @@index([userId])
   @@index([month, year])
 }
 
 // === מטרות חיסכון ===
 model SavingsGoal {
   id              String   @id @default(cuid())
+  userId          String?
   name            String   // שם המטרה (טיול, רכב, דירה)
   icon            String?
   targetAmount    Decimal  @db.Decimal(10, 2)
@@ -92,6 +100,8 @@ model SavingsGoal {
   updatedAt       DateTime @updatedAt
 
   deposits        SavingsDeposit[]
+
+  @@index([userId])
 }
 
 model SavingsDeposit {
@@ -107,6 +117,7 @@ model SavingsDeposit {
 // === הלוואות וחובות ===
 model Loan {
   id              String     @id @default(cuid())
+  userId          String?
   name            String     // שם ההלוואה
   type            LoanType   // MORTGAGE / BANK / EXTERNAL / CREDIT / OTHER
   originalAmount  Decimal    @db.Decimal(10, 2) // סכום מקורי
@@ -123,6 +134,8 @@ model Loan {
   updatedAt       DateTime   @updatedAt
 
   payments        LoanPayment[]
+
+  @@index([userId])
 }
 
 enum LoanType {
@@ -147,7 +160,8 @@ model LoanPayment {
 
 // === הגדרות אפליקציה ===
 model AppSettings {
-  id              String   @id @default("default")
+  id              String   @id @default(cuid())
+  userId          String   @unique
   payday          Int      @default(11)      // יום המשכורת
   currency        String   @default("ILS")
   startMonth      Int      @default(1)       // חודש התחלה (ינואר)

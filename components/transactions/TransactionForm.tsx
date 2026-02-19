@@ -79,7 +79,7 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [categories, setCategories] = useState<Array<{
+  type CategoryItem = {
     id: string;
     name: string;
     icon: string | null;
@@ -87,7 +87,8 @@ export function TransactionForm({
     type: string;
     isFixed: boolean;
     sortOrder: number;
-  }>>([]);
+  };
+  const [allCategories, setAllCategories] = useState<{ income: CategoryItem[]; expense: CategoryItem[] }>({ income: [], expense: [] });
   const [selectedType, setSelectedType] = useState<TransactionType>(
     transaction?.type || TransactionType.EXPENSE
   );
@@ -102,24 +103,27 @@ export function TransactionForm({
   const { selectedMonth, selectedYear } = useMonthNavigation();
   const { toast } = useToast();
 
-  // זיהוי גודל מסך
+  const categories = selectedType === TransactionType.INCOME
+    ? allCategories.income
+    : allCategories.expense;
+
   useEffect(() => {
     const checkDesktop = () => {
       setIsDesktop(window.innerWidth >= 768);
     };
-    
     checkDesktop();
     window.addEventListener('resize', checkDesktop);
-    
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
-  // טעינת קטגוריות
   useEffect(() => {
-    async function loadCategories() {
+    async function loadAllCategories() {
       try {
-        const cats = await getParentCategories(selectedType as unknown as CategoryType);
-        setCategories(cats);
+        const [incomeCats, expenseCats] = await Promise.all([
+          getParentCategories(CategoryType.INCOME),
+          getParentCategories(CategoryType.EXPENSE),
+        ]);
+        setAllCategories({ income: incomeCats, expense: expenseCats });
       } catch (error) {
         console.error('Error loading categories:', error);
         toast({
@@ -129,8 +133,8 @@ export function TransactionForm({
         });
       }
     }
-    loadCategories();
-  }, [selectedType]);
+    loadAllCategories();
+  }, []);
 
   useEffect(() => {
     if (open && selectedType === TransactionType.EXPENSE) {
@@ -181,9 +185,9 @@ export function TransactionForm({
   const isFixed = watch('isFixed');
   const isRecurring = watch('isRecurring');
 
-  // עדכון הטופס כשמשנים את סוג העסקה
   useEffect(() => {
     setValue('type', selectedType);
+    setValue('categoryId', '');
   }, [selectedType, setValue]);
 
   // שמירת עסקה
@@ -240,23 +244,25 @@ export function TransactionForm({
             <span className="text-xs text-slate-400 mr-auto">שנה</span>
           </Button>
         ) : (
-          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-4 sm:gap-2">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                className={cn(
-                  'flex flex-col items-center gap-1 p-2 rounded-lg border transition-all text-center',
-                  selectedCategoryId === category.id
-                    ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-500'
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                )}
-                onClick={() => setValue('categoryId', category.id)}
-              >
-                <CategoryIcon icon={category.icon} color={category.color} size={20} />
-                <span className="text-[10px] sm:text-xs leading-tight truncate w-full">{category.name}</span>
-              </button>
-            ))}
+          <div className="max-h-[140px] overflow-y-auto rounded-lg border border-slate-100 p-1.5">
+            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-4 sm:gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={cn(
+                    'flex flex-col items-center gap-1 p-2 rounded-lg border transition-all text-center',
+                    selectedCategoryId === category.id
+                      ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-500'
+                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  )}
+                  onClick={() => setValue('categoryId', category.id)}
+                >
+                  <CategoryIcon icon={category.icon} color={category.color} size={20} />
+                  <span className="text-[10px] sm:text-xs leading-tight truncate w-full">{category.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {errors.categoryId && (
@@ -443,7 +449,7 @@ export function TransactionForm({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] sm:min-h-[520px]">
           <DialogHeader>
             <DialogTitle>
               {transaction ? 'עריכת עסקה' : 'הוספת עסקה'}

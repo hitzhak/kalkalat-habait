@@ -1,24 +1,33 @@
 'use client';
 
 import { Suspense } from 'react';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, HelpCircle } from 'lucide-react';
 import { useMonthNavigation } from '@/hooks/useMonthNavigation';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 function HeaderContent() {
   const { monthYearDisplay, goToNextMonth, goToPrevMonth } = useMonthNavigation();
 
   return (
-    <div className="flex items-center justify-center gap-4 px-4 py-[1.125rem]">
-      <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
-        <ChevronRight className="h-5 w-5" />
-      </Button>
-      <div className="min-w-[180px] text-center">
-        <h2 className="text-lg font-semibold text-slate-800">{monthYearDisplay}</h2>
+    <div className="flex items-center justify-between px-4 py-[1.125rem]">
+      <Link href="/guide" className="md:hidden">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600">
+          <HelpCircle className="h-5 w-5" />
+        </Button>
+      </Link>
+      <div className="flex items-center justify-center gap-4 flex-1">
+        <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8">
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+        <div className="min-w-[180px] text-center">
+          <h2 className="text-lg font-semibold text-slate-800">{monthYearDisplay}</h2>
+        </div>
+        <Button variant="ghost" size="icon" onClick={goToPrevMonth} className="h-8 w-8">
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
       </div>
-      <Button variant="ghost" size="icon" onClick={goToPrevMonth} className="h-8 w-8">
-        <ChevronLeft className="h-5 w-5" />
-      </Button>
+      <div className="w-8 md:hidden" />
     </div>
   );
 }
