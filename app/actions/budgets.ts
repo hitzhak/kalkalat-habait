@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma, withRetry } from '@/lib/db';
 import { TransactionType } from '@/types';
 import { Prisma } from '@prisma/client';
-import { getAuthUserId } from '@/lib/auth';
+import { getHouseholdId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -22,22 +22,19 @@ const BudgetItemSchema = z.object({
 
 // ========== Helper Functions ==========
 
-/**
- * המרת Decimal ל-number
- */
 function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
 /**
- * חישוב סה"כ הוצאות בפועל לקטגוריה בחודש
+ * חישוב סה"כ הוצאות בפועל לקטגוריה בחודש — householdId required
  */
 async function calculateActualSpent(
   categoryId: string,
   month: number,
   year: number,
   includeChildren: boolean = false,
-  userId?: string
+  householdId: string
 ): Promise<number> {
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);
@@ -54,7 +51,7 @@ async function calculateActualSpent(
 
   const transactions = await prisma.transaction.findMany({
     where: {
-      ...(userId && { userId }),
+      householdId,
       categoryId: {
         in: categoryIds,
       },
@@ -66,20 +63,17 @@ async function calculateActualSpent(
     },
   });
 
-  // סיכום הסכומים
   return transactions.reduce(
     (sum: number, tx: { amount: Prisma.Decimal }) => sum + decimalToNumber(tx.amount),
     0
   );
 }
 
-/**
- * קבלת תקציב עבור קטגוריה בחודש (אם קיים)
- */
-async function getBudgetItem(categoryId: string, month: number, year: number) {
+async function getBudgetItem(householdId: string, categoryId: string, month: number, year: number) {
   return await prisma.budgetItem.findUnique({
     where: {
-      categoryId_month_year: {
+      householdId_categoryId_month_year: {
+        householdId,
         categoryId,
         month,
         year,
@@ -92,22 +86,19 @@ async function getBudgetItem(categoryId: string, month: number, year: number) {
 
 /**
  * 1. קבלת כל פריטי התקציב לחודש
- * מחזיר קטגוריות ראשיות בלבד, כולל חישוב הוצאות בפועל
  */
 export async function getBudgetForMonth(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = MonthYearSchema.parse({ month, year });
 
-    // שליפת קטגוריות הוצאות ראשיות בלבד (parentId = null) — with retry for cold starts
     const categories = await withRetry(() =>
       prisma.category.findMany({
         where: {
           type: 'EXPENSE',
           isActive: true,
           parentId: null,
-          OR: [{ isDefault: true }, { userId }],
+          OR: [{ isDefault: true }, { householdId }],
         },
         include: {
           children: {
@@ -120,6 +111,7 @@ export async function getBudgetForMonth(month: number, year: number) {
           },
           budgetItems: {
             where: {
+              householdId,
               month: validated.month,
               year: validated.year,
             },
@@ -131,32 +123,26 @@ export async function getBudgetForMonth(month: number, year: number) {
       })
     );
 
-    // אם אין קטגוריות — מחזיר מערך ריק (DB לא seed-עד)
     if (categories.length === 0) {
       return [];
     }
 
-    // חישוב נתונים לכל קטגוריה
     const budgetData = await Promise.all(
       categories.map(async (category) => {
-        // תקציב מתוכנן
         const budgetItem = category.budgetItems[0];
         const plannedAmount = budgetItem ? decimalToNumber(budgetItem.plannedAmount) : 0;
 
-        // הוצאות בפועל (כולל תתי-קטגוריות)
         const actualSpent = await calculateActualSpent(
           category.id,
           validated.month,
           validated.year,
           true,
-          userId
+          householdId
         );
 
-        // חישובים
         const remaining = plannedAmount - actualSpent;
         const usagePercent = plannedAmount > 0 ? (actualSpent / plannedAmount) * 100 : 0;
 
-        // קביעת צבע התראה
         let alertLevel: 'success' | 'warning' | 'danger' | 'error' = 'success';
         if (usagePercent >= 100) {
           alertLevel = 'error';
@@ -166,10 +152,10 @@ export async function getBudgetForMonth(month: number, year: number) {
           alertLevel = 'warning';
         }
 
-        // נתוני תתי-קטגוריות
         const childrenData = await Promise.all(
           category.children.map(async (child) => {
             const childBudgetItem = await getBudgetItem(
+              householdId,
               child.id,
               validated.month,
               validated.year
@@ -182,7 +168,7 @@ export async function getBudgetForMonth(month: number, year: number) {
               validated.month,
               validated.year,
               false,
-              userId
+              householdId
             );
             const childRemaining = childPlanned - childActual;
             const childUsagePercent =
@@ -219,14 +205,12 @@ export async function getBudgetForMonth(month: number, year: number) {
     return budgetData;
   } catch (error) {
     console.error('Error fetching budget for month:', error);
-    // Return empty array instead of throwing — let the UI show the empty state
     return [];
   }
 }
 
 /**
  * 2. יצירה/עדכון פריט תקציב
- * אם קיים - עדכון, אם לא - יצירה
  */
 export async function upsertBudgetItem(
   categoryId: string,
@@ -235,14 +219,13 @@ export async function upsertBudgetItem(
   amount: number
 ) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = BudgetItemSchema.parse({ categoryId, month, year, amount });
 
-    // אם הסכום 0, נמחק את פריט התקציב (אם קיים)
     if (validated.amount === 0) {
       await prisma.budgetItem.deleteMany({
         where: {
+          householdId,
           categoryId: validated.categoryId,
           month: validated.month,
           year: validated.year,
@@ -256,17 +239,17 @@ export async function upsertBudgetItem(
       };
     }
 
-    // יצירה או עדכון
     const budgetItem = await prisma.budgetItem.upsert({
       where: {
-        categoryId_month_year: {
+        householdId_categoryId_month_year: {
+          householdId,
           categoryId: validated.categoryId,
           month: validated.month,
           year: validated.year,
         },
       },
       create: {
-        userId,
+        householdId,
         categoryId: validated.categoryId,
         month: validated.month,
         year: validated.year,
@@ -309,11 +292,9 @@ export async function upsertBudgetItem(
  */
 export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYear: number) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = MonthYearSchema.parse({ month: targetMonth, year: targetYear });
 
-    // חישוב חודש קודם
     let previousMonth = validated.month - 1;
     let previousYear = validated.year;
     if (previousMonth < 1) {
@@ -321,10 +302,9 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
       previousYear -= 1;
     }
 
-    // שליפת פריטי תקציב מחודש קודם
     const previousBudgetItems = await prisma.budgetItem.findMany({
       where: {
-        userId,
+        householdId,
         month: previousMonth,
         year: previousYear,
       },
@@ -338,10 +318,9 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
       };
     }
 
-    // בדיקה אם כבר קיימים פריטי תקציב בחודש היעד
     const existingItems = await prisma.budgetItem.findMany({
       where: {
-        userId,
+        householdId,
         month: validated.month,
         year: validated.year,
       },
@@ -350,16 +329,15 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
     if (existingItems.length > 0) {
       await prisma.budgetItem.deleteMany({
         where: {
-          userId,
+          householdId,
           month: validated.month,
           year: validated.year,
         },
       });
     }
 
-    // יצירת פריטי תקציב חדשים
     const newBudgetItems = previousBudgetItems.map((item) => ({
-      userId,
+      householdId,
       categoryId: item.categoryId,
       month: validated.month,
       year: validated.year,
@@ -383,19 +361,16 @@ export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYea
 
 /**
  * 4. קבלת סיכום תקציב חודשי
- * מחזיר: סה"כ מתוכנן, סה"כ בפועל, סה"כ נותר, אחוז כללי
  */
 export async function getBudgetSummary(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = MonthYearSchema.parse({ month, year });
 
-    // שליפת כל פריטי התקציב לחודש — with retry for cold starts
     const budgetItems = await withRetry(() =>
       prisma.budgetItem.findMany({
         where: {
-          userId,
+          householdId,
           month: validated.month,
           year: validated.year,
         },
@@ -410,16 +385,13 @@ export async function getBudgetSummary(month: number, year: number) {
       })
     );
 
-    // סינון רק קטגוריות ראשיות (למנוע ספירה כפולה)
     const mainCategoryItems = budgetItems.filter((item) => !item.category.parentId);
 
-    // חישוב סכומים מתוכננים
     const totalPlanned = mainCategoryItems.reduce(
       (sum, item) => sum + decimalToNumber(item.plannedAmount),
       0
     );
 
-    // חישוב סכומים בפועל
     let totalActual = 0;
     for (const item of mainCategoryItems) {
       const actual = await calculateActualSpent(
@@ -427,12 +399,11 @@ export async function getBudgetSummary(month: number, year: number) {
         validated.month,
         validated.year,
         true,
-        userId
+        householdId
       );
       totalActual += actual;
     }
 
-    // חישובים כוללים
     const totalRemaining = totalPlanned - totalActual;
     const totalUsagePercent = totalPlanned > 0 ? (totalActual / totalPlanned) * 100 : 0;
 
@@ -444,7 +415,6 @@ export async function getBudgetSummary(month: number, year: number) {
     };
   } catch (error) {
     console.error('Error fetching budget summary:', error);
-    // Return zeroed summary instead of throwing — let the UI show gracefully
     return {
       totalPlanned: 0,
       totalActual: 0,

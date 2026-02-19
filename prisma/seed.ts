@@ -263,12 +263,10 @@ async function main() {
   for (const cat of expenseCategories) {
     const { subCategories, ...mainCategoryData } = cat;
 
-    // יצירת קטגוריה ראשית
     const mainCategory = await prisma.category.create({
       data: mainCategoryData,
     });
 
-    // יצירת תתי-קטגוריות
     if (subCategories && subCategories.length > 0) {
       for (let i = 0; i < subCategories.length; i++) {
         await prisma.category.create({
@@ -289,29 +287,16 @@ async function main() {
 
   console.log(`✅ נוצרו 14 קטגוריות הוצאות ראשיות + ${subCategoryCount} תתי-קטגוריות`);
 
-  // =========== הגדרות אפליקציה ===========
-  console.log('⚙️ יוצר הגדרות אפליקציה...');
-
-  await prisma.appSettings.upsert({
-    where: { userId: 'system-seed' },
-    update: {},
-    create: {
-      userId: 'system-seed',
-      payday: 11,
-      currency: 'ILS',
-      startMonth: 1,
-      weekStartDay: 0,
-    },
-  });
-
-  console.log('✅ הגדרות אפליקציה נוצרו');
+  // System categories have householdId: null + isDefault: true.
+  // Each household gets its own AppSettings via lazy creation in getHouseholdId().
+  // No system-level AppSettings needed.
 
   console.log('');
   console.log('🎉 Seed הושלם בהצלחה!');
   console.log('📊 סיכום:');
   console.log('   • 6 קטגוריות הכנסות');
   console.log(`   • 14 קטגוריות הוצאות + ${subCategoryCount} תתי-קטגוריות`);
-  console.log('   • הגדרות אפליקציה (יום משכורת: 11)');
+  console.log('   • הגדרות נוצרות אוטומטית עבור כל משק בית חדש');
 }
 
 main()

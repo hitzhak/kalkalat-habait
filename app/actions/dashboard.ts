@@ -4,11 +4,8 @@ import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { getTransactionsSummary, getTransactions } from './transactions';
 import { getBudgetForMonth } from './budgets';
-import { getAuthUserId } from '@/lib/auth';
+import { getHouseholdId } from '@/lib/auth';
 
-/**
- * המרת Decimal ל-number
- */
 function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
@@ -18,13 +15,13 @@ function decimalToNumber(decimal: Prisma.Decimal): number {
  */
 export async function getExpensesByCategory(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId,
+        householdId,
         type: 'EXPENSE',
         date: {
           gte: startDate,
@@ -42,7 +39,6 @@ export async function getExpensesByCategory(month: number, year: number) {
       },
     });
 
-    // קיבוץ לפי קטגוריה
     const categoryMap = new Map<
       string,
       { categoryId: string; categoryName: string; categoryColor?: string; totalAmount: number }
@@ -75,13 +71,13 @@ export async function getExpensesByCategory(month: number, year: number) {
  */
 export async function getWeeklyVariableExpenses(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId,
+        householdId,
         type: 'EXPENSE',
         isFixed: false,
         date: {
@@ -91,7 +87,6 @@ export async function getWeeklyVariableExpenses(month: number, year: number) {
       },
     });
 
-    // קיבוץ לפי שבוע
     const weekMap = new Map<number, number>();
 
     transactions.forEach((tx) => {
@@ -102,7 +97,6 @@ export async function getWeeklyVariableExpenses(month: number, year: number) {
       }
     });
 
-    // יצירת מערך מסודר
     const weeklyData = [];
     for (let week = 1; week <= 5; week++) {
       weeklyData.push({
@@ -123,14 +117,13 @@ export async function getWeeklyVariableExpenses(month: number, year: number) {
  */
 export async function getBudgetAlerts(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // קבלת כל פריטי התקציב לחודש
     const budgetItems = await prisma.budgetItem.findMany({
       where: {
-        userId,
+        householdId,
         month,
         year,
       },
@@ -146,10 +139,9 @@ export async function getBudgetAlerts(month: number, year: number) {
       },
     });
 
-    // קבלת עסקאות לחודש
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId,
+        householdId,
         type: 'EXPENSE',
         date: {
           gte: startDate,
@@ -158,14 +150,12 @@ export async function getBudgetAlerts(month: number, year: number) {
       },
     });
 
-    // חישוב הוצאות לפי קטגוריה
     const spentByCategory = new Map<string, number>();
     transactions.forEach((tx) => {
       const current = spentByCategory.get(tx.categoryId) || 0;
       spentByCategory.set(tx.categoryId, current + decimalToNumber(tx.amount));
     });
 
-    // יצירת מערך התראות
     const alerts = budgetItems
       .map((budget) => {
         const spent = spentByCategory.get(budget.categoryId) || 0;
@@ -181,8 +171,8 @@ export async function getBudgetAlerts(month: number, year: number) {
           usagePercent: Math.round(usagePercent * 100) / 100,
         };
       })
-      .filter((alert) => alert.usagePercent >= 80) // רק מעל 80%
-      .sort((a, b) => b.usagePercent - a.usagePercent); // מהגבוה לנמוך
+      .filter((alert) => alert.usagePercent >= 80)
+      .sort((a, b) => b.usagePercent - a.usagePercent);
 
     return alerts;
   } catch (error) {
@@ -196,14 +186,13 @@ export async function getBudgetAlerts(month: number, year: number) {
  */
 export async function getTotalBudgetSummary(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // סה"כ תקציב — קטגוריות ראשיות בלבד (למניעת ספירה כפולה)
     const budgetItems = await prisma.budgetItem.findMany({
       where: {
-        userId,
+        householdId,
         month,
         year,
         category: { parentId: null },
@@ -215,10 +204,9 @@ export async function getTotalBudgetSummary(month: number, year: number) {
       0
     );
 
-    // סה"כ הוצאות
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId,
+        householdId,
         type: 'EXPENSE',
         date: {
           gte: startDate,
@@ -247,8 +235,7 @@ export async function getTotalBudgetSummary(month: number, year: number) {
  */
 export async function getPreviousMonthSummary(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
-    // חישוב חודש קודם
+    const householdId = await getHouseholdId();
     let prevMonth = month - 1;
     let prevYear = year;
     if (prevMonth === 0) {
@@ -261,7 +248,7 @@ export async function getPreviousMonthSummary(month: number, year: number) {
 
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId,
+        householdId,
         date: {
           gte: startDate,
           lte: endDate,
@@ -296,19 +283,18 @@ export async function getPreviousMonthSummary(month: number, year: number) {
 
 /**
  * סיכום זרימת תקציב חודשי.
- * מציג: הכנסות -> הוצאות קבועות -> נותר למשתנות -> הוצאות משתנות בפועל -> יתרה סופית
  */
 export async function getBudgetFlowSummary(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const [settings, transactions] = await Promise.all([
-      prisma.appSettings.findFirst({ where: { userId } }),
+      prisma.appSettings.findFirst({ where: { householdId } }),
       prisma.transaction.findMany({
         where: {
-          userId,
+          householdId,
           date: { gte: startDate, lte: endDate },
         },
       }),
@@ -369,7 +355,6 @@ export async function getBudgetFlowSummary(month: number, year: number) {
 
 /**
  * טעינה מאוחדת של כל נתוני הדשבורד - קריאה אחת במקום 7.
- * מפחיתה עומס רשת, cold-start ב-Vercel, ומשפרת דרמטית את מהירות המעבר בין דפים.
  */
 export async function getDashboardData(month: number, year: number) {
   const [

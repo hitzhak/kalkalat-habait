@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,10 @@ function getHebrewAuthError(error: unknown): string {
     return 'שגיאת רשת — בדוק את החיבור לאינטרנט';
   if (lower.includes('email') && lower.includes('invalid'))
     return 'כתובת אימייל לא תקינה';
+  if (lower.includes('email already used by another account') || lower.includes('email_address_not_authorized'))
+    return 'האימייל הזה כבר קיים — נסה להתחבר עם Google';
+  if (lower.includes('identity already exists') || lower.includes('identity_already_exists'))
+    return 'כבר קיים חשבון עם האימייל הזה';
 
   return msg;
 }
@@ -38,7 +43,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      toast.error(errorParam);
+    }
+  }, [searchParams]);
 
   const validate = (): boolean => {
     const errors: { email?: string; password?: string } = {};

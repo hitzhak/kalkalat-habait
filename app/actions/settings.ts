@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { CategoryType } from '@/types';
 import { Prisma } from '@prisma/client';
-import { getAuthUserId } from '@/lib/auth';
+import { getHouseholdId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -31,9 +31,6 @@ const UpdateCategorySchema = CategorySchema.partial().extend({
 
 // ========== Helper Functions ==========
 
-/**
- * המרת Decimal ל-number
- */
 function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
@@ -45,15 +42,15 @@ function decimalToNumber(decimal: Prisma.Decimal): number {
  */
 export async function getSettings() {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     let settings = await prisma.appSettings.findUnique({
-      where: { userId },
+      where: { householdId },
     });
 
     if (!settings) {
       settings = await prisma.appSettings.create({
         data: {
-          userId,
+          householdId,
           payday: 11,
           currency: 'ILS',
           startMonth: 1,
@@ -79,15 +76,13 @@ export async function getSettings() {
  */
 export async function updateSettings(data: z.infer<typeof SettingsSchema>) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = SettingsSchema.parse(data);
 
-    // עדכון או יצירה
     const settings = await prisma.appSettings.upsert({
-      where: { userId },
+      where: { householdId },
       create: {
-        userId,
+        householdId,
         ...validated,
       },
       update: validated,
@@ -117,10 +112,10 @@ export async function updateSettings(data: z.infer<typeof SettingsSchema>) {
  */
 export async function getAllCategoriesForManagement() {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const categories = await prisma.category.findMany({
       where: {
-        OR: [{ isDefault: true }, { userId }],
+        OR: [{ isDefault: true }, { householdId }],
       },
       include: {
         parent: {
@@ -145,10 +140,10 @@ export async function getAllCategoriesForManagement() {
       },
       orderBy: [
         {
-          type: 'asc', // INCOME קודם
+          type: 'asc',
         },
         {
-          parentId: 'asc', // קטגוריות ראשיות קודם
+          parentId: 'asc',
         },
         {
           sortOrder: 'asc',
@@ -187,17 +182,15 @@ export async function getAllCategoriesForManagement() {
  */
 export async function createCategory(data: z.infer<typeof CategorySchema>) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = CategorySchema.parse(data);
 
-    // בדיקה שהקטגוריה לא קיימת כבר למשתמש זה
     const existing = await prisma.category.findFirst({
       where: {
         name: validated.name,
         type: validated.type,
         parentId: validated.parentId || null,
-        OR: [{ userId }, { isDefault: true }],
+        OR: [{ householdId }, { isDefault: true }],
       },
     });
 
@@ -205,11 +198,10 @@ export async function createCategory(data: z.infer<typeof CategorySchema>) {
       throw new Error('קטגוריה עם שם זה כבר קיימת');
     }
 
-    // יצירת הקטגוריה
     const category = await prisma.category.create({
       data: {
         ...validated,
-        userId,
+        householdId,
         isDefault: false,
         isActive: true,
       },
@@ -257,25 +249,21 @@ export async function updateCategory(
   data: Partial<z.infer<typeof CategorySchema>>
 ) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = UpdateCategorySchema.parse({ id, ...data });
 
-    // בדיקה שהקטגוריה קיימת ושייכת למשתמש
     const existing = await prisma.category.findFirst({
-      where: { id: validated.id, userId },
+      where: { id: validated.id, householdId },
     });
 
     if (!existing) {
       throw new Error('הקטגוריה לא נמצאה');
     }
 
-    // בדיקה אם זו קטגוריית מערכת - לא ניתן לשנות
     if (existing.isDefault) {
       throw new Error('לא ניתן לשנות קטגוריית מערכת');
     }
 
-    // עדכון הקטגוריה
     const category = await prisma.category.update({
       where: { id: validated.id },
       data: {
@@ -328,17 +316,15 @@ export async function updateCategory(
  */
 export async function toggleCategory(id: string) {
   try {
-    const userId = await getAuthUserId();
-    // בדיקה שהקטגוריה קיימת ונגישה למשתמש
+    const householdId = await getHouseholdId();
     const category = await prisma.category.findFirst({
-      where: { id, OR: [{ userId }, { isDefault: true }] },
+      where: { id, OR: [{ householdId }, { isDefault: true }] },
     });
 
     if (!category) {
       throw new Error('הקטגוריה לא נמצאה');
     }
 
-    // עדכון הסטטוס
     const updated = await prisma.category.update({
       where: { id },
       data: {
@@ -366,8 +352,7 @@ export async function toggleCategory(id: string) {
  */
 export async function exportAllData() {
   try {
-    const userId = await getAuthUserId();
-    // שליפת כל הנתונים של המשתמש
+    const householdId = await getHouseholdId();
     const [
       settings,
       categories,
@@ -378,13 +363,13 @@ export async function exportAllData() {
       loans,
       loanPayments,
     ] = await Promise.all([
-      prisma.appSettings.findMany({ where: { userId } }),
+      prisma.appSettings.findMany({ where: { householdId } }),
       prisma.category.findMany({
-        where: { OR: [{ userId }, { isDefault: true }] },
+        where: { OR: [{ householdId }, { isDefault: true }] },
         orderBy: [{ type: 'asc' }, { sortOrder: 'asc' }],
       }),
       prisma.transaction.findMany({
-        where: { userId },
+        where: { householdId },
         include: {
           category: {
             select: {
@@ -396,7 +381,7 @@ export async function exportAllData() {
         orderBy: { date: 'desc' },
       }),
       prisma.budgetItem.findMany({
-        where: { userId },
+        where: { householdId },
         include: {
           category: {
             select: {
@@ -408,24 +393,23 @@ export async function exportAllData() {
         orderBy: [{ year: 'desc' }, { month: 'desc' }],
       }),
       prisma.savingsGoal.findMany({
-        where: { userId },
+        where: { householdId },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.savingsDeposit.findMany({
-        where: { goal: { userId } },
+        where: { goal: { householdId } },
         orderBy: { date: 'desc' },
       }),
       prisma.loan.findMany({
-        where: { userId },
+        where: { householdId },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.loanPayment.findMany({
-        where: { loan: { userId } },
+        where: { loan: { householdId } },
         orderBy: { date: 'desc' },
       }),
     ]);
 
-    // המרת Decimal ל-number
     const exportData = {
       version: '1.0',
       exportDate: new Date().toISOString(),
@@ -500,41 +484,36 @@ export async function exportAllData() {
 
 /**
  * 8. ייבוא נתונים מ-JSON (שחזור)
- * אזהרה: פעולה זו תחליף את כל הנתונים הקיימים!
  */
 export async function importData(jsonData: any) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה בסיסית
+    const householdId = await getHouseholdId();
     if (!jsonData || typeof jsonData !== 'object') {
       throw new Error('קובץ JSON לא תקין');
     }
 
-    // בדיקת גרסה
     if (!jsonData.version) {
       throw new Error('קובץ גיבוי לא מזוהה - חסר שדה version');
     }
 
-    // התחלת טרנזקציה — מחיקת נתוני המשתמש בלבד
     await prisma.$transaction(async (tx) => {
-      await tx.loanPayment.deleteMany({ where: { loan: { userId } } });
-      await tx.loan.deleteMany({ where: { userId } });
-      await tx.savingsDeposit.deleteMany({ where: { goal: { userId } } });
-      await tx.savingsGoal.deleteMany({ where: { userId } });
-      await tx.budgetItem.deleteMany({ where: { userId } });
-      await tx.transaction.deleteMany({ where: { userId } });
+      await tx.loanPayment.deleteMany({ where: { loan: { householdId } } });
+      await tx.loan.deleteMany({ where: { householdId } });
+      await tx.savingsDeposit.deleteMany({ where: { goal: { householdId } } });
+      await tx.savingsGoal.deleteMany({ where: { householdId } });
+      await tx.budgetItem.deleteMany({ where: { householdId } });
+      await tx.transaction.deleteMany({ where: { householdId } });
       
       await tx.category.deleteMany({
-        where: { userId, isDefault: false },
+        where: { householdId, isDefault: false },
       });
 
-      // ייבוא הגדרות
       if (jsonData.settings && Array.isArray(jsonData.settings) && jsonData.settings.length > 0) {
         const settingsData = jsonData.settings[0];
         await tx.appSettings.upsert({
-          where: { userId },
+          where: { householdId },
           create: {
-            userId,
+            householdId,
             payday: settingsData.payday || 11,
             currency: settingsData.currency || 'ILS',
             startMonth: settingsData.startMonth || 1,
@@ -549,7 +528,6 @@ export async function importData(jsonData: any) {
         });
       }
 
-      // ייבוא קטגוריות (רק לא-מערכת, כי מערכת כבר קיימות)
       if (jsonData.categories && Array.isArray(jsonData.categories)) {
         const customCategories = jsonData.categories.filter((c: any) => !c.isDefault);
         if (customCategories.length > 0) {
@@ -565,6 +543,7 @@ export async function importData(jsonData: any) {
               sortOrder: c.sortOrder || 0,
               isActive: c.isActive !== undefined ? c.isActive : true,
               isDefault: false,
+              householdId,
               createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
             })),
             skipDuplicates: true,
@@ -572,17 +551,13 @@ export async function importData(jsonData: any) {
         }
       }
 
-      // ייבוא עסקאות
       if (jsonData.transactions && Array.isArray(jsonData.transactions)) {
-        // צריך למפות categoryId לפי שם הקטגוריה או ID
         for (const txData of jsonData.transactions) {
           let categoryId = txData.categoryId;
           
-          // אם יש category object, נשתמש ב-ID שלו
           if (txData.category && txData.category.id) {
             categoryId = txData.category.id;
           } else if (txData.category && txData.category.name) {
-            // נחפש לפי שם
             const category = await tx.category.findFirst({
               where: { name: txData.category.name },
             });
@@ -595,6 +570,7 @@ export async function importData(jsonData: any) {
             await tx.transaction.create({
               data: {
                 id: txData.id,
+                householdId,
                 amount: txData.amount,
                 type: txData.type,
                 categoryId,
@@ -612,7 +588,6 @@ export async function importData(jsonData: any) {
         }
       }
 
-      // ייבוא תקציבים
       if (jsonData.budgetItems && Array.isArray(jsonData.budgetItems)) {
         for (const biData of jsonData.budgetItems) {
           let categoryId = biData.categoryId;
@@ -632,6 +607,7 @@ export async function importData(jsonData: any) {
             await tx.budgetItem.create({
               data: {
                 id: biData.id,
+                householdId,
                 categoryId,
                 month: biData.month,
                 year: biData.year,
@@ -644,11 +620,11 @@ export async function importData(jsonData: any) {
         }
       }
 
-      // ייבוא מטרות חיסכון
       if (jsonData.savingsGoals && Array.isArray(jsonData.savingsGoals)) {
         await tx.savingsGoal.createMany({
           data: jsonData.savingsGoals.map((sg: any) => ({
             id: sg.id,
+            householdId,
             name: sg.name,
             icon: sg.icon || null,
             targetAmount: sg.targetAmount,
@@ -664,7 +640,6 @@ export async function importData(jsonData: any) {
         });
       }
 
-      // ייבוא הפקדות חיסכון
       if (jsonData.savingsDeposits && Array.isArray(jsonData.savingsDeposits)) {
         await tx.savingsDeposit.createMany({
           data: jsonData.savingsDeposits.map((sd: any) => ({
@@ -679,11 +654,11 @@ export async function importData(jsonData: any) {
         });
       }
 
-      // ייבוא הלוואות
       if (jsonData.loans && Array.isArray(jsonData.loans)) {
         await tx.loan.createMany({
           data: jsonData.loans.map((l: any) => ({
             id: l.id,
+            householdId,
             name: l.name,
             type: l.type,
             originalAmount: l.originalAmount,
@@ -703,7 +678,6 @@ export async function importData(jsonData: any) {
         });
       }
 
-      // ייבוא תשלומי הלוואה
       if (jsonData.loanPayments && Array.isArray(jsonData.loanPayments)) {
         await tx.loanPayment.createMany({
           data: jsonData.loanPayments.map((lp: any) => ({
@@ -736,25 +710,23 @@ export async function importData(jsonData: any) {
  */
 export async function resetAllData() {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     await prisma.$transaction(async (tx) => {
-      // מחיקת נתוני המשתמש בלבד
-      await tx.loanPayment.deleteMany({ where: { loan: { userId } } });
-      await tx.loan.deleteMany({ where: { userId } });
-      await tx.savingsDeposit.deleteMany({ where: { goal: { userId } } });
-      await tx.savingsGoal.deleteMany({ where: { userId } });
-      await tx.budgetItem.deleteMany({ where: { userId } });
-      await tx.transaction.deleteMany({ where: { userId } });
+      await tx.loanPayment.deleteMany({ where: { loan: { householdId } } });
+      await tx.loan.deleteMany({ where: { householdId } });
+      await tx.savingsDeposit.deleteMany({ where: { goal: { householdId } } });
+      await tx.savingsGoal.deleteMany({ where: { householdId } });
+      await tx.budgetItem.deleteMany({ where: { householdId } });
+      await tx.transaction.deleteMany({ where: { householdId } });
       
       await tx.category.deleteMany({
-        where: { userId, isDefault: false },
+        where: { householdId, isDefault: false },
       });
 
-      // איפוס הגדרות לברירת מחדל
       await tx.appSettings.upsert({
-        where: { userId },
+        where: { householdId },
         create: {
-          userId,
+          householdId,
           payday: 11,
           currency: 'ILS',
           startMonth: 1,

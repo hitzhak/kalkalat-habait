@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   BookOpen,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -19,6 +20,7 @@ const navItems = [
   { href: '/', label: 'ראשי', icon: Home },
   { href: '/transactions', label: 'עסקאות', icon: Receipt },
   { href: '/reports', label: 'דוחות', icon: BarChart3 },
+  { href: '/family', label: 'משפחה', icon: Users },
 ];
 
 const bottomNavItem = {

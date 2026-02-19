@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { TransactionType } from '@/types';
 import { Prisma } from '@prisma/client';
-import { getAuthUserId } from '@/lib/auth';
+import { getHouseholdId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -26,16 +26,10 @@ const TrendSchema = z.object({
 
 // ========== Helper Functions ==========
 
-/**
- * המרת Decimal ל-number
- */
 function decimalToNumber(decimal: Prisma.Decimal): number {
   return parseFloat(decimal.toString());
 }
 
-/**
- * חישוב מספר שבוע בחודש
- */
 function getWeekNumber(date: Date): number {
   const dayOfMonth = date.getDate();
   if (dayOfMonth <= 7) return 1;
@@ -45,9 +39,6 @@ function getWeekNumber(date: Date): number {
   return 5;
 }
 
-/**
- * קבלת שם חודש בעברית
- */
 function getHebrewMonthName(month: number): string {
   const months = [
     'ינואר',
@@ -70,22 +61,18 @@ function getHebrewMonthName(month: number): string {
 
 /**
  * 1. דוח חודשי מפורט
- * מחזיר: הכנסות, הוצאות קבועות, הוצאות משתנות, מאזן, הוצאות לפי קטגוריה, הוצאות לפי שבוע
  */
 export async function getMonthlyReport(month: number, year: number) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = MonthYearSchema.parse({ month, year });
 
-    // תאריכי התחלה וסיום החודש
     const startDate = new Date(validated.year, validated.month - 1, 1);
     const endDate = new Date(validated.year, validated.month, 0, 23, 59, 59, 999);
 
-    // שליפת כל העסקאות לחודש
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId,
+        householdId,
         date: {
           gte: startDate,
           lte: endDate,
@@ -109,7 +96,6 @@ export async function getMonthlyReport(month: number, year: number) {
       },
     });
 
-    // חישוב סיכומים כלליים
     let totalIncome = 0;
     let totalExpenses = 0;
     let fixedExpenses = 0;
@@ -132,7 +118,6 @@ export async function getMonthlyReport(month: number, year: number) {
 
     const balance = totalIncome - totalExpenses;
 
-    // הוצאות לפי קטגוריה (קטגוריות ראשיות בלבד)
     const expensesByCategory: {
       [key: string]: {
         categoryId: string;
@@ -146,11 +131,9 @@ export async function getMonthlyReport(month: number, year: number) {
     transactions
       .filter((tx) => tx.type === TransactionType.EXPENSE)
       .forEach((tx) => {
-        // אם זו תת-קטגוריה, נשתמש בקטגוריית האב
         const categoryId = tx.category.parentId || tx.category.id;
 
         if (!expensesByCategory[categoryId]) {
-          // נמצא את הקטגוריה הראשית
           const mainCategory =
             tx.category.parentId === null
               ? tx.category
@@ -169,7 +152,6 @@ export async function getMonthlyReport(month: number, year: number) {
         expensesByCategory[categoryId].amount += decimalToNumber(tx.amount);
       });
 
-    // המרה למערך ממוין
     const expensesByCategoryArray = Object.values(expensesByCategory)
       .map((cat) => ({
         ...cat,
@@ -179,7 +161,6 @@ export async function getMonthlyReport(month: number, year: number) {
       }))
       .sort((a, b) => b.amount - a.amount);
 
-    // הוצאות לפי שבוע (הוצאות משתנות בלבד)
     const expensesByWeek: {
       [key: number]: number;
     } = {
@@ -203,7 +184,6 @@ export async function getMonthlyReport(month: number, year: number) {
       amount: Math.round(amount * 100) / 100,
     }));
 
-    // חישוב ממוצע שבועי (הוצאות משתנות)
     const weeksWithExpenses = expensesByWeekArray.filter((w) => w.amount > 0).length;
     const weeklyAverage =
       weeksWithExpenses > 0
@@ -237,7 +217,6 @@ export async function getMonthlyReport(month: number, year: number) {
 
 /**
  * 2. השוואת 2 חודשים
- * לכל קטגוריה — סכום בחודש 1, סכום בחודש 2, שינוי ב-₪ ובאחוזים
  */
 export async function getComparisonData(
   month1: number,
@@ -246,16 +225,13 @@ export async function getComparisonData(
   year2: number
 ) {
   try {
-    // ולידציה
     const validated = ComparisonSchema.parse({ month1, year1, month2, year2 });
 
-    // קבלת דוחות לשני החודשים
     const [report1, report2] = await Promise.all([
       getMonthlyReport(validated.month1, validated.year1),
       getMonthlyReport(validated.month2, validated.year2),
     ]);
 
-    // בניית מפת קטגוריות מחודש 1
     const categoryMap: {
       [key: string]: {
         categoryId: string;
@@ -267,7 +243,6 @@ export async function getComparisonData(
       };
     } = {};
 
-    // הוספת קטגוריות מחודש 1
     report1.expensesByCategory.forEach((cat) => {
       categoryMap[cat.categoryId] = {
         categoryId: cat.categoryId,
@@ -279,7 +254,6 @@ export async function getComparisonData(
       };
     });
 
-    // הוספת קטגוריות מחודש 2
     report2.expensesByCategory.forEach((cat) => {
       if (categoryMap[cat.categoryId]) {
         categoryMap[cat.categoryId].month2Amount = cat.amount;
@@ -295,7 +269,6 @@ export async function getComparisonData(
       }
     });
 
-    // חישוב שינויים
     const comparison = Object.values(categoryMap)
       .map((cat) => {
         const changeAmount = cat.month2Amount - cat.month1Amount;
@@ -315,7 +288,6 @@ export async function getComparisonData(
       })
       .sort((a, b) => Math.abs(b.changeAmount) - Math.abs(a.changeAmount));
 
-    // סיכום השוואתי
     const summaryComparison = {
       month1: {
         month: validated.month1,
@@ -371,31 +343,26 @@ export async function getComparisonData(
 
 /**
  * 3. נתוני מגמה ל-N חודשים אחורה
- * הכנסות והוצאות כולל לכל חודש
  */
 export async function getTrendData(months: number = 12) {
   try {
-    const userId = await getAuthUserId();
-    // ולידציה
+    const householdId = await getHouseholdId();
     const validated = TrendSchema.parse({ months });
 
     const today = new Date();
     const trendData = [];
 
-    // איסוף נתונים לכל חודש
     for (let i = validated.months - 1; i >= 0; i--) {
       const targetDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const month = targetDate.getMonth() + 1;
       const year = targetDate.getFullYear();
 
-      // תאריכי התחלה וסיום
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-      // שליפת עסקאות
       const transactions = await prisma.transaction.findMany({
         where: {
-          userId,
+          householdId,
           date: {
             gte: startDate,
             lte: endDate,
@@ -403,7 +370,6 @@ export async function getTrendData(months: number = 12) {
         },
       });
 
-      // חישוב הכנסות והוצאות
       let income = 0;
       let expenses = 0;
 
@@ -427,7 +393,6 @@ export async function getTrendData(months: number = 12) {
       });
     }
 
-    // חישוב ממוצעים
     const avgIncome =
       trendData.length > 0
         ? Math.round((trendData.reduce((sum, d) => sum + d.income, 0) / trendData.length) * 100) /

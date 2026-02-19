@@ -6,6 +6,12 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/';
+  const errorParam = searchParams.get('error_description');
+
+  if (errorParam) {
+    const encoded = encodeURIComponent(errorParam);
+    return NextResponse.redirect(`${origin}/login?error=${encoded}`);
+  }
 
   if (code) {
     const cookieStore = cookies();
@@ -33,6 +39,13 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
+    }
+
+    const msg = error.message?.toLowerCase() || '';
+    if (msg.includes('identity') || msg.includes('already')) {
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent('כבר קיים חשבון עם האימייל הזה — נסה שיטת התחברות אחרת')}`
+      );
     }
   }
 

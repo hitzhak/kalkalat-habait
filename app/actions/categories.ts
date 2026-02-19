@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { CategoryType } from '@/types';
-import { getAuthUserId } from '@/lib/auth';
+import { getHouseholdId } from '@/lib/auth';
 
 // ========== Zod Schemas ==========
 
@@ -15,11 +15,10 @@ const GetCategoriesSchema = z.object({
 
 /**
  * 1. קבלת קטגוריות (אופציונלי: לפי סוג INCOME/EXPENSE)
- * מחזיר קטגוריות כולל תתי-קטגוריות
  */
 export async function getCategories(type?: CategoryType) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     if (type) {
       GetCategoriesSchema.parse({ type });
     }
@@ -28,7 +27,7 @@ export async function getCategories(type?: CategoryType) {
       where: {
         ...(type && { type }),
         isActive: true,
-        OR: [{ isDefault: true }, { userId }],
+        OR: [{ isDefault: true }, { householdId }],
       },
       include: {
         parent: {
@@ -76,16 +75,15 @@ export async function getCategories(type?: CategoryType) {
 
 /**
  * 2. קבלת עץ קטגוריות מלא
- * מחזיר רק קטגוריות ראשיות עם ה-children שלהן (עץ היררכי)
  */
 export async function getCategoryTree() {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const categories = await prisma.category.findMany({
       where: {
         parentId: null,
         isActive: true,
-        OR: [{ isDefault: true }, { userId }],
+        OR: [{ isDefault: true }, { householdId }],
       },
       include: {
         children: {
@@ -112,7 +110,7 @@ export async function getCategoryTree() {
       },
       orderBy: [
         {
-          type: 'asc', // INCOME קודם, אחר כך EXPENSE
+          type: 'asc',
         },
         {
           sortOrder: 'asc',
@@ -131,13 +129,16 @@ export async function getCategoryTree() {
 }
 
 /**
- * 3. קבלת קטגוריה בודדת לפי ID
- * (פונקציה נוספת שימושית)
+ * 3. קבלת קטגוריה בודדת לפי ID — restricted to household + default categories
  */
 export async function getCategoryById(id: string) {
   try {
-    const category = await prisma.category.findUnique({
-      where: { id },
+    const householdId = await getHouseholdId();
+    const category = await prisma.category.findFirst({
+      where: {
+        id,
+        OR: [{ isDefault: true }, { householdId }],
+      },
       include: {
         parent: {
           select: {
@@ -180,11 +181,10 @@ export async function getCategoryById(id: string) {
 
 /**
  * 4. קבלת קטגוריות ראשיות בלבד (ללא children)
- * שימושי לבחירה מהירה בטפסים
  */
 export async function getParentCategories(type?: CategoryType) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     if (type) {
       GetCategoriesSchema.parse({ type });
     }
@@ -194,7 +194,7 @@ export async function getParentCategories(type?: CategoryType) {
         parentId: null,
         isActive: true,
         ...(type && { type }),
-        OR: [{ isDefault: true }, { userId }],
+        OR: [{ isDefault: true }, { householdId }],
       },
       select: {
         id: true,
@@ -227,12 +227,12 @@ export async function getParentCategories(type?: CategoryType) {
  */
 export async function getSubCategories(parentId: string) {
   try {
-    const userId = await getAuthUserId();
+    const householdId = await getHouseholdId();
     const subCategories = await prisma.category.findMany({
       where: {
         parentId,
         isActive: true,
-        OR: [{ isDefault: true }, { userId }],
+        OR: [{ isDefault: true }, { householdId }],
       },
       select: {
         id: true,
