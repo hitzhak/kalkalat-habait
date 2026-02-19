@@ -10,7 +10,7 @@ export function formatCurrency(amount: number): string {
   }).format(Math.abs(amount));
   
   const sign = amount < 0 ? '-' : '';
-  return `${sign}₪${formatted}`;
+  return `\u2066${sign}₪${formatted}\u2069`;
 }
 
 /**

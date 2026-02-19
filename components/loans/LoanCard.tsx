@@ -181,15 +181,15 @@ export function LoanCard({ loan }: LoanCardProps) {
                     <div>{getLoanTypeText(loan.type)}</div>
                     
                     <div className="text-muted-foreground">סכום מקורי:</div>
-                    <div>₪{Number(loan.originalAmount).toLocaleString('he-IL')}</div>
+                    <div>{'\u2066'}₪{Number(loan.originalAmount).toLocaleString('he-IL')}{'\u2069'}</div>
                     
                     <div className="text-muted-foreground">יתרה:</div>
                     <div className="font-semibold text-expense-500">
-                      ₪{Number(loan.remainingAmount).toLocaleString('he-IL')}
+                      {'\u2066'}₪{Number(loan.remainingAmount).toLocaleString('he-IL')}{'\u2069'}
                     </div>
                     
                     <div className="text-muted-foreground">תשלום חודשי:</div>
-                    <div>₪{Number(loan.monthlyPayment).toLocaleString('he-IL')}</div>
+                    <div>{'\u2066'}₪{Number(loan.monthlyPayment).toLocaleString('he-IL')}{'\u2069'}</div>
                     
                     {loan.interestRate && (
                       <>
@@ -264,12 +264,12 @@ export function LoanCard({ loan }: LoanCardProps) {
           <div>
             <div className="text-sm text-muted-foreground mb-1">יתרה</div>
             <div className="text-xl font-bold text-expense-500">
-              ₪{Number(loan.remainingAmount).toLocaleString('he-IL')}
+              {'\u2066'}₪{Number(loan.remainingAmount).toLocaleString('he-IL')}{'\u2069'}
             </div>
           </div>
           <div>
             <div className="text-sm text-muted-foreground mb-1">תשלום חודשי</div>
-            <div className="text-xl font-semibold">₪{Number(loan.monthlyPayment).toLocaleString('he-IL')}</div>
+            <div className="text-xl font-semibold">{'\u2066'}₪{Number(loan.monthlyPayment).toLocaleString('he-IL')}{'\u2069'}</div>
           </div>
         </div>
 
@@ -297,8 +297,8 @@ export function LoanCard({ loan }: LoanCardProps) {
           </div>
           <Progress value={paidPercentage} className="h-2" />
           <div className="text-xs text-muted-foreground text-center">
-            שולם ₪{(Number(loan.originalAmount) - Number(loan.remainingAmount)).toLocaleString('he-IL')} מתוך{' '}
-            ₪{Number(loan.originalAmount).toLocaleString('he-IL')}
+            שולם {'\u2066'}₪{(Number(loan.originalAmount) - Number(loan.remainingAmount)).toLocaleString('he-IL')}{'\u2069'} מתוך{' '}
+            {'\u2066'}₪{Number(loan.originalAmount).toLocaleString('he-IL')}{'\u2069'}
           </div>
         </div>
 

@@ -59,7 +59,7 @@ function formatCurrency(amount: number): string {
     maximumFractionDigits: 0,
   }).format(Math.abs(amount));
   const sign = amount < 0 ? '-' : '';
-  return `${sign}₪${formatted}`;
+  return `\u2066${sign}₪${formatted}\u2069`;
 }
 
 interface ComparisonData {

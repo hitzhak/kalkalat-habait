@@ -66,7 +66,7 @@ function formatCurrency(amount: number): string {
     maximumFractionDigits: 0,
   }).format(Math.abs(amount));
   const sign = amount < 0 ? '-' : '';
-  return `${sign}₪${formatted}`;
+  return `\u2066${sign}₪${formatted}\u2069`;
 }
 
 // Reusable type for category data
@@ -104,11 +104,6 @@ function CategoryRow({
         indent ? 'me-4 sm:me-6 border-dashed' : ''
       } ${isActive ? 'bg-white border-border' : 'bg-secondary/70 border-border/50 opacity-60'}`}
     >
-      <Switch
-        checked={isActive}
-        onCheckedChange={() => onToggleActive(category.id)}
-        disabled={category.isDefault && !isActive}
-      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className={`font-medium truncate ${indent ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>
@@ -130,6 +125,10 @@ function CategoryRow({
           <Edit2 className="h-3.5 w-3.5" />
         </Button>
       )}
+      <Switch
+        checked={isActive}
+        onCheckedChange={() => onToggleActive(category.id)}
+      />
     </div>
   );
 }
@@ -154,11 +153,6 @@ function CategoryGroup({
     <Collapsible open={isOpen} onOpenChange={onToggleOpen}>
       <div className={`border rounded-xl overflow-hidden transition-all ${isActive ? 'border-border' : 'border-border/50 opacity-60'}`}>
         <div className={`flex items-center gap-3 p-3 transition-colors ${isActive ? 'bg-secondary/50 hover:bg-secondary' : 'bg-secondary/30'}`}>
-          <Switch
-            checked={isActive}
-            onCheckedChange={() => onToggleActive(parent.id)}
-            disabled={parent.isDefault && !isActive}
-          />
           <CollapsibleTrigger asChild>
             <button className="flex items-center gap-3 flex-1 min-w-0 text-right">
               <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? '' : '-rotate-90 rtl:rotate-90'}`} />
@@ -188,6 +182,10 @@ function CategoryGroup({
               <Edit2 className="h-3.5 w-3.5" />
             </Button>
           )}
+          <Switch
+            checked={isActive}
+            onCheckedChange={() => onToggleActive(parent.id)}
+          />
         </div>
         <CollapsibleContent>
           {children.length > 0 && (
@@ -211,7 +209,7 @@ function CategoryGroup({
 
 export default function SettingsPage() {
   // State for General Settings
-  const [payday, setPayday] = useState(11);
+  const [payday, setPayday] = useState(1);
   const [savingSettings, setSavingSettings] = useState(false);
 
   // State for Categories
@@ -501,17 +499,18 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label htmlFor="payday">יום חיוב הוצאות קבועות</Label>
             <div className="flex items-center gap-4">
-              <Input
+              <select
                 id="payday"
-                type="number"
-                min="1"
-                max="31"
                 value={payday}
-                onChange={(e) => setPayday(parseInt(e.target.value) || 11)}
-                className="w-24"
-              />
+                onChange={(e) => setPayday(parseInt(e.target.value) || 1)}
+                className="flex h-10 w-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
               <span className="text-sm text-muted-foreground">
-                ברירת מחדל: 11
+                ברירת מחדל: 1
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">

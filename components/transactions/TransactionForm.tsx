@@ -200,13 +200,13 @@ export function TransactionForm({
         await updateTransaction(transaction.id, data);
         toast({
           title: 'העסקה עודכנה',
-          description: `${categoryName} — ₪${data.amount.toLocaleString('he-IL')}`,
+          description: `${categoryName} — \u2066₪${data.amount.toLocaleString('he-IL')}\u2069`,
         });
       } else {
         await createTransaction(data);
         toast({
           title: 'העסקה נוספה',
-          description: `₪${data.amount.toLocaleString('he-IL')} ב${categoryName}`,
+          description: `\u2066₪${data.amount.toLocaleString('he-IL')}\u2069 ב${categoryName}`,
         });
       }
 
@@ -327,20 +327,20 @@ export function TransactionForm({
         <div className="relative">
           <Input
             id="amount"
-            type="number"
-            step="0.01"
+            type="text"
             placeholder="0"
             inputMode="decimal"
+            autoComplete="off"
+            title=""
             className="text-left pr-8 h-14 text-2xl font-bold"
             {...register('amount', {
-              valueAsNumber: true,
               setValueAs: (v: string) => {
                 const parsed = parseFloat(v);
                 return isNaN(parsed) ? undefined : parsed;
               },
             })}
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground font-medium">₪</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground font-medium">{'\u2066'}₪{'\u2069'}</span>
         </div>
         {errors.amount && <p className="text-sm text-red-500">{String(errors.amount.message)}</p>}
       </div>

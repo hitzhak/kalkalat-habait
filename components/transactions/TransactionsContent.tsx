@@ -83,19 +83,19 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
         <Card className="p-2.5 sm:p-4">
           <p className="text-[11px] sm:text-sm text-muted-foreground">הכנסות</p>
           <p className="mt-1 text-base sm:text-2xl font-bold text-income-500">
-            ₪{summary?.totalIncome?.toLocaleString('he-IL')}
+            {'\u2066'}₪{summary?.totalIncome?.toLocaleString('he-IL')}{'\u2069'}
           </p>
         </Card>
         <Card className="p-2.5 sm:p-4">
           <p className="text-[11px] sm:text-sm text-muted-foreground">הוצאות</p>
           <p className="mt-1 text-base sm:text-2xl font-bold text-expense-500">
-            ₪{summary?.totalExpenses?.toLocaleString('he-IL')}
+            {'\u2066'}₪{summary?.totalExpenses?.toLocaleString('he-IL')}{'\u2069'}
           </p>
         </Card>
         <Card className="p-2.5 sm:p-4">
           <p className="text-[11px] sm:text-sm text-muted-foreground">מאזן</p>
           <p className={`mt-1 text-base sm:text-2xl font-bold ${(summary?.balance ?? 0) >= 0 ? 'text-income-500' : 'text-expense-500'}`}>
-            {(summary?.balance ?? 0) >= 0 ? '+' : ''}₪{(summary?.balance ?? 0).toLocaleString('he-IL')}
+            {'\u2066'}{(summary?.balance ?? 0) >= 0 ? '+' : ''}₪{(summary?.balance ?? 0).toLocaleString('he-IL')}{'\u2069'}
           </p>
         </Card>
       </div>

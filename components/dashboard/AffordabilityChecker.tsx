@@ -48,7 +48,7 @@ export function AffordabilityChecker({ categories, totalRemaining, onCheck }: Af
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground shrink-0">💡 רוצה להוציא</span>
           <div className="relative flex-1 max-w-[160px]">
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₪</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{'\u2066'}₪{'\u2069'}</span>
             <Input
               type="number"
               inputMode="decimal"
