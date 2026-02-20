@@ -10,6 +10,12 @@ export enum TransactionType {
   EXPENSE = 'EXPENSE'
 }
 
+export enum TransactionSource {
+  MANUAL = 'MANUAL',
+  IMPORT = 'IMPORT',
+  RECURRING = 'RECURRING'
+}
+
 export enum LoanType {
   MORTGAGE = 'MORTGAGE',      // משכנתא
   BANK = 'BANK',              // הלוואת בנק
@@ -50,6 +56,10 @@ export interface Transaction {
   notes?: string | null;
   tags: string[];
   isRecurring: boolean;
+  source: TransactionSource;
+  sourceLabel?: string | null;
+  sourceDescription?: string | null;
+  importBatchId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -129,4 +139,57 @@ export interface AppSettings {
   weekStartDay: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// =========== Import Feature ===========
+
+export type ImportFileType = 'excel' | 'pdf' | 'screenshot';
+
+export type ImportRowStatus = 'new' | 'duplicate' | 'suspect' | 'transfer' | 'recurring_match';
+
+export type ConfidenceLevel = 'high' | 'low' | 'unknown';
+
+export interface ImportRow {
+  index: number;
+  date: string;
+  sourceDescription: string;
+  amount: number;
+  type: TransactionType;
+  categoryId: string | null;
+  categoryName: string | null;
+  subCategoryId: string | null;
+  subCategoryName: string | null;
+  confidence: ConfidenceLevel;
+  status: ImportRowStatus;
+  duplicateOfId?: string;
+  duplicateReason?: string;
+  isSelected: boolean;
+  notes?: string;
+  installmentInfo?: string;
+}
+
+export interface ImportPreviewData {
+  rows: ImportRow[];
+  summary: {
+    totalFound: number;
+    newCount: number;
+    duplicateCount: number;
+    suspectCount: number;
+    transferCount: number;
+    recurringMatchCount: number;
+    dateRange: { from: string; to: string };
+  };
+}
+
+export interface ImportBatchInfo {
+  id: string;
+  fileName: string;
+  fileType: string;
+  sourceLabel: string;
+  sourceBank?: string | null;
+  totalFound: number;
+  imported: number;
+  duplicates: number;
+  skipped: number;
+  createdAt: string;
 }

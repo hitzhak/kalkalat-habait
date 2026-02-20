@@ -5,8 +5,11 @@ import { TransactionType } from '@/types';
 import { getTransactionsPageData } from '@/app/actions/transactions';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
+import { ImportDialog } from '@/components/import/ImportDialog';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Upload } from 'lucide-react';
 
 type TabValue = 'all' | 'variable' | 'fixed' | 'income';
 
@@ -46,6 +49,7 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
   const [activeTab, setActiveTab] = useState<TabValue>('variable');
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const reloadData = async () => {
     try {
@@ -100,6 +104,20 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
         </Card>
       </div>
 
+      {/* Import button */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setImportOpen(true)}
+          className="gap-1.5"
+        >
+          <Upload className="h-4 w-4" />
+          <span className="hidden sm:inline">ייבוא עסקאות</span>
+          <span className="sm:hidden">ייבוא</span>
+        </Button>
+      </div>
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
         <TabsList className="grid w-full grid-cols-4">
@@ -137,6 +155,13 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
         open={formOpen}
         onOpenChange={handleFormClose}
         transaction={editTransaction}
+        onSuccess={reloadData}
+      />
+
+      {/* Import dialog */}
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
         onSuccess={reloadData}
       />
     </div>

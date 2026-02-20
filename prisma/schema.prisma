@@ -17,14 +17,16 @@ model Household {
   name      String   @default("הבית שלי")
   createdAt DateTime @default(now())
 
-  members      HouseholdMember[]
-  invites      HouseholdInvite[]
-  settings     AppSettings?
-  categories   Category[]
-  transactions Transaction[]
-  budgetItems  BudgetItem[]
-  savingsGoals SavingsGoal[]
-  loans        Loan[]
+  members            HouseholdMember[]
+  invites            HouseholdInvite[]
+  settings           AppSettings?
+  categories         Category[]
+  transactions       Transaction[]
+  budgetItems        BudgetItem[]
+  savingsGoals       SavingsGoal[]
+  loans              Loan[]
+  importBatches      ImportBatch[]
+  importSourceLabels ImportSourceLabel[]
 }
 
 model HouseholdMember {
@@ -89,31 +91,72 @@ enum CategoryType {
 
 // === עסקאות (הכנסות והוצאות) ===
 model Transaction {
-  id              String          @id @default(cuid())
-  householdId     String
-  household       Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  amount          Decimal         @db.Decimal(10, 2)
-  type            TransactionType
-  categoryId      String
-  category        Category        @relation(fields: [categoryId], references: [id])
-  date            DateTime
-  weekNumber      Int?
-  isFixed         Boolean         @default(false)
-  notes           String?
-  tags            String[]
-  isRecurring     Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id                String            @id @default(cuid())
+  householdId       String
+  household         Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  amount            Decimal           @db.Decimal(10, 2)
+  type              TransactionType
+  categoryId        String
+  category          Category          @relation(fields: [categoryId], references: [id])
+  date              DateTime
+  weekNumber        Int?
+  isFixed           Boolean           @default(false)
+  notes             String?
+  tags              String[]
+  isRecurring       Boolean           @default(false)
+  source            TransactionSource @default(MANUAL)
+  sourceLabel       String?
+  sourceDescription String?
+  importBatchId     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([householdId])
   @@index([date])
   @@index([categoryId])
   @@index([type, date])
+  @@index([importBatchId])
+  @@index([sourceLabel, sourceDescription, amount, date])
 }
 
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+enum TransactionSource {
+  MANUAL
+  IMPORT
+  RECURRING
+}
+
+// === ייבוא עסקאות ===
+model ImportBatch {
+  id          String    @id @default(cuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileType    String
+  sourceLabel String
+  sourceBank  String?
+  totalFound  Int
+  imported    Int
+  duplicates  Int
+  skipped     Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([householdId])
+}
+
+model ImportSourceLabel {
+  id          String    @id @default(cuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  label       String
+  lastUsedAt  DateTime  @default(now())
+
+  @@unique([householdId, label])
+  @@index([householdId])
 }
 
 // === תקציב חודשי ===
