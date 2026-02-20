@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getHouseholdId } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { parseExcelFile, isTransferDescription, isCCPayment } from '@/lib/import-parser';
-import { categorizeTransactions } from '@/lib/import-ai';
+import { categorizeTransactions, UserMapping } from '@/lib/import-ai';
 import { checkDuplicates } from '@/lib/import-dedup';
 import { TransactionType, ImportRow, ImportPreviewData } from '@/types';
 
@@ -64,6 +64,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const pastTransactions = await prisma.transaction.findMany({
+      where: {
+        householdId,
+        source: 'IMPORT',
+        sourceDescription: { not: null },
+      },
+      select: {
+        sourceDescription: true,
+        categoryId: true,
+        category: { select: { id: true, name: true, parentId: true } },
+      },
+      distinct: ['sourceDescription'],
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+    });
+
+    const userMappings: UserMapping[] = pastTransactions
+      .filter(t => t.sourceDescription)
+      .map(t => ({
+        description: t.sourceDescription!,
+        categoryId: t.categoryId,
+        parentCategoryId: t.category.parentId,
+        categoryName: t.category.name,
+      }));
+
     const buffer = Buffer.from(await file.arrayBuffer());
     let importRows: ImportRow[] = [];
     let aiError: string | undefined;
@@ -77,7 +102,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'לא נמצאו עסקאות בקובץ. ודא שהקובץ מכיל נתונים תקינים' }, { status: 400 });
       }
 
-      // AI categorization - send descriptions with type context
       const transactions = parsed.map(r => ({ description: r.description, type: r.type as 'INCOME' | 'EXPENSE' }));
       const aiResult = await categorizeTransactions(
         transactions,
@@ -86,7 +110,8 @@ export async function POST(request: NextRequest) {
           name: c.name,
           type: c.type,
           children: c.children,
-        }))
+        })),
+        userMappings
       );
 
       const categorizedRaw = aiResult.results;

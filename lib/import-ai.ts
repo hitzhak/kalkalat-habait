@@ -31,12 +31,32 @@ interface TransactionInput {
   type: 'INCOME' | 'EXPENSE';
 }
 
+export interface UserMapping {
+  description: string;
+  categoryId: string;
+  parentCategoryId: string | null;
+  categoryName: string;
+}
+
 const BATCH_SIZE = 30;
+
+function normalizeDesc(desc: string): string {
+  return desc.trim().replace(/\s+/g, ' ');
+}
+
+function buildExamplesSection(mappings: UserMapping[]): string {
+  if (mappings.length === 0) return '';
+  const examples = mappings.slice(0, 50).map(m =>
+    `- "${m.description}" → ${m.categoryName}`
+  ).join('\n');
+  return `\nדוגמאות מסיווגים קודמים שאושרו ע"י המשתמש (עקוב אחריהם!):\n${examples}\n`;
+}
 
 async function categorizeBatch(
   batch: TransactionInput[],
   globalStartIndex: number,
-  categories: CategoryInfo[]
+  categories: CategoryInfo[],
+  userMappings: UserMapping[]
 ): Promise<CategorizationResult[]> {
   const categoryList = categories.map(cat => {
     const subs = cat.children?.length
@@ -50,11 +70,13 @@ async function categorizeBatch(
     return `${idx}. "${t.description}" [${t.type}]`;
   }).join('\n');
 
+  const examplesSection = buildExamplesSection(userMappings);
+
   const prompt = `אתה מסווג עסקאות בנקאיות ישראליות לקטגוריות תקציב.
 
 קטגוריות זמינות:
 ${categoryList}
-
+${examplesSection}
 עסקאות לסיווג:
 ${descList}
 
@@ -64,12 +86,13 @@ ${descList}
 3. חשוב: לכל עסקה מצוין [EXPENSE] או [INCOME] — בחר קטגוריה מהסוג המתאים בלבד
 4. סמן העברות בין חשבונות, תשלומי כרטיס אשראי, הפקדות לפיקדון כ-isTransfer: true
 5. confidence: "high" = ברור (שופרסל=אוכל), "low" = לא בטוח, "unknown" = לא ניתן לזהות
+6. אם הדוגמאות מסיווגים קודמים רלוונטיות — עקוב אחריהן. המשתמש אישר אותן.
 
 החזר JSON array בלבד (בלי markdown):
 [{"index": 1, "categoryId": "cat_id", "subCategoryId": "sub_id_or_null", "confidence": "high|low|unknown", "reason": "optional", "isTransfer": false}]`;
 
   const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
     messages: [
       { role: 'system', content: 'אתה מומחה בסיווג עסקאות פיננסיות ישראליות. ענה תמיד ב-JSON בלבד.' },
       { role: 'user', content: prompt },
@@ -96,7 +119,8 @@ export interface CategorizeResult {
 
 export async function categorizeTransactions(
   transactions: TransactionInput[],
-  categories: CategoryInfo[]
+  categories: CategoryInfo[],
+  userMappings: UserMapping[] = []
 ): Promise<CategorizeResult> {
   if (transactions.length === 0) return { results: [] };
 
@@ -113,47 +137,85 @@ export async function categorizeTransactions(
     };
   }
 
-  const batches: { batch: TransactionInput[]; startIndex: number }[] = [];
-  for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
+  const mappingLookup = new Map<string, UserMapping>();
+  for (const m of userMappings) {
+    mappingLookup.set(normalizeDesc(m.description), m);
+  }
+
+  const cachedResults: CategorizationResult[] = [];
+  const uncachedTransactions: { original: TransactionInput; originalIndex: number }[] = [];
+
+  for (let i = 0; i < transactions.length; i++) {
+    const key = normalizeDesc(transactions[i].description);
+    const cached = mappingLookup.get(key);
+    if (cached) {
+      const isSubCategory = cached.parentCategoryId !== null;
+      cachedResults.push({
+        index: i + 1,
+        categoryId: isSubCategory ? cached.parentCategoryId : cached.categoryId,
+        subCategoryId: isSubCategory ? cached.categoryId : null,
+        confidence: 'high',
+        reason: 'מיפוי מייבוא קודם',
+      });
+    } else {
+      uncachedTransactions.push({ original: transactions[i], originalIndex: i });
+    }
+  }
+
+  console.log(`AI categorization: ${transactions.length} total, ${cachedResults.length} cached, ${uncachedTransactions.length} need AI`);
+
+  if (uncachedTransactions.length === 0) {
+    return { results: cachedResults.sort((a, b) => a.index - b.index) };
+  }
+
+  const batches: { batch: TransactionInput[]; indices: number[] }[] = [];
+  for (let i = 0; i < uncachedTransactions.length; i += BATCH_SIZE) {
+    const slice = uncachedTransactions.slice(i, i + BATCH_SIZE);
     batches.push({
-      batch: transactions.slice(i, i + BATCH_SIZE),
-      startIndex: i,
+      batch: slice.map(s => s.original),
+      indices: slice.map(s => s.originalIndex),
     });
   }
 
-  console.log(`AI categorization: ${transactions.length} transactions in ${batches.length} batch(es)`);
+  console.log(`Sending ${uncachedTransactions.length} transactions to AI in ${batches.length} batch(es)`);
 
   let failedBatches = 0;
   let lastError = '';
 
   const batchResults = await Promise.all(
-    batches.map(({ batch, startIndex }) =>
-      categorizeBatch(batch, startIndex, categories).catch(error => {
+    batches.map(({ batch, indices }) => {
+      const globalStart = indices[0];
+      return categorizeBatch(batch, globalStart, categories, userMappings).then(results => {
+        return results.map((r, i) => ({
+          ...r,
+          index: indices[i] + 1,
+        }));
+      }).catch(error => {
         failedBatches++;
         const msg = error instanceof Error ? error.message : String(error);
         lastError = msg;
-        console.error(`Batch starting at ${startIndex} failed:`, msg);
-        return batch.map((_, i) => ({
-          index: startIndex + i + 1,
+        console.error(`Batch failed:`, msg);
+        return indices.map(idx => ({
+          index: idx + 1,
           categoryId: null,
           subCategoryId: null,
           confidence: 'unknown' as ConfidenceLevel,
           reason: 'שגיאה בסיווג אוטומטי',
         }));
-      })
-    )
+      });
+    })
   );
 
-  const results = batchResults.flat();
+  const allResults = [...cachedResults, ...batchResults.flat()].sort((a, b) => a.index - b.index);
   let aiError: string | undefined;
 
-  if (failedBatches === batches.length) {
+  if (failedBatches === batches.length && batches.length > 0) {
     aiError = `סיווג אוטומטי נכשל לחלוטין: ${lastError}`;
   } else if (failedBatches > 0) {
     aiError = `סיווג אוטומטי נכשל ב-${failedBatches} מתוך ${batches.length} קבוצות`;
   }
 
-  return { results, aiError };
+  return { results: allResults, aiError };
 }
 
 export async function extractFromPDF(
