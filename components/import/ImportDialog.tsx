@@ -167,6 +167,15 @@ export function ImportDialog({ open, onOpenChange, onSuccess }: ImportDialogProp
 
       setPreviewData(result);
       setStep('preview');
+
+      if (result.aiError) {
+        toast({
+          title: 'סיווג אוטומטי נכשל',
+          description: result.aiError + ' — יש לבחור קטגוריות ידנית.',
+          variant: 'destructive',
+          duration: 10000,
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'שגיאה בעיבוד הקובץ';
       toast({

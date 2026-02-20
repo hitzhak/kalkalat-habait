@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     let importRows: ImportRow[] = [];
+    let aiError: string | undefined;
 
     const isCreditCard = isCreditCardSource(sourceLabel);
 
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
 
       // AI categorization - send descriptions with type context
       const transactions = parsed.map(r => ({ description: r.description, type: r.type as 'INCOME' | 'EXPENSE' }));
-      const categorizedRaw = await categorizeTransactions(
+      const aiResult = await categorizeTransactions(
         transactions,
         categories.map(c => ({
           id: c.id,
@@ -87,6 +88,9 @@ export async function POST(request: NextRequest) {
           children: c.children,
         }))
       );
+
+      const categorizedRaw = aiResult.results;
+      aiError = aiResult.aiError;
 
       // Build index-based lookup map (AI returns 1-based indices)
       const catMap = new Map<number, typeof categorizedRaw[number]>();
@@ -233,7 +237,9 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    return NextResponse.json({ rows: importRows, summary } satisfies ImportPreviewData);
+    const response: ImportPreviewData = { rows: importRows, summary };
+    if (aiError) response.aiError = aiError;
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Import error:', error);
     const message = error instanceof Error ? error.message : 'שגיאה בעיבוד הקובץ';

@@ -89,11 +89,29 @@ ${descList}
   }
 }
 
+export interface CategorizeResult {
+  results: CategorizationResult[];
+  aiError?: string;
+}
+
 export async function categorizeTransactions(
   transactions: TransactionInput[],
   categories: CategoryInfo[]
-): Promise<CategorizationResult[]> {
-  if (transactions.length === 0) return [];
+): Promise<CategorizeResult> {
+  if (transactions.length === 0) return { results: [] };
+
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('OPENAI_API_KEY is not configured');
+    return {
+      results: transactions.map((_, i) => ({
+        index: i + 1,
+        categoryId: null,
+        subCategoryId: null,
+        confidence: 'unknown' as ConfidenceLevel,
+      })),
+      aiError: 'מפתח OpenAI לא מוגדר בשרת. יש להגדיר OPENAI_API_KEY ולבצע redeploy.',
+    };
+  }
 
   const batches: { batch: TransactionInput[]; startIndex: number }[] = [];
   for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
@@ -105,10 +123,16 @@ export async function categorizeTransactions(
 
   console.log(`AI categorization: ${transactions.length} transactions in ${batches.length} batch(es)`);
 
+  let failedBatches = 0;
+  let lastError = '';
+
   const batchResults = await Promise.all(
     batches.map(({ batch, startIndex }) =>
       categorizeBatch(batch, startIndex, categories).catch(error => {
-        console.error(`Batch starting at ${startIndex} failed:`, error);
+        failedBatches++;
+        const msg = error instanceof Error ? error.message : String(error);
+        lastError = msg;
+        console.error(`Batch starting at ${startIndex} failed:`, msg);
         return batch.map((_, i) => ({
           index: startIndex + i + 1,
           categoryId: null,
@@ -120,7 +144,16 @@ export async function categorizeTransactions(
     )
   );
 
-  return batchResults.flat();
+  const results = batchResults.flat();
+  let aiError: string | undefined;
+
+  if (failedBatches === batches.length) {
+    aiError = `סיווג אוטומטי נכשל לחלוטין: ${lastError}`;
+  } else if (failedBatches > 0) {
+    aiError = `סיווג אוטומטי נכשל ב-${failedBatches} מתוך ${batches.length} קבוצות`;
+  }
+
+  return { results, aiError };
 }
 
 export async function extractFromPDF(

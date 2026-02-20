@@ -192,6 +192,17 @@ export function ImportPreview({ data, categories, onRowsChange }: ImportPreviewP
         </p>
       )}
 
+      {data.aiError && (
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-medium">סיווג אוטומטי לא זמין: </span>
+            {data.aiError}
+            <span className="block text-xs mt-1 text-amber-600">יש לבחור קטגוריה ידנית לכל עסקה.</span>
+          </div>
+        </div>
+      )}
+
       {/* Filter tabs */}
       <div className="flex gap-1.5">
         <Button

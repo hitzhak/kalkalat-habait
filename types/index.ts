@@ -179,6 +179,7 @@ export interface ImportPreviewData {
     recurringMatchCount: number;
     dateRange: { from: string; to: string };
   };
+  aiError?: string;
 }
 
 export interface ImportBatchInfo {
