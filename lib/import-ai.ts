@@ -26,12 +26,18 @@ interface CategorizationResult {
   isTransfer?: boolean;
 }
 
-export async function categorizeTransactions(
-  descriptions: string[],
+interface TransactionInput {
+  description: string;
+  type: 'INCOME' | 'EXPENSE';
+}
+
+const BATCH_SIZE = 30;
+
+async function categorizeBatch(
+  batch: TransactionInput[],
+  globalStartIndex: number,
   categories: CategoryInfo[]
 ): Promise<CategorizationResult[]> {
-  if (descriptions.length === 0) return [];
-
   const categoryList = categories.map(cat => {
     const subs = cat.children?.length
       ? ` (תתי: ${cat.children.map(s => `${s.name}[${s.id}]`).join(', ')})`
@@ -39,7 +45,10 @@ export async function categorizeTransactions(
     return `- "${cat.id}": "${cat.name}" [${cat.type}]${subs}`;
   }).join('\n');
 
-  const descList = descriptions.map((d, i) => `${i + 1}. "${d}"`).join('\n');
+  const descList = batch.map((t, i) => {
+    const idx = globalStartIndex + i + 1;
+    return `${idx}. "${t.description}" [${t.type}]`;
+  }).join('\n');
 
   const prompt = `אתה מסווג עסקאות בנקאיות ישראליות לקטגוריות תקציב.
 
@@ -52,37 +61,66 @@ ${descList}
 כללים:
 1. התאם לתת-קטגוריה הספציפית ביותר (למשל "סלקום" → סלולר, "שופרסל" → סופר)
 2. אם אין תת-קטגוריה מתאימה, השתמש בקטגוריית האב
-3. סמן העברות בין חשבונות, תשלומי כרטיס אשראי, הפקדות לפיקדון כ-isTransfer: true
-4. confidence: "high" = ברור (שופרסל=אוכל), "low" = לא בטוח, "unknown" = לא ניתן לזהות
+3. חשוב: לכל עסקה מצוין [EXPENSE] או [INCOME] — בחר קטגוריה מהסוג המתאים בלבד
+4. סמן העברות בין חשבונות, תשלומי כרטיס אשראי, הפקדות לפיקדון כ-isTransfer: true
+5. confidence: "high" = ברור (שופרסל=אוכל), "low" = לא בטוח, "unknown" = לא ניתן לזהות
 
 החזר JSON array בלבד (בלי markdown):
 [{"index": 1, "categoryId": "cat_id", "subCategoryId": "sub_id_or_null", "confidence": "high|low|unknown", "reason": "optional", "isTransfer": false}]`;
 
-  try {
-    const response = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'אתה מומחה בסיווג עסקאות פיננסיות ישראליות. ענה תמיד ב-JSON בלבד.' },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.1,
-      max_tokens: 4096,
-    });
+  const response = await getOpenAI().chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: 'אתה מומחה בסיווג עסקאות פיננסיות ישראליות. ענה תמיד ב-JSON בלבד.' },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.1,
+    max_tokens: 8192,
+  });
 
-    const content = response.choices[0]?.message?.content || '[]';
-    const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const results: CategorizationResult[] = JSON.parse(cleaned);
-    return results;
-  } catch (error) {
-    console.error('AI categorization error:', error);
-    return descriptions.map((_, i) => ({
-      index: i + 1,
-      categoryId: null,
-      subCategoryId: null,
-      confidence: 'unknown' as ConfidenceLevel,
-      reason: 'שגיאה בסיווג אוטומטי',
-    }));
+  const content = response.choices[0]?.message?.content || '[]';
+  const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+  try {
+    return JSON.parse(cleaned) as CategorizationResult[];
+  } catch (parseError) {
+    console.error(`AI batch parse error (indices ${globalStartIndex + 1}-${globalStartIndex + batch.length}). Raw response:`, content);
+    throw parseError;
   }
+}
+
+export async function categorizeTransactions(
+  transactions: TransactionInput[],
+  categories: CategoryInfo[]
+): Promise<CategorizationResult[]> {
+  if (transactions.length === 0) return [];
+
+  const batches: { batch: TransactionInput[]; startIndex: number }[] = [];
+  for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
+    batches.push({
+      batch: transactions.slice(i, i + BATCH_SIZE),
+      startIndex: i,
+    });
+  }
+
+  console.log(`AI categorization: ${transactions.length} transactions in ${batches.length} batch(es)`);
+
+  const batchResults = await Promise.all(
+    batches.map(({ batch, startIndex }) =>
+      categorizeBatch(batch, startIndex, categories).catch(error => {
+        console.error(`Batch starting at ${startIndex} failed:`, error);
+        return batch.map((_, i) => ({
+          index: startIndex + i + 1,
+          categoryId: null,
+          subCategoryId: null,
+          confidence: 'unknown' as ConfidenceLevel,
+          reason: 'שגיאה בסיווג אוטומטי',
+        }));
+      })
+    )
+  );
+
+  return batchResults.flat();
 }
 
 export async function extractFromPDF(

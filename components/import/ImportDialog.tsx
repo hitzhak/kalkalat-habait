@@ -28,7 +28,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { ImportPreview } from '@/components/import/ImportPreview';
-import { ImportInstructions } from '@/components/import/ImportInstructions';
+
 import { getSourceLabels } from '@/app/actions/import';
 import { confirmImport } from '@/app/actions/import';
 import { getCategoryTree } from '@/app/actions/categories';
@@ -66,7 +66,7 @@ const FILE_TYPES: { value: ImportFileType; label: string; icon: React.ReactNode;
     value: 'pdf',
     label: 'PDF',
     icon: <FileText className="h-8 w-8" />,
-    desc: 'דף חשבון מהבנק',
+    desc: 'דיוק גבוה (~98%)',
   },
   {
     value: 'screenshot',
@@ -283,8 +283,6 @@ export function ImportDialog({ open, onOpenChange, onSuccess }: ImportDialogProp
             </div>
           )}
 
-          {fileType === 'excel' && <ImportInstructions />}
-
           <Button className="w-full" onClick={() => setStep('upload')}>
             המשך
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -306,9 +304,9 @@ export function ImportDialog({ open, onOpenChange, onSuccess }: ImportDialogProp
                 {savedLabels.map(label => (
                   <SelectItem key={label} value={label}>{label}</SelectItem>
                 ))}
-                <SelectItem value="cc-husband">כרטיס אשראי (בעל)</SelectItem>
-                <SelectItem value="cc-wife">כרטיס אשראי (אישה)</SelectItem>
-                <SelectItem value="bank">חשבון בנק</SelectItem>
+                <SelectItem value="כרטיס אשראי (בעל)">כרטיס אשראי (בעל)</SelectItem>
+                <SelectItem value="כרטיס אשראי (אישה)">כרטיס אשראי (אישה)</SelectItem>
+                <SelectItem value="חשבון בנק">חשבון בנק</SelectItem>
                 <SelectItem value="__custom__">שם מותאם...</SelectItem>
               </SelectContent>
             </Select>

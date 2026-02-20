@@ -133,7 +133,7 @@ function parseInstallmentInfo(desc: string): string | undefined {
   return undefined;
 }
 
-export function parseExcelFile(buffer: Buffer): ParsedRow[] {
+export function parseExcelFile(buffer: Buffer, isCreditCard = false): ParsedRow[] {
   const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
@@ -193,7 +193,13 @@ export function parseExcelFile(buffer: Buffer): ParsedRow[] {
       const rawAmount = parseFloat(String(row[cols.amountCol] || '0').replace(/[,₪\s]/g, ''));
       if (isNaN(rawAmount)) continue;
       amount = Math.abs(rawAmount);
-      type = rawAmount < 0 ? TransactionType.EXPENSE : TransactionType.INCOME;
+      if (isCreditCard) {
+        // CC: positive = charge (expense), negative = refund (income)
+        type = rawAmount < 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
+      } else {
+        // Bank: positive = deposit (income), negative = withdrawal (expense)
+        type = rawAmount < 0 ? TransactionType.EXPENSE : TransactionType.INCOME;
+      }
     } else {
       continue;
     }
@@ -209,7 +215,6 @@ export function parseExcelFile(buffer: Buffer): ParsedRow[] {
   return rows;
 }
 
-export function parseCSVFile(buffer: Buffer): ParsedRow[] {
-  const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
-  return parseExcelFile(buffer);
+export function parseCSVFile(buffer: Buffer, isCreditCard = false): ParsedRow[] {
+  return parseExcelFile(buffer, isCreditCard);
 }

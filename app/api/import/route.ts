@@ -9,6 +9,13 @@ import { TransactionType, ImportRow, ImportPreviewData } from '@/types';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.pdf', '.png', '.jpg', '.jpeg'];
 
+const CC_KEYWORDS = ['כרטיס אשראי', 'אשראי', 'כאל', 'מקס', 'ישראכרט', 'אמריקן', 'לאומי קארד', 'ויזה', 'דיינרס'];
+
+function isCreditCardSource(label: string): boolean {
+  const lower = label.toLowerCase();
+  return CC_KEYWORDS.some(k => lower.includes(k));
+}
+
 function getExtension(filename: string): string {
   return filename.slice(filename.lastIndexOf('.')).toLowerCase();
 }
@@ -60,17 +67,19 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     let importRows: ImportRow[] = [];
 
+    const isCreditCard = isCreditCardSource(sourceLabel);
+
     if (ext === '.xlsx' || ext === '.xls' || ext === '.csv') {
-      const parsed = parseExcelFile(buffer);
+      const parsed = parseExcelFile(buffer, isCreditCard);
 
       if (parsed.length === 0) {
         return NextResponse.json({ error: 'לא נמצאו עסקאות בקובץ. ודא שהקובץ מכיל נתונים תקינים' }, { status: 400 });
       }
 
-      // AI categorization - send only descriptions
-      const descriptions = parsed.map(r => r.description);
-      const categorized = await categorizeTransactions(
-        descriptions,
+      // AI categorization - send descriptions with type context
+      const transactions = parsed.map(r => ({ description: r.description, type: r.type as 'INCOME' | 'EXPENSE' }));
+      const categorizedRaw = await categorizeTransactions(
+        transactions,
         categories.map(c => ({
           id: c.id,
           name: c.name,
@@ -79,19 +88,28 @@ export async function POST(request: NextRequest) {
         }))
       );
 
+      // Build index-based lookup map (AI returns 1-based indices)
+      const catMap = new Map<number, typeof categorizedRaw[number]>();
+      for (const r of categorizedRaw) {
+        catMap.set(r.index, r);
+      }
+
       // Duplicate detection
-      const forDedup = parsed.map((r, i) => ({
-        date: r.date,
-        sourceDescription: r.description,
-        amount: r.amount,
-        type: r.type,
-        categoryId: categorized[i]?.categoryId || categorized[i]?.subCategoryId || null,
-      }));
+      const forDedup = parsed.map((r, i) => {
+        const cat = catMap.get(i + 1);
+        return {
+          date: r.date,
+          sourceDescription: r.description,
+          amount: r.amount,
+          type: r.type,
+          categoryId: cat?.categoryId || cat?.subCategoryId || null,
+        };
+      });
       const dedupResults = await checkDuplicates(householdId, sourceLabel, forDedup);
 
       // Build import rows
       importRows = parsed.map((row, i) => {
-        const cat = categorized[i];
+        const cat = catMap.get(i + 1);
         const dedup = dedupResults[i];
 
         const isTransfer = cat?.isTransfer || isTransferDescription(row.description) || isCCPayment(row.description);
