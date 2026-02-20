@@ -45,7 +45,11 @@ const AVAILABLE_COLORS = [
   { value: "#14B8A6", label: "טורקיז" },
 ];
 
-export function CreateGoalDialog() {
+interface CreateGoalDialogProps {
+  onSuccess?: () => void;
+}
+
+export function CreateGoalDialog({ onSuccess }: CreateGoalDialogProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,6 +95,7 @@ export function CreateGoalDialog() {
       setSelectedIcon("Target");
       setSelectedColor("#0073EA");
       setIsOpen(false);
+      onSuccess?.();
     } catch (error) {
       toast({
         title: "שגיאה",

@@ -35,9 +35,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface SavingsGoalCardProps {
   goal: SavingsGoal;
+  onRefresh?: () => void;
 }
 
-export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
+export function SavingsGoalCard({ goal, onRefresh }: SavingsGoalCardProps) {
   const { toast } = useToast();
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -111,6 +112,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
       });
 
       setIsDepositOpen(false);
+      onRefresh?.();
       setDepositAmount("");
       setDepositNotes("");
     } catch (error) {
@@ -135,6 +137,7 @@ export function SavingsGoalCard({ goal }: SavingsGoalCardProps) {
         title: "מטרה נמחקה",
         description: "מטרת החיסכון נמחקה בהצלחה",
       });
+      onRefresh?.();
     } catch (error) {
       toast({
         title: "שגיאה",

@@ -24,6 +24,56 @@ async function main() {
   console.log('  Mock Data Seeder');
   console.log('========================================\n');
 
+  // Resolve household to seed: HOUSEHOLD_ID env > SEED_EMAIL env > first household
+  const householdIdFromEnv = process.env.HOUSEHOLD_ID;
+  const seedEmail = process.env.SEED_EMAIL;
+  let householdId: string;
+
+  if (householdIdFromEnv) {
+    householdId = householdIdFromEnv;
+    const h = await prisma.household.findUnique({ where: { id: householdId } });
+    if (!h) {
+      console.error(`Household ${householdId} not found.`);
+      process.exit(1);
+    }
+    console.log(`Using household from env: ${householdId}\n`);
+  } else if (seedEmail) {
+    try {
+      const result = await prisma.$queryRawUnsafe<{ id: string }[]>(
+        `SELECT u.id FROM auth.users u WHERE u.email = $1`,
+        seedEmail
+      );
+      if (!result || result.length === 0) {
+        console.error(`User with email ${seedEmail} not found.`);
+        process.exit(1);
+      }
+      const userId = result[0].id;
+      const member = await prisma.householdMember.findUnique({ where: { userId } });
+      if (!member) {
+        console.error(`User ${seedEmail} has no household. Log in to the app first.`);
+        process.exit(1);
+      }
+      householdId = member.householdId;
+      console.log(`Using household for ${seedEmail}: ${householdId}\n`);
+    } catch (e) {
+      console.warn('Could not resolve by email (auth schema may be inaccessible), falling back to first household.');
+      const first = await prisma.household.findFirst();
+      if (!first) {
+        console.error('No household found.');
+        process.exit(1);
+      }
+      householdId = first.id;
+    }
+  } else {
+    const firstHousehold = await prisma.household.findFirst();
+    if (!firstHousehold) {
+      console.error('No household found. Log in to the app first to create one.');
+      process.exit(1);
+    }
+    householdId = firstHousehold.id;
+    console.log(`Using first household: ${householdId}\n`);
+  }
+
   // Fetch existing categories
   const allCategories = await prisma.category.findMany({
     include: { children: true },
@@ -54,14 +104,15 @@ async function main() {
     return id;
   }
 
-  // ========== Clear existing data ==========
-  console.log('Clearing existing transactions, budgets, savings, loans...');
-  await prisma.loanPayment.deleteMany();
-  await prisma.loan.deleteMany();
-  await prisma.savingsDeposit.deleteMany();
-  await prisma.savingsGoal.deleteMany();
-  await prisma.budgetItem.deleteMany();
-  await prisma.transaction.deleteMany();
+  // ========== Clear existing data (scope to household) ==========
+  console.log('Clearing existing transactions, budgets, savings, loans for this household...');
+  const loanIds = (await prisma.loan.findMany({ where: { householdId }, select: { id: true } })).map((l) => l.id);
+  await prisma.loanPayment.deleteMany({ where: { loanId: { in: loanIds } } });
+  await prisma.loan.deleteMany({ where: { householdId } });
+  await prisma.savingsDeposit.deleteMany({ where: { goal: { householdId } } });
+  await prisma.savingsGoal.deleteMany({ where: { householdId } });
+  await prisma.budgetItem.deleteMany({ where: { householdId } });
+  await prisma.transaction.deleteMany({ where: { householdId } });
   console.log('  Done.\n');
 
   // ========== MONTHS TO SEED ==========
@@ -306,6 +357,7 @@ async function main() {
       if (salaryId) {
         await prisma.transaction.create({
           data: {
+            householdId,
             amount: income.salary1,
             type: 'INCOME',
             categoryId: salaryId,
@@ -321,6 +373,7 @@ async function main() {
       if (childId) {
         await prisma.transaction.create({
           data: {
+            householdId,
             amount: income.childAllowance,
             type: 'INCOME',
             categoryId: childId,
@@ -336,6 +389,7 @@ async function main() {
       if (businessId) {
         await prisma.transaction.create({
           data: {
+            householdId,
             amount: income.business,
             type: 'INCOME',
             categoryId: businessId,
@@ -353,6 +407,7 @@ async function main() {
         if (extraId) {
           await prisma.transaction.create({
             data: {
+              householdId,
               amount: income.extra.amount,
               type: 'INCOME',
               categoryId: extraId,
@@ -374,6 +429,7 @@ async function main() {
       if (!catId) continue;
       await prisma.transaction.create({
         data: {
+          householdId,
           amount: exp.amount,
           type: 'EXPENSE',
           categoryId: catId,
@@ -393,6 +449,7 @@ async function main() {
       if (!catId) continue;
       await prisma.transaction.create({
         data: {
+          householdId,
           amount: exp.amount,
           type: 'EXPENSE',
           categoryId: catId,
@@ -413,6 +470,7 @@ async function main() {
       if (!catId) continue;
       await prisma.budgetItem.create({
         data: {
+          householdId,
           categoryId: catId,
           month,
           year,
@@ -430,6 +488,7 @@ async function main() {
 
   const vacation = await prisma.savingsGoal.create({
     data: {
+      householdId,
       name: 'חופשה משפחתית',
       icon: 'Plane',
       targetAmount: 15000,
@@ -442,6 +501,7 @@ async function main() {
 
   const emergency = await prisma.savingsGoal.create({
     data: {
+      householdId,
       name: 'קרן חירום',
       icon: 'Shield',
       targetAmount: 50000,
@@ -473,6 +533,7 @@ async function main() {
 
   const mortgage = await prisma.loan.create({
     data: {
+      householdId,
       name: 'משכנתא',
       type: 'MORTGAGE',
       originalAmount: 800000,
@@ -489,6 +550,7 @@ async function main() {
 
   const bankLoan = await prisma.loan.create({
     data: {
+      householdId,
       name: 'הלוואת בנק',
       type: 'BANK',
       originalAmount: 30000,

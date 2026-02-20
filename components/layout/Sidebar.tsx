@@ -11,6 +11,7 @@ import {
   LogOut,
   BookOpen,
   Users,
+  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/', label: 'ראשי', icon: Home },
   { href: '/transactions', label: 'עסקאות', icon: Receipt },
   { href: '/reports', label: 'דוחות', icon: BarChart3 },
+  { href: '/savings', label: 'חיסכון', icon: Target },
   { href: '/family', label: 'משפחה', icon: Users },
 ];
 
@@ -34,7 +36,8 @@ export function Sidebar() {
   const selectedMonth = useAppStore((s) => s.selectedMonth);
   const selectedYear = useAppStore((s) => s.selectedYear);
 
-  function buildHref(base: string) {
+  function buildHref(base: string, withMonth = true) {
+    if (!withMonth || base === '/savings') return base;
     return `${base}?month=${selectedMonth}&year=${selectedYear}`;
   }
 
