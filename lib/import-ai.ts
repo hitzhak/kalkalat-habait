@@ -1,9 +1,14 @@
 import OpenAI from 'openai';
 import { ConfidenceLevel } from '@/types';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let _openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 interface CategoryInfo {
   id: string;
@@ -54,7 +59,7 @@ ${descList}
 [{"index": 1, "categoryId": "cat_id", "subCategoryId": "sub_id_or_null", "confidence": "high|low|unknown", "reason": "optional", "isTransfer": false}]`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: 'אתה מומחה בסיווג עסקאות פיננסיות ישראליות. ענה תמיד ב-JSON בלבד.' },
@@ -103,7 +108,7 @@ export async function extractFromPDF(
   }).join('\n');
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
