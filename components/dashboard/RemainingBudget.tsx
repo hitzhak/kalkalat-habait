@@ -43,7 +43,7 @@ export function RemainingBudget({ categories }: CategoryGridProps) {
 
   return (
     <>
-      <div className="category-grid grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="category-grid grid grid-cols-2 lg:grid-cols-3 gap-3">
         {displayCategories.map((cat) => (
           <CategoryCard
             key={cat.id}

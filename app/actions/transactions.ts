@@ -498,10 +498,16 @@ export async function getTransactionsByCategory(categoryId: string, month: numbe
     const startDate = new Date(validated.year, validated.month - 1, 1);
     const endDate = new Date(validated.year, validated.month, 0, 23, 59, 59, 999);
 
+    const childCategories = await prisma.category.findMany({
+      where: { parentId: categoryId },
+      select: { id: true },
+    });
+    const categoryIds = [categoryId, ...childCategories.map((c) => c.id)];
+
     const transactions = await prisma.transaction.findMany({
       where: {
         householdId,
-        categoryId,
+        categoryId: { in: categoryIds },
         date: { gte: startDate, lte: endDate },
       },
       include: {

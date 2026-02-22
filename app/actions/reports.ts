@@ -88,6 +88,9 @@ export async function getMonthlyReport(month: number, year: number) {
             type: true,
             isFixed: true,
             parentId: true,
+            parent: {
+              select: { id: true, name: true, icon: true, color: true },
+            },
           },
         },
       },
@@ -137,8 +140,7 @@ export async function getMonthlyReport(month: number, year: number) {
           const mainCategory =
             tx.category.parentId === null
               ? tx.category
-              : transactions.find((t) => t.category.id === tx.category.parentId)?.category ||
-                tx.category;
+              : tx.category.parent || tx.category;
 
           expensesByCategory[categoryId] = {
             categoryId,

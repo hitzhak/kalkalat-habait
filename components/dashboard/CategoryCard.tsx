@@ -48,7 +48,7 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
       onClick={() => onClick?.(category)}
     >
       <CardContent className="p-3 space-y-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {IconEl && (
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"

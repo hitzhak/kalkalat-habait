@@ -45,9 +45,10 @@ export function AffordabilityChecker({ categories, totalRemaining, onCheck }: Af
   return (
     <Card className="border-dashed border-border bg-primary-50/30">
       <CardContent className="py-4 px-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground shrink-0">💡 רוצה להוציא</span>
-          <div className="relative flex-1 max-w-[160px]">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-muted-foreground shrink-0 hidden min-[360px]:inline">💡 רוצה להוציא</span>
+          <span className="text-sm font-medium text-muted-foreground shrink-0 min-[360px]:hidden">💡</span>
+          <div className="relative flex-1 max-w-[120px] sm:max-w-[160px] min-w-0">
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{'\u2066'}₪{'\u2069'}</span>
             <Input
               type="number"

@@ -61,7 +61,11 @@ async function main() {
   ];
 
   for (const cat of incomeCategories) {
-    await prisma.category.create({ data: cat });
+    await prisma.category.upsert({
+      where: { name_type_parentId_householdId: { name: cat.name, type: cat.type, parentId: null, householdId: null } },
+      create: cat,
+      update: cat,
+    });
   }
 
   console.log('✅ נוצרו 6 קטגוריות הכנסות');
@@ -263,20 +267,29 @@ async function main() {
   for (const cat of expenseCategories) {
     const { subCategories, ...mainCategoryData } = cat;
 
-    const mainCategory = await prisma.category.create({
-      data: mainCategoryData,
+    const mainCategory = await prisma.category.upsert({
+      where: { name_type_parentId_householdId: { name: mainCategoryData.name, type: mainCategoryData.type, parentId: null, householdId: null } },
+      create: mainCategoryData,
+      update: mainCategoryData,
     });
 
     if (subCategories && subCategories.length > 0) {
       for (let i = 0; i < subCategories.length; i++) {
-        await prisma.category.create({
-          data: {
+        await prisma.category.upsert({
+          where: { name_type_parentId_householdId: { name: subCategories[i], type: CategoryType.EXPENSE, parentId: mainCategory.id, householdId: null } },
+          create: {
             name: subCategories[i],
             icon: cat.icon,
             color: cat.color,
             type: CategoryType.EXPENSE,
             isFixed: cat.isFixed,
             parentId: mainCategory.id,
+            sortOrder: i + 1,
+          },
+          update: {
+            icon: cat.icon,
+            color: cat.color,
+            isFixed: cat.isFixed,
             sortOrder: i + 1,
           },
         });

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { format, isToday, isYesterday, isSameMonth } from 'date-fns';
+import { useState, useMemo, useEffect } from 'react';
+import { format, isToday, isYesterday } from 'date-fns';
 import { he } from 'date-fns/locale';
 import * as Icons from 'lucide-react';
 import { TransactionType } from '@/types';
@@ -42,17 +42,46 @@ interface TransactionListProps {
   transactions: Transaction[];
   onEdit?: (transaction: Transaction) => void;
   onDelete?: () => void;
+  /** month/year for fixed-expenses header (avoids hydration mismatch from new Date()) */
+  selectedMonth?: number;
+  selectedYear?: number;
 }
 
-export function TransactionList({ transactions, onEdit, onDelete }: TransactionListProps) {
+const MONTH_NAMES_HE = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+export function TransactionList({ transactions, onEdit, onDelete, selectedMonth, selectedYear }: TransactionListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
-  // קיבוץ עסקאות לפי תאריך
+  // קיבוץ עסקאות לפי תאריך (client-only for isToday/isYesterday to avoid hydration mismatch)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const groupedTransactions = useMemo(() => {
     const groups: {
+      today: Transaction[];
+      yesterday: Transaction[];
+      fixed: Transaction[];
+      other: Record<string, Transaction[]>;
+    } = {
+      today: [],
+      yesterday: [],
+      fixed: transactions.filter((tx) => tx.isFixed),
+      other: {},
+    };
+    if (!mounted) {
+      transactions.forEach((tx) => {
+        if (!tx.isFixed) {
+          const dateKey = format(new Date(tx.date), 'yyyy-MM-dd');
+          if (!groups.other[dateKey]) groups.other[dateKey] = [];
+          groups.other[dateKey].push(tx);
+        }
+      });
+      return groups;
+    }
+    const groupsFull: {
       today: Transaction[];
       yesterday: Transaction[];
       fixed: Transaction[];
@@ -68,22 +97,22 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
       const txDate = new Date(tx.date);
 
       if (tx.isFixed) {
-        groups.fixed.push(tx);
+        groupsFull.fixed.push(tx);
       } else if (isToday(txDate)) {
-        groups.today.push(tx);
+        groupsFull.today.push(tx);
       } else if (isYesterday(txDate)) {
-        groups.yesterday.push(tx);
+        groupsFull.yesterday.push(tx);
       } else {
         const dateKey = format(txDate, 'yyyy-MM-dd');
-        if (!groups.other[dateKey]) {
-          groups.other[dateKey] = [];
+        if (!groupsFull.other[dateKey]) {
+          groupsFull.other[dateKey] = [];
         }
-        groups.other[dateKey].push(tx);
+        groupsFull.other[dateKey].push(tx);
       }
     });
 
-    return groups;
-  }, [transactions]);
+    return groupsFull;
+  }, [transactions, mounted]);
 
   // פורמט תאריך לכותרת קבוצה
   const formatGroupDate = (date: Date) => {
@@ -203,8 +232,8 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
         {/* הוצאות קבועות */}
         {groupedTransactions.fixed.length > 0 && (
           <div>
-            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-              הוצאות קבועות - {format(new Date(), 'MMMM', { locale: he })}
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground" suppressHydrationWarning>
+              הוצאות קבועות - {selectedMonth != null && selectedYear != null ? MONTH_NAMES_HE[selectedMonth - 1] : format(new Date(), 'MMMM', { locale: he })}
             </h3>
             <div className="space-y-2">
               {groupedTransactions.fixed.map((tx) => (

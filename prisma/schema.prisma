@@ -81,6 +81,7 @@ model Category {
   transactions    Transaction[]
   budgetItems     BudgetItem[]
 
+  @@unique([name, type, parentId, householdId])
   @@index([householdId])
 }
 

@@ -145,6 +145,8 @@ export function TransactionsContent({ initialTransactions, initialSummary, month
               transactions={filteredTransactions}
               onEdit={handleEdit}
               onDelete={reloadData}
+              selectedMonth={month}
+              selectedYear={year}
             />
           )}
         </TabsContent>

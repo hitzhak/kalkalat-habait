@@ -10,6 +10,37 @@ import { DbConnectionError } from '@/components/DbConnectionError';
 import Link from 'next/link';
 import { Plus, Wallet } from 'lucide-react';
 
+function EmptyMonthState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md text-center space-y-5">
+        <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
+          <Wallet className="w-10 h-10 text-muted-foreground" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-foreground">אין נתונים בחודש זה</h2>
+          <p className="text-muted-foreground text-sm">הוסף עסקאות או הגדר תקציב כדי להתחיל</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/transactions"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-600 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            הוסף עסקה
+          </Link>
+          <Link
+            href="/settings"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary-500 text-primary-500 px-5 py-2.5 text-sm font-medium hover:bg-primary-50 transition-colors"
+          >
+            הגדר תקציב
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -75,12 +106,17 @@ export function DashboardContent({ data, error }: DashboardContentProps) {
   const transactions = data.transactionsResult.transactions || [];
   const recurringGenerated = data.transactionsResult.recurringGenerated;
 
+  const hasBudgetSetup =
+    data.budgetSummary.totalBudget > 0 ||
+    data.budgetByCategory.some((c) => c.plannedAmount > 0);
+
   const hasData =
     transactions.length > 0 ||
     data.summary.totalIncome > 0 ||
     data.summary.totalExpenses > 0;
 
-  if (!hasData) return <EmptyState />;
+  if (!hasData && !hasBudgetSetup) return <EmptyState />;
+  if (!hasData && hasBudgetSetup) return <EmptyMonthState />;
 
   const totalBudget = data.budgetSummary.totalBudget;
   const totalSpent = data.budgetSummary.totalSpent;
